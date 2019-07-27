@@ -11,3 +11,7 @@ monitor program that prints out whatever is received by the nRF905 module.  The
 other transmits 32 bits (8 hex chars).
 
 Finally, there is a test harness that tests the nRF905 class.
+
+## TODO
+
+Add details about the module and how to connect it up.
