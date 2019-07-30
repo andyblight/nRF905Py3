@@ -1,38 +1,11 @@
-#!/usr/bin/env python3
-
-# import pigpio
-
 class nrf905:
-    """ A wrapper class around pigpio that drives an nRF905 device. 
-        Looking at the top (the side with the antenna sticking up) the nRF905 
-        module pin out is:
-
-        VCC         TxEN      
-        CE          PWR
-        CLK         CD
-        AM          DR            CHIP          ANTENNA 
-        MISO        MOSI
-        SCK         CSN
-        GND         GND
-
-        The RPi is connected to SPI0 and some GPIO pins as follows:
-
-        RPi                         nRF905
-        Name        Pin No.         Name
-
-        GPIO17      11              PWR     0 = standby, 1 = working
-        GPIO18      12              DR via resistor
-        GPIO27      13              CE
-        VCC         15              VCC
-        GPIO10      17              MOSI
-        GPIO9       19              MISO
-        GPIO11      21              SCK
-        GPIO8       22              CSN
-        GND         23              GND
+    """ The interface to control a nRF905 device.  This class does all the
+    parameter checking and state checking.  The actual byte bashing is done in
+    the module nrf905hw.
 
     Important points to note about the nRF905.
-    1.  The device can work as a transmitter or a receiver but not both together.
-        This means that open() has to be aware if transmission is needed.
+    The device can work as a transmitter or a receiver but not both together.
+    This means that the state has to be considered.
     """
 
     def __init__(self):
@@ -44,6 +17,7 @@ class nrf905:
         self.__callback = None
         self.__frequency = 0
         self.__address = 0
+        self.__crc_mode = 16
         self.set_pins(self.__default_pins)
 
     def set_pins(self, pins):
@@ -72,12 +46,35 @@ class nrf905:
         else:
             if address >= 0:
                 if address == 0 or address & 0xffffffff:
-                    self.__address = 0
+                    self.__address = address
                     print("Address set", address)
                 else:
                     raise ValueError("Address out of range")
             else:
                 raise ValueError("Address out of range")
+
+    def set_crc_mode(self, mode):
+        # print("set_crc_mode")
+        if self.__is_open:
+            raise StateError("CRC mode NOT set. Device in use.")
+        else:
+            if mode == 0 or mode == 8 or mode == 16:
+                self.__crc_mode = mode
+                print("CRC mode set", mode)
+            else:
+                raise ValueError("CRC mode must be one of 0, 8, 16")
+
+    def set_frequency(self, frequency):
+        # print("set_frequency")
+        if self.__is_open:
+            raise StateError("Frequency NOT set. Device in use.")
+        else:
+            # TODO Verify frequency 
+            if mode == 0 or mode == 8 or mode == 16:
+                self.__crc_mode = mode
+                print("CRC mode set", mode)
+            else:
+                raise ValueError("CRC mode must be one of 0, 8, 16")
 
     def open(self, frequency, callback=None):
         # print("open")
@@ -96,13 +93,14 @@ class nrf905:
             else:
                 print("open as transmitter", frequency)
                 self.__is_transmitter = True
-            self.__configure_hw()
+            self.__hw_configure()
             self.__is_open = True
 
     def write(self, data):
         # print("write")
         if self.__is_open:
             if self.__is_transmitter:
+                self.__hw_write(data)
                 print("wrote", data)
             else:
                 raise StateError("Device in receive mode.")
@@ -111,14 +109,18 @@ class nrf905:
 
     def close(self):
         # print("close")
-        self.__release_hw()
+        self.__hw_release()
         self.__is_open = False
 
-    def __configure_hw(self):
-        print("__configure_hw")
+    def __hw_configure(self):
+        """ Uses member variables directly """
+        print("__hw_configure")
 
-    def __release_hw(self):
-        print("__release_hw")
+    def __hw_write(self, data):
+        print("__hw_write", data)
+
+    def __hw_release(self):
+        print("__hw_release")
 
 
 class Error(Exception):

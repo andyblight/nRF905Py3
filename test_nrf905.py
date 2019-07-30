@@ -99,7 +99,6 @@ class Testnrf905(unittest.TestCase):
         transceiver.set_address(address)
         address = 0xffffffff
         transceiver.set_address(address)
-
         # Verify values that are not unsigned 32 bit integers generate exceptions.
         address = -1
         with self.assertRaises(ValueError):
@@ -107,13 +106,49 @@ class Testnrf905(unittest.TestCase):
         address = 3.4
         with self.assertRaises(TypeError):
             transceiver.set_address(address)
-
         # Set after open asserts with StateError.
         transceiver.open(434)
         address = 105
         with self.assertRaises(StateError):
             transceiver.set_address(address)
+        transceiver.close()
 
+    def test_set_crc_mode(self):
+        transceiver = nrf905()
+        # Verify it works before open for 0, 8 and 16.
+        crc_mode = 0
+        transceiver.set_crc_mode(crc_mode)
+        crc_mode = 8
+        transceiver.set_crc_mode(crc_mode)
+        crc_mode = 16
+        transceiver.set_crc_mode(crc_mode)
+        # Verify ValueError before open for not 0, 8 and 16.
+        crc_mode = -1
+        with self.assertRaises(ValueError):
+            transceiver.set_crc_mode(crc_mode)
+        crc_mode = 1
+        with self.assertRaises(ValueError):
+            transceiver.set_crc_mode(crc_mode)
+        crc_mode = 7
+        with self.assertRaises(ValueError):
+            transceiver.set_crc_mode(crc_mode)
+        crc_mode = 9
+        with self.assertRaises(ValueError):
+            transceiver.set_crc_mode(crc_mode)
+        crc_mode = 15
+        with self.assertRaises(ValueError):
+            transceiver.set_crc_mode(crc_mode)
+        crc_mode = 17
+        with self.assertRaises(ValueError):
+            transceiver.set_crc_mode(crc_mode)
+        crc_mode = 200
+        with self.assertRaises(ValueError):
+            transceiver.set_crc_mode(crc_mode)
+        # Set after open causes StateError.
+        transceiver.open(434)
+        crc_mode = 8
+        with self.assertRaises(StateError):
+            transceiver.set_crc_mode(crc_mode)
         transceiver.close()
 
 if __name__ == '__main__':
