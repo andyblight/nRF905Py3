@@ -4,6 +4,13 @@ import pigpio
 
 class nrf905spi:
     """ Handles access to SPI bus and the nRF905 registers.
+    Extracts from the data sheet.
+        The device must be in a low power mode to access the registers.
+        Whenever CSN is set low the interface expects an instruction. 
+        Every new instruction must be started by a high to low transition on CSN.
+        The content of the status register (S[7:0]) is always read to
+        MISO after a high to low transition on CSN.
+
     """
 
     CRYSTAL_FREQUENCY_HZ = 16 * 1000 * 1000  # 16MHz is on the board I'm using.
@@ -11,10 +18,21 @@ class nrf905spi:
     # SPI pins are defaults for pigpio bus 0 (RPi 1 A&B only have SPI bus 0).
     SPI_BUS = 0
     SPI_SCK_HZ = 1 * 1000 * 1000  # 10MHz max. (data sheet)
+    
+    # pigpio SPI flag values
+    SPI_MODE = 0  # nRF905 supports SPI mode 0 only. 2 bits
+    SPI_CE_ACTIVE_HIGH = 0 # nRF905 active low. 1 bit
+    SPI_CE_PIN = 0 # Use SPIx_CE0_N. 1 bit
+    SPI_USE_AUX = 0 # Use main for RPi1A/B. 1 bit
+    SPI_3WIRE = 0  # nRF905 is 4 wire. 1 bit
+    SPI_TX_LSB_FIRST = 0  # nRF905 is MSB first. 1 bit
+    SPI_RX_LSB_FIRST = 0  # nRF905 is MSB first. 1 bit
+    SPI_AUX_WORD_SIZE = 0  # Using main SPI bus. 6 bits
 
     def __init__(self, pi):
         self.__spi_handle = 0
-        # nRF905 supports SPI mode 0.
+        # As this driver is using SPI0, all values are 0.  Add code here if any 
+        # of the values need to be changed. 
         spi_flags = 0
         # Open SPI device
         self.__spi_handle = pi.spi_open(self.SPI_BUS, self.SPI_SCK_HZ, spi_flags)
@@ -27,8 +45,9 @@ class nrf905spi:
             Raises ValueError exception if data does not contain 10 bytes.
         """
         if len(data) == 10:
-            # Write the address of the register.
-            pi.spi_write(self.__spi_handle, data)
+            # Prepend the instruction for writing all bytes to the config 
+            # register is 0.
+            data.insert(0, 0)
             # Write the data to the register.
             pi.spi_write(self.__spi_handle, data)
         else:
@@ -37,13 +56,12 @@ class nrf905spi:
     def configuration_register_read(self, pi):
         """ Returns an array of 10 bytes read from the RF configuration register.
             If the read was not successful, returns empty array.
+            We need to write an instruction byte before reading back the data
+            so we use spi_xfer instead of spi_read.
+            The command for reading all bytes is 0x10.
         """
-        # Write the address of the register.
-        
-        # Read the data from the register.
-        bytes_to_read = 10
-        (count, data) = pi.spi_read(self.__spi_handle, bytes_to_read)
-        if not count == bytes_to_read:
+        (count, data) = pi.spi_xfer(self.__spi_handle, b'\0x10')
+        if count < 0:
             data = []
         return data
 
@@ -100,9 +118,13 @@ class nrf905spi:
         The HFREQ_PLL is byte 1, bit 1 and CH_NO bit 8 is byte 1, bit 0.
         So all that is needed it a tuple containing a frequency and two byte
         values.
+        UK frequency ranges:
+            433.05 to 434.79
+            863.00 to 870.00
+        TODO Add more valid frequencies.
         """
         frequency_list = [
-            (430.0, (0b01001100, 0b00)),  # 430 MHz
+            (430.0, (0b01001100, 0b00)),  # 430MHz
             (433.1, (0b01101011, 0b00)),
             (433.2, (0b01101100, 0b00)),
             (433.7, (0b01111011, 0b00)),
