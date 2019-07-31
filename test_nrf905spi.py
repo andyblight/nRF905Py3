@@ -1,5 +1,6 @@
 #!/usr/bin/env python3
 
+import pigpio
 import unittest
 import sys
 
