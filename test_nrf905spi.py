@@ -17,23 +17,25 @@ class Testnrf905spi(unittest.TestCase):
 
     def setUp(self):
         self.pi = pigpio.pi()
-        self.spi = nrf905spi(pi)
+        self.spi = nrf905spi(self.pi)
 
     def tearDown(self):
         self.spi.close(self.pi)
         self.pi.stop()
 
-    def test_frequency_to_bits(self):
-        """ Only need to test for match in list and not found """
-        # Frequency found
-        frequency = 433.2
-        result = self.spi.__frequency_to_bits(frequency)
-        self.assertEqual(result[0], 0b01101100)
-        self.assertEqual(result[1], 0b00)
+    def test_configuration_register_create(self):
+        """ Tests various aspects of the create function """
+        # Test frequency values
+        frequency_mhz = 433.2
+        rx_address = 0xDDCCBBAA
+        crc_mode = 0
+        data = self.spi.configuration_register_create(frequency_mhz, rx_address, crc_mode)
+        self.assertEqual(data[0], 0b01101100)
+        self.assertEqual(data[1], 0b00)
         # Frequency not found.
-        frequency = 512.7
+        frequency_mhz = 512.7
         with self.assertRaises(ValueError):
-            result = self.spi.__frequency_to_bits(frequency)
+            data = self.spi.configuration_register_create(frequency_mhz, rx_address, crc_mode)
 
     def test_create_print(self):
         frequency_mhz = 433.7

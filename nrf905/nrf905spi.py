@@ -95,7 +95,7 @@ class nrf905spi:
         So all that is needed it a tuple containing a frequency and two byte
         values.
         """
-        frequency_dict = dict([
+        frequency_list = [
             (430.0, (0b01001100, 0b00)),  # 430 MHz
             (433.1, (0b01101011, 0b00)),
             (433.2, (0b01101100, 0b00)),
@@ -107,11 +107,11 @@ class nrf905spi:
             (902.2, (0b00011111, 0b11)),  # 900MHZ
             (902.4, (0b00100000, 0b11)),
             (927.8, (0b10011111, 0b11))
-        ])
+        ]
         result = (0,0)
-        for key, value in frequency_dict:
-            if key == frequency:
-                result = value
+        for entry in frequency_list:
+            if entry[0] == frequency:
+                result = entry[1]
         if result == (0, 0):
             raise ValueError("Frequency not found.")
         return result
