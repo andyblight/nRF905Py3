@@ -74,8 +74,8 @@ class nrf905spi:
         # Creates an array of data bytes from the given parameters suitable for
         # writing to the device.
         frequency_bits = self.__frequency_to_bits(frequency_mhz)
-        byte_0 = frequency_bits & 0xff
-        byte_1 = frequency_bits & 0x03
+        byte_0 = frequency_bits[0]
+        byte_1 = frequency_bits[1]
         byte_2 = 0
         byte_3 = 0
         byte_4 = 0
@@ -88,6 +88,30 @@ class nrf905spi:
         return result
 
     def __frequency_to_bits(self, frequency):
-        # Returns a 16 bit value with the correct values of CH_NO and HFREQ_PLL.
-        # Raises exception if frequency is invalid.
-        return 0x0333
+        """ Returns a pair of bytes correct values of CH_NO and HFREQ_PLL.
+        Raises exception if frequency is invalid.
+        Table 24 from data sheet gives these values.
+        The HFREQ_PLL is byte 1, bit 1 and CH_NO bit 8 is byte 1, bit 0.
+        So all that is needed it a tuple containing a frequency and two byte
+        values.
+        """
+        frequency_dict = dict([
+            (430.0, (0b01001100, 0b00)),  # 430 MHz
+            (433.1, (0b01101011, 0b00)),
+            (433.2, (0b01101100, 0b00)),
+            (433.7, (0b01111011, 0b00)),
+            (862.0, (0b01010110, 0b10)),  # 860MHz
+            (868.2, (0b01110101, 0b10)),
+            (868.4, (0b01110110, 0b10)),
+            (869.8, (0b01111101, 0b10)),
+            (902.2, (0b00011111, 0b11)),  # 900MHZ
+            (902.4, (0b00100000, 0b11)),
+            (927.8, (0b10011111, 0b11))
+        ])
+        result = (0,0)
+        for key, value in frequency_dict:
+            if key == frequency:
+                result = value
+        if result == (0, 0):
+            raise ValueError("Frequency not found.")
+        return result

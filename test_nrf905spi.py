@@ -15,17 +15,32 @@ def callback(data):
 
 class Testnrf905spi(unittest.TestCase):
 
+    def setUp(self):
+        self.pi = pigpio.pi()
+        self.spi = nrf905spi(pi)
+
+    def tearDown(self):
+        self.spi.close(self.pi)
+        self.pi.stop()
+
+    def test_frequency_to_bits(self):
+        """ Only need to test for match in list and not found """
+        # Frequency found
+        frequency = 433.2
+        result = self.spi.__frequency_to_bits(frequency)
+        self.assertEqual(result[0], 0b01101100)
+        self.assertEqual(result[1], 0b00)
+        # Frequency not found.
+        frequency = 512.7
+        with self.assertRaises(ValueError):
+            result = self.spi.__frequency_to_bits(frequency)
+
     def test_create_print(self):
-        pi = pigpio.pi()
-        spi = nrf905spi(pi)
-        frequency_mhz = 434.7
+        frequency_mhz = 433.7
         rx_address = 0xDDCCBBAA
         crc_mode = 0
-        data = spi.configuration_register_create(frequency_mhz, rx_address, crc_mode)
-        spi.configuration_register_print(data)
-        spi.close(pi)
-        pi.stop()
-
+        data = self.spi.configuration_register_create(frequency_mhz, rx_address, crc_mode)
+        self.spi.configuration_register_print(data)
 
 if __name__ == '__main__':
     unittest.main()
