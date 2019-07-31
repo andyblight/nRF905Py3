@@ -17,10 +17,10 @@ class nrf905spi:
         # nRF905 supports SPI mode 0.
         spi_flags = 0
         # Open SPI device
-        self.__spi_handle = self.pi.spi_open(SPI_BUS, SPI_SCK_HZ, spi_flags)
+        self.__spi_handle = pi.spi_open(self.SPI_BUS, self.SPI_SCK_HZ, spi_flags)
 
-    def spi_close(self, pi):
-        self.pi.spi_close(self.__spi_handle)
+    def close(self, pi):
+        pi.spi_close(self.__spi_handle)
 
     def configuration_register_write(self, pi, data):
         """ Writes data to the RF configuration register.
@@ -51,6 +51,7 @@ class nrf905spi:
         # Prints the values using data sheet names.
         if len(data) == 10:
             channel_number = ((data[1] & 0x01) * 256) + data[0]
+            print()
             print("CH_NO:", channel_number)
             print("AUTO_RETRAN:", data[1] & 0x10)
             print("RX_RED_PWR:", data[1] & 0x10)
@@ -86,7 +87,7 @@ class nrf905spi:
         result = [byte_0, byte_1, byte_2, byte_3, byte_4, byte_5, byte_6, byte_7, byte_8, byte_9]
         return result
 
-    def __convert_freqency_to_bits(self, frequency):
+    def __frequency_to_bits(self, frequency):
         # Returns a 16 bit value with the correct values of CH_NO and HFREQ_PLL.
         # Raises exception if frequency is invalid.
         return 0x0333
