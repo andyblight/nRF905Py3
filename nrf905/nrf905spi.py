@@ -70,20 +70,26 @@ class nrf905spi:
         else:
             raise ValueError("data must contain 10 bytes")
 
-    def configuration_register_create(self, frequency_mhz, rx_address, crc_mode):
-        # Creates an array of data bytes from the given parameters suitable for
-        # writing to the device.
+    def configuration_register_create(self, frequency_mhz, rx_address, crc_bits):
+        """ Creates an array of data bytes from the given parameters suitable for
+        writing to the device.
+        crc_bits is one of 0, 8, 16.
+        """
         frequency_bits = self.__frequency_to_bits(frequency_mhz)
         byte_0 = frequency_bits[0]
         byte_1 = frequency_bits[1]
         byte_2 = 0
         byte_3 = 0
         byte_4 = 0
-        byte_5 = 0xff
-        byte_6 = 0
-        byte_7 = 0
-        byte_8 = 0
+        byte_5 = rx_address & 0x000000ff
+        byte_6 = (rx_address & 0x0000ff00) >> 8
+        byte_7 = (rx_address & 0x00ff0000) >> 16
+        byte_8 = (rx_address & 0xff000000) >> 24
         byte_9 = 0
+        if crc_bits == 8:
+            byte_9 |= 0b01000000
+        if crc_bits == 16:
+            byte_9 |= 0b11000000
         result = [byte_0, byte_1, byte_2, byte_3, byte_4, byte_5, byte_6, byte_7, byte_8, byte_9]
         return result
 

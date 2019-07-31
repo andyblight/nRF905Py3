@@ -28,10 +28,18 @@ class Testnrf905spi(unittest.TestCase):
         # Test frequency values
         frequency_mhz = 433.2
         rx_address = 0xDDCCBBAA
-        crc_mode = 0
+        crc_mode = 16
         data = self.spi.configuration_register_create(frequency_mhz, rx_address, crc_mode)
         self.assertEqual(data[0], 0b01101100)
         self.assertEqual(data[1], 0b00)
+        self.assertEqual(data[2], 0)
+        self.assertEqual(data[3], 0)
+        self.assertEqual(data[4], 0)
+        self.assertEqual(data[5], 0xAA)
+        self.assertEqual(data[6], 0xBB)
+        self.assertEqual(data[7], 0xCC)
+        self.assertEqual(data[8], 0xDD)
+        self.assertEqual(data[9], 0b11000000)
         # Frequency not found.
         frequency_mhz = 512.7
         with self.assertRaises(ValueError):
