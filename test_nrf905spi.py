@@ -52,5 +52,13 @@ class Testnrf905spi(unittest.TestCase):
         data = self.spi.configuration_register_create(frequency_mhz, rx_address, crc_mode)
         self.spi.configuration_register_print(data)
 
+    def test_configuration_register_read(self):
+        data = self.spi.configuration_register_read(self.pi)
+        self.assertEqual(len(data), 10)
+        self.spi.configuration_register_print(data)
+        
+
+
+
 if __name__ == '__main__':
     unittest.main()
