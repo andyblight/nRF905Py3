@@ -11,17 +11,27 @@ class nrf905gpio:
         11          GPIO17          PWR     PWR_UP      0 = standby, 1 = working
         12          GPIO18          DR      DR          1 = Data ready (resistor)
         15          GPIO22          TxEN    TX_EN       0 = receive, 1 = transmit
+        16          GPIO23          CD      CD          1 = Carrier detetcted (resistor)
+        18          GPIO24          AM      AM          1 = Address matched (resistor)
         22          GPIO25          CE      TRX_CE      0 = disable, 1 = enable
     
         This module does not own the pigpio instance so all functions need the
         instance passed in. 
+
+        Callbacks can be set up once and left in place.  The nRF905 only changes
+        the state on these pins when in receive mode. 
     """
     
     # GPIO pins.  Uses BCM numbers same as pigpio.
     POWER_UP = 17
-    DATA_READY = 18
     TRANSMIT_ENABLE = 22
     TRANSMIT_RECEIVE_CHIP_ENABLE = 25
+    __output_pins = [POWER_UP, TRANSMIT_ENABLE, TRANSMIT_RECEIVE_CHIP_ENABLE]
+
+    DATA_READY = 18
+    CARRIER_DETECT = 23
+    ADDRESS_MATCHED = 24
+    __callback_pins = [DATA_READY, CARRIER_DETECT, ADDRESS_MATCHED]
 
     # nRF905 modes, see nRF905 datasheet, table 11.
     POWER_DOWN = 0
@@ -33,22 +43,18 @@ class nrf905gpio:
     SHOCKBURST_TX = 3
 
     def __init__(self, pi):
-        self.__pins_used = [self.POWER_UP, self.DATA_READY,
-                            self.TRANSMIT_ENABLE,
-                            self.TRANSMIT_RECEIVE_CHIP_ENABLE]
         # Output pins controlling nRF905 - set all to 0.
-        pi.set_mode(self.POWER_UP, pigpio.OUTPUT)
-        pi.write(self.POWER_UP, 0)
-        pi.set_mode(self.TRANSMIT_ENABLE, pigpio.OUTPUT)
-        pi.write(self.TRANSMIT_ENABLE, 0)
-        pi.set_mode(self.TRANSMIT_RECEIVE_CHIP_ENABLE, pigpio.OUTPUT)
-        pi.write(self.TRANSMIT_RECEIVE_CHIP_ENABLE, 0)
-        # DR is sorted out when the callback is set up.
+        for pin in self.__output_pins:
+            pi.set_mode(pin, pigpio.OUTPUT)
+            pi.write(pin, 0)
+        # Callback pins are sorted out when each callback is set up.
+        self.__active_callbacks = []
         
     def term(self, pi):
         print("reset")
-        self.__drcb.cancel()
-        for pin in self.__pins_used:
+        for pin in self.__callback_pins:
+            self.clear_callback(pi, pin)
+        for pin in self.__output_pins:
             self.reset_pin(pi, pin)
 
     def reset_pin(self, pi, pin):
@@ -67,13 +73,11 @@ class nrf905gpio:
         pi.write(self.POWER_UP, 0)
         pi.write(self.TRANSMIT_RECEIVE_CHIP_ENABLE, 0)
         pi.write(self.TRANSMIT_ENABLE, 0)
-        self.__drcb.cancel()
 
     def set_mode_standby(self, pi):
         pi.write(self.POWER_UP, 1)
-        pi.write(self.TRANSMIT_RECEIVE_CHIP_ENABLE, 1)
+        pi.write(self.TRANSMIT_RECEIVE_CHIP_ENABLE, 0)
         pi.write(self.TRANSMIT_ENABLE, 0)
-        self.__drcb.cancel()
 
     def set_mode_receive(self, pi):
         pi.write(self.POWER_UP, 1)
@@ -84,12 +88,23 @@ class nrf905gpio:
         pi.write(self.POWER_UP, 1)
         pi.write(self.TRANSMIT_RECEIVE_CHIP_ENABLE, 1)
         pi.write(self.TRANSMIT_ENABLE, 1)
-        self.__drcb.cancel()
 
-    def set_data_ready_callback(self, pi, callback):
-        print("sdrc")
-        gpio = self.DATA_READY 
-        pi.set_mode(gpio, pigpio.INPUT)
-        pi.set_pull_up_down(gpio, pigpio.PUD_OFF)
-        # DR goes high when data is available.
-        self.__drcb = pi.callback(gpio, pigpio.RISING_EDGE, callback)
+    def set_callback(self, pi, pin, callback_function):
+        # Using index() causes a ValueError exception if the pin is not found.
+        _ = self.__callback_pins.index(pin)
+        # Set up the pin and add callback
+        pi.set_mode(pin, pigpio.INPUT)
+        pi.set_pull_up_down(pin, pigpio.PUD_OFF)
+        callback = pi.callback(pin, pigpio.EITHER_EDGE, callback_function)
+        self.__active_callbacks.append((pin, callback))
+
+    def clear_callback(self, pi, pin):
+        found = False
+        for entry in self.__active_callbacks:
+            if entry[0] == pin:
+                entry[1].cancel()
+                self.__active_callbacks.remove(entry)
+                found = True
+                break
+        if not found:
+            raise ValueError("Invalid pin". pin)
