@@ -107,4 +107,4 @@ class nrf905gpio:
                 found = True
                 break
         if not found:
-            raise ValueError("Invalid pin". pin)
+            raise ValueError("Invalid pin", pin)

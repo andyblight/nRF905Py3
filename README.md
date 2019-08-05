@@ -24,7 +24,8 @@ running:
 Looking at the top (the side with the antenna sticking up) the nRF905 module
 pin out is:
 
-___________________________________________________
+```Z
+ __________________________________________________
 | VCC         TxEN                                 |
 | CE          PWR                                  |
 | CLK         CD                                   |
@@ -33,11 +34,13 @@ ___________________________________________________
 | SCK         CSN                                  |
 | GND         GND                                  |
 |__________________________________________________|
+```
 
 ### RPi to nRF905
 
 The RPi is connected to SPI0 and some GPIO pins as follows:
 
+```Z
 RPi                         nRF905
 Pin No.     Name            Board   Datasheet   Notes
 11          GPIO17          PWR     PWR_UP      0 = standby, 1 = working
@@ -52,6 +55,7 @@ Pin No.     Name            Board   Datasheet   Notes
 23          GPIO11          SCK
 24          GPIO8           CSN
 25          GND             GND
+```
 
 Where it says (resistor), use a 1k resistor.
 The AM and CD pins are optional.  Adding these pins improves control of the

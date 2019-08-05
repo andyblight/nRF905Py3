@@ -96,14 +96,27 @@ class nrf905spi:
         frequency_bits = self.__frequency_to_bits(frequency_mhz)
         byte_0 = frequency_bits[0]
         byte_1 = frequency_bits[1]
-        byte_2 = 0
-        byte_3 = 0
-        byte_4 = 0
+        # Byte 1 also has:
+        # PA_PWR.  Use lowset settuing, 0b00000000
+        # RX_RED_PWR. Normal operation = 0
+        # AUTO_RETRAN 0 = no auto retransmit.
+        # All 0 for now so nothing to do.
+        byte_1 |= 0b00000000
+        # Byte 2 TX_AFW = 0b01110000, RX_AFW = 0b00000111
+        # Use 4 byte address widths for both.
+        byte_2 = 0b01000100
+        # Byte 3. RX_PW 1 to 32. Set to 1 byte for now.
+        byte_3 = 1
+        # Byte 4. TX_PW 1 to 32. Set to 1 byte for now.
+        byte_4 = 1
         byte_5 = rx_address & 0x000000ff
         byte_6 = (rx_address & 0x0000ff00) >> 8
         byte_7 = (rx_address & 0x00ff0000) >> 16
         byte_8 = (rx_address & 0xff000000) >> 24
-        byte_9 = 0
+        # Byte 9
+        # XOF is 16MHz, 0b00011000
+        # UP_CLK_EN = 0, UP_CLK_FREQ = 00
+        byte_9 = 0b00011000
         if crc_bits == 8:
             byte_9 |= 0b01000000
         if crc_bits == 16:
