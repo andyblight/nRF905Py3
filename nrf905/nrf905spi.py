@@ -17,7 +17,7 @@ class nrf905spi:
     
     # SPI pins are defaults for pigpio bus 0 (RPi 1 A&B only have SPI bus 0).
     SPI_BUS = 0
-    SPI_SCK_HZ = 1 * 1000 * 1000  # 10MHz max. (data sheet)
+    SPI_SCK_HZ = 1 * 1000 * 1000  # Set to 1MHz.  10MHz max. (data sheet)
     
     # pigpio SPI flag values
     SPI_MODE = 0  # nRF905 supports SPI mode 0 only. 2 bits
@@ -29,11 +29,29 @@ class nrf905spi:
     SPI_RX_LSB_FIRST = 0  # nRF905 is MSB first. 1 bit
     SPI_AUX_WORD_SIZE = 0  # Using main SPI bus. 6 bits
 
+    # nRF905 SPI instructions (table 13)
+    INSTRUCTION_W_CONFIG = 0b00000000
+    INSTRUCTION_R_CONFIG = 0b00010000
+    INSTRUCTION_W_TX_PAYLOAD = 0b00100000
+    INSTRUCTION_R_TX_PAYLOAD = 0b00100001
+    INSTRUCTION_W_TX_ADDRESS = 0b00100010
+    INSTRUCTION_R_TX_ADDRESS = 0b00100011
+    INSTRUCTION_R_RX_ADDRESS = 0b00100100
+    INSTRUCTION_CHANNEL_CONFIG = 0b10000000
+
+
     def __init__(self, pi):
         self.__spi_handle = 0
         # As this driver is using SPI0, all values are 0.  Add code here if any 
         # of the values need to be changed. 
         spi_flags = 0
+        # Width of nRF905 registers. Defaults set to chip defaults.
+        self.__receive_address_width = 0b100  # 4 bytes
+        self.__transmit_address_width = 0b100   # 4 bytes
+        self.__receive_payload_width = 0b100000  # 32 bytes
+        self.__transmit_payload_width = 0b100000  # 32 bytes
+        # The last value of the status register.
+        self.__status_register = 0
         # Open SPI device
         self.__spi_handle = pi.spi_open(self.SPI_BUS, self.SPI_SCK_HZ, spi_flags)
 
@@ -46,8 +64,9 @@ class nrf905spi:
         """
         if len(data) == 10:
             # Prepend the instruction for writing all bytes to the config 
-            # register is 0.
-            data.insert(0, 0)
+            # register.  The 4 least significant bytes are set to 0 so all 
+            # bytes are written to. 
+            data.insert(0, INSTRUCTION_W_CONFIG)
             # Write the data to the register.
             pi.spi_write(self.__spi_handle, data)
         else:
@@ -88,6 +107,7 @@ class nrf905spi:
         else:
             raise ValueError("data must contain 10 bytes")
 
+    # TODO add named fields for the address and payload field widths. 
     def configuration_register_create(self, frequency_mhz, rx_address, crc_bits):
         """ Creates an array of data bytes from the given parameters suitable for
         writing to the device.
@@ -156,3 +176,55 @@ class nrf905spi:
         if result == (0, 0):
             raise ValueError("Frequency not found.")
         return result
+
+    def write_transmit_payload(self, payload):
+        pass
+
+    def read_transmit_payload(self, payload):
+        pass
+
+    def write_transmit_address(self, address):
+        """ Writes the value of address to the transmit address register.
+        Multi-byte values are transmitted LSB first, so the address
+        bytes need to be reversed.
+        """
+        # Create the array of bytes to send.
+        data = []
+        data.append(W_TX_ADDRESS_INSTRUCTION)
+        for i in range(0, self.__transmit_address_width):
+            byte = address
+        
+        # Send the bytes.
+        (count, address) = pi.spi_xfer(self.__spi_handle, data)
+        print("wta:", count, address)
+        # The first byte received is the status register.
+        self.__status_register = address.pop(0)
+        # What is left is the address so reverse the bytes.
+        address.reverse()
+
+    def read_transmit_address(self):
+        """ Returns a 32 bit value representing the address.
+        The value returned is  1 to 4 bytes long (dependent on the value in the 
+        config register).   Multi-byte values are returned LSB first, so the 
+        bytes need to be reversed.
+        """
+        # Send the instruction to read the TX ADDRESS register.
+        command = R_TX_ADDRESS_INSTRUCTION
+        (count, address) = pi.spi_xfer(self.__spi_handle, command)
+        print("rta:", count, address)
+        # The first byte received is the status register.
+        self.__status_register = address.pop(0)
+        # What is left is the address so reverse the bytes.
+        address.reverse()
+        #  TODO Convert the byte array into a 32 bit value. 
+        return address
+
+    def read_receive_payload(self):
+        pass
+
+    def set_channel_config(self, channel, hfreq_pll, pa_pwr):
+        pass
+
+    def get_status_register(self):
+        """Gets the last read value of the status register. """
+        pass

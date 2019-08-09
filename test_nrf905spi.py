@@ -56,7 +56,13 @@ class Testnrf905spi(unittest.TestCase):
         data = self.spi.configuration_register_read(self.pi)
         self.assertEqual(len(data), 10)
         self.spi.configuration_register_print(data)
-        
+
+    def test_transmit_address_read_write(self):
+        """ Verify that the functions that write to and read from the TX_ADDRESS
+        register work as expected. """
+        # Verify that default value, E7E7E7E7, can be read.
+        address = self.spi.read_transmit_address()
+        self.assertEqual(address, 0xe7e7e7e7)
 
 
 
