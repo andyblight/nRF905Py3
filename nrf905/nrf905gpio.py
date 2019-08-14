@@ -26,12 +26,12 @@ class nrf905gpio:
     POWER_UP = 17
     TRANSMIT_ENABLE = 22
     TRANSMIT_RECEIVE_CHIP_ENABLE = 25
-    __output_pins = [POWER_UP, TRANSMIT_ENABLE, TRANSMIT_RECEIVE_CHIP_ENABLE]
+    output_pins = [POWER_UP, TRANSMIT_ENABLE, TRANSMIT_RECEIVE_CHIP_ENABLE]
 
     DATA_READY = 18
     CARRIER_DETECT = 23
     ADDRESS_MATCHED = 24
-    __callback_pins = [DATA_READY, CARRIER_DETECT, ADDRESS_MATCHED]
+    callback_pins = [DATA_READY, CARRIER_DETECT, ADDRESS_MATCHED]
 
     # nRF905 modes, see nRF905 datasheet, table 11.
     POWER_DOWN = 0
@@ -44,7 +44,7 @@ class nrf905gpio:
 
     def __init__(self, pi):
         # Output pins controlling nRF905 - set all to 0.
-        for pin in self.__output_pins:
+        r pin in self.__output_pins:
             pi.set_mode(pin, pigpio.OUTPUT)
             pi.write(pin, 0)
         # Callback pins are sorted out when each callback is set up.
@@ -54,7 +54,7 @@ class nrf905gpio:
         print("reset")
         for pin in self.__callback_pins:
             self.clear_callback(pi, pin)
-        for pin in self.__output_pins:
+        r pin in self.__output_pins:
             self.reset_pin(pi, pin)
 
     def reset_pin(self, pi, pin):
