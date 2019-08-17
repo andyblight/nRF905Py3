@@ -62,3 +62,8 @@ The AM and CD pins are optional.  Adding these pins improves control of the
 devices.  The CD pin improves transmission by only transmitting when the carrier
 is not detected.  The AM pin can be used to determine if the data packet is
 valid or not.
+
+## References
+
+This blog post has a lot of useful info in it.
+<http://blog.zakkemble.net/nrf905-avrarduino-librarydriver/>
