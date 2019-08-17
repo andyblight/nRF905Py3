@@ -9,6 +9,14 @@ from nrf905.nrf905spi import nrf905spi
 
 class Testnrf905spinc(unittest.TestCase):
 
+    def setUp(self):
+        self.pi = pigpio.pi()
+        self.spi = nrf905spi(self.pi)
+
+    def tearDown(self):
+        self.spi.close(self.pi)
+        self.pi.stop()
+
     def test_configuration_register_create(self):
         """ Tests various aspects of the create function """
         # Test frequency values
@@ -25,7 +33,7 @@ class Testnrf905spinc(unittest.TestCase):
         self.assertEqual(data[6], 0xBB)
         self.assertEqual(data[7], 0xCC)
         self.assertEqual(data[8], 0xDD)
-        self.assertEqual(data[9], 0b11000000)
+        self.assertEqual(data[9], 0b11011000)
         # Frequency not found.
         frequency_mhz = 512.7
         with self.assertRaises(ValueError):

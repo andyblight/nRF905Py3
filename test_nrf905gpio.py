@@ -3,7 +3,7 @@
 import pigpio
 import unittest
 import sys
-from time import sleep
+import time
 
 from nrf905.nrf905gpio import nrf905gpio
 
@@ -34,12 +34,13 @@ class Testnrf905gpio(unittest.TestCase):
             self.assertEqual(mode, pigpio.OUTPUT)
             state = self.__pi.read(pin)
             self.assertEqual(state, 0)
-        # Input pins
-        pin = nrf905gpio.DATA_READY
-        mode = self.__pi.get_mode(pin)
-        self.assertEqual(mode, pigpio.INPUT)
-        state = self.__pi.read(pin)
-        self.assertEqual(state, 0)
+        # Input pins. Mode = input, value = 1 for the callback pins.
+        for pin in nrf905gpio.callback_pins:
+            pin = nrf905gpio.DATA_READY
+            mode = self.__pi.get_mode(pin)
+            self.assertEqual(mode, pigpio.INPUT)
+            state = self.__pi.read(pin)
+            self.assertEqual(state, 1)
 
     def term(self):
         """__init__ already called so verify GPIO pins restored to default state.
@@ -105,15 +106,16 @@ class Testnrf905gpio(unittest.TestCase):
         __callback_pin_state = -1
         # Setup callback
         self.__gpio.set_callback(self.__pi, nrf905gpio.DATA_READY, callback_function)
-        # Force DR high to trigger callback.
+        # Force DR low then high to trigger callback.
+        self.__pi.set_pull_up_down(nrf905gpio.DATA_READY, pigpio.PUD_DOWN)
         self.__pi.set_pull_up_down(nrf905gpio.DATA_READY, pigpio.PUD_UP)
         # Wait for 5 ms to allow the callback to trigger.
-        sleep(0.005)
+        time.sleep(0.005)
         # Check that the callback variables have been set correctly.
         self.assertEqual(__callback_pin, nrf905gpio.DATA_READY)
         self.assertEqual(__callback_pin_state, 1)
         # Restore the pin to normal
-        self.__pi.set_pull_up_down(nrf905gpio.DATA_READY, pigpio.PUD_DOWN)
+        self.__pi.set_pull_up_down(nrf905gpio.DATA_READY, pigpio.PUD_OFF)
 
     def test_clear_callback(self):
         # Ensure callback vars are set to known invalid state.
@@ -122,9 +124,10 @@ class Testnrf905gpio(unittest.TestCase):
         # Setup callback
         self.__gpio.set_callback(self.__pi, nrf905gpio.ADDRESS_MATCHED, callback_function)
         # Clear non-existent callback - should cause exception.
-        self.__gpio.clear_callback(self.__pi, nrf905gpio.CARRIER_DETECT, callback_function)
-        # Clear existent callback.
-        self.__gpio.clear_callback(self.__pi, nrf905gpio.ADDRESS_MATCHED, callback_function)
+        with self.assertRaises(ValueError):
+            self.__gpio.clear_callback(self.__pi, nrf905gpio.CARRIER_DETECT)
+        # Clear existing callback.
+        self.__gpio.clear_callback(self.__pi, nrf905gpio.ADDRESS_MATCHED)
     
 
 if __name__ == '__main__':

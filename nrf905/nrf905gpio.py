@@ -46,9 +46,12 @@ class nrf905gpio:
         for pin in self.output_pins:
             pi.set_mode(pin, pigpio.OUTPUT)
             pi.write(pin, 0)
-        # Callback pins are sorted out when each callback is set up.
-        self.__active_callbacks = []
-        
+        # Store callbacks
+        self.__callback_data_ready = None
+        self.__callback_address_matched = None
+        self.__callback_carrier_detect = None
+
+
     def term(self, pi):
         print("reset")
         for pin in self.callback_pins:
@@ -91,19 +94,28 @@ class nrf905gpio:
     def set_callback(self, pi, pin, callback_function):
         # Using index() causes a ValueError exception if the pin is not found.
         self.callback_pins.index(pin)
-        # Set up the pin and add callback
+        # Set up the pin.
+        # PUD_OFF is used as this is what works with the nRF905 module.
         pi.set_mode(pin, pigpio.INPUT)
         pi.set_pull_up_down(pin, pigpio.PUD_OFF)
-        callback = pi.callback(pin, pigpio.EITHER_EDGE, callback_function)
-        self.__active_callbacks.append((pin, callback))
+        # Create callback object and store it for cancel.
+        callback_obj = pi.callback(pin, pigpio.EITHER_EDGE, callback_function)
+        if pin == DATA_READY:
+            self.__callback_data_ready = callback_obj
+        elif pin == ADDRESS_MATCHED:
+            self.__callback_address_matched = callback_obj
+        elif pin == CARRIER_DETECT:
+            self.__callback_carrier_detect = callback_obj
 
     def clear_callback(self, pi, pin):
-        found = False
-        for entry in self.__active_callbacks:
-            if entry[0] == pin:
-                entry[1].cancel()
-                self.__active_callbacks.remove(entry)
-                found = True
-                break
-        if not found:
+        if pin == DATA_READY:
+            self.__callback_data_ready.cancel()
+            self.__callback_data_ready = None
+        elif pin == ADDRESS_MATCHED:
+            self.__callback_address_matched.cancel()
+            self.__callback_address_matched = None
+        elif pin == CARRIER_DETECT:
+            self.__callback_carrier_detect.cancel()
+            self.__callback_carrier_detect = None
+        else:
             raise ValueError("Invalid pin", pin)
