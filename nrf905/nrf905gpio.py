@@ -108,14 +108,17 @@ class nrf905gpio:
             self.__callback_carrier_detect = callback_obj
 
     def clear_callback(self, pi, pin):
+        callback_obj = None
         if pin == self.DATA_READY:
-            self.__callback_data_ready.cancel()
+            callback_obj = self.__callback_data_ready
             self.__callback_data_ready = None
         elif pin == self.ADDRESS_MATCHED:
-            self.__callback_address_matched.cancel()
+            callback_obj = self.__callback_address_matched
             self.__callback_address_matched = None
         elif pin == self.CARRIER_DETECT:
-            self.__callback_carrier_detect.cancel()
+            callback_obj = self.__callback_carrier_detect
             self.__callback_carrier_detect = None
+        if callback_obj:
+            callback_obj.cancel()
         else:
             raise ValueError("Invalid pin", pin)
