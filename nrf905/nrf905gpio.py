@@ -100,21 +100,21 @@ class nrf905gpio:
         pi.set_pull_up_down(pin, pigpio.PUD_OFF)
         # Create callback object and store it for cancel.
         callback_obj = pi.callback(pin, pigpio.EITHER_EDGE, callback_function)
-        if pin == DATA_READY:
+        if pin == self.DATA_READY:
             self.__callback_data_ready = callback_obj
-        elif pin == ADDRESS_MATCHED:
+        elif pin == self.ADDRESS_MATCHED:
             self.__callback_address_matched = callback_obj
-        elif pin == CARRIER_DETECT:
+        elif pin == self.CARRIER_DETECT:
             self.__callback_carrier_detect = callback_obj
 
     def clear_callback(self, pi, pin):
-        if pin == DATA_READY:
+        if pin == self.DATA_READY:
             self.__callback_data_ready.cancel()
             self.__callback_data_ready = None
-        elif pin == ADDRESS_MATCHED:
+        elif pin == self.ADDRESS_MATCHED:
             self.__callback_address_matched.cancel()
             self.__callback_address_matched = None
-        elif pin == CARRIER_DETECT:
+        elif pin == self.CARRIER_DETECT:
             self.__callback_carrier_detect.cancel()
             self.__callback_carrier_detect = None
         else:
