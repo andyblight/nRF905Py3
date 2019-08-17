@@ -117,7 +117,7 @@ class nrf905spi:
         byte_0 = frequency_bits[0]
         byte_1 = frequency_bits[1]
         # Byte 1 also has:
-        # PA_PWR.  Use lowset settuing, 0b00000000
+        # PA_PWR.  Use lowset setting, 0b00000000
         # RX_RED_PWR. Normal operation = 0
         # AUTO_RETRAN 0 = no auto retransmit.
         # All 0 for now so nothing to do.
@@ -125,10 +125,10 @@ class nrf905spi:
         # Byte 2 TX_AFW = 0b01110000, RX_AFW = 0b00000111
         # Use 4 byte address widths for both.
         byte_2 = 0b01000100
-        # Byte 3. RX_PW 1 to 32. Set to 1 byte for now.
-        byte_3 = 1
-        # Byte 4. TX_PW 1 to 32. Set to 1 byte for now.
-        byte_4 = 1
+        # Byte 3. RX_PW 1 to 32. Set to 32 byte for now.
+        byte_3 = 32
+        # Byte 4. TX_PW 1 to 32. Set to 32 byte for now.
+        byte_4 = 32
         byte_5 = rx_address & 0x000000ff
         byte_6 = (rx_address & 0x0000ff00) >> 8
         byte_7 = (rx_address & 0x00ff0000) >> 16
@@ -209,7 +209,7 @@ class nrf905spi:
         bytes need to be reversed.
         """
         # Send the instruction to read the TX ADDRESS register.
-        command = R_TX_ADDRESS_INSTRUCTION
+        command = INSTRUCTION_R_TX_ADDRESS
         (count, address) = pi.spi_xfer(self.__spi_handle, command)
         print("rta:", count, address)
         # The first byte received is the status register.

@@ -43,7 +43,7 @@ class nrf905gpio:
 
     def __init__(self, pi):
         # Output pins controlling nRF905 - set all to 0.
-        for pin in self.__output_pins:
+        for pin in self.output_pins:
             pi.set_mode(pin, pigpio.OUTPUT)
             pi.write(pin, 0)
         # Callback pins are sorted out when each callback is set up.
@@ -51,9 +51,9 @@ class nrf905gpio:
         
     def term(self, pi):
         print("reset")
-        for pin in self.__callback_pins:
+        for pin in self.callback_pins:
             self.clear_callback(pi, pin)
-        for pin in self.__output_pins:
+        for pin in self.output_pins:
             self.reset_pin(pi, pin)
 
     def reset_pin(self, pi, pin):
@@ -90,7 +90,7 @@ class nrf905gpio:
 
     def set_callback(self, pi, pin, callback_function):
         # Using index() causes a ValueError exception if the pin is not found.
-        self.__callback_pins.index(pin)
+        self.callback_pins.index(pin)
         # Set up the pin and add callback
         pi.set_mode(pin, pigpio.INPUT)
         pi.set_pull_up_down(pin, pigpio.PUD_OFF)
