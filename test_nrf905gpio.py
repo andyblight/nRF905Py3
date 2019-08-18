@@ -50,7 +50,7 @@ class Testnrf905gpio(unittest.TestCase):
         The state of the pins should all be 0 if nothing is connected.
         """
         self.__gpio.term(self.__pi)
-        all_pins = nrf905gpio.input_pins + nrf905gpio.output_pins
+        all_pins = nrf905gpio.callback_pins + nrf905gpio.output_pins
         for pin in all_pins:
             mode = self.__pi.get_mode(pin)
             self.assertEqual(mode, pigpio.INPUT)
@@ -71,37 +71,35 @@ class Testnrf905gpio(unittest.TestCase):
             else:
                 self.assertEqual(state, 0)
 
-    def test_mode_power_down(self):
-        """ Verify that all output pins are set correctly. """
-        self.__gpio.set_mode_power_down(self.__pi)
-        expected = [0, 0, 0]
-        for index, pin in enumerate(nrf905gpio.output_pins):
-            state = self.__pi.read(pin)
-            self.assertEqual(state, expected[index])
+    def check_output_pins(self, expected):
+        """ The state of each output pin is tested against 'expected'.
+        'expected' is a list that contains the expected state of the output pins
+        in this order:
+            POWER_UP
+            TRANSMIT_RECEIVE_CHIP_ENABLE
+            TRANSMIT_ENABLE
+        This is done outside a loop so that the pin that fails can be identified
+        in the text output.
+        """
+        self.assertEqual(self.__pi.read(nrf905gpio.POWER_UP), expected[0])
+        self.assertEqual(self.__pi.read(nrf905gpio.TRANSMIT_RECEIVE_CHIP_ENABLE), expected[1])
+        self.assertEqual(self.__pi.read(nrf905gpio.TRANSMIT_ENABLE), expected[2])
 
-    def test_mode_standby(self):
+    def test_output_pins(self):
         """ Verify that all output pins are set correctly. """
+        self.check_output_pins([0, 0, 0])
+        # Check standby 
+        self.__gpio.set_mode_standby(self.__pi)
+        self.check_output_pins([1, 0, 0])
+        # Check power down
         self.__gpio.set_mode_power_down(self.__pi)
-        expected = [1, 0, 0]
-        for index, pin in enumerate(nrf905gpio.output_pins):
-            state = self.__pi.read(pin)
-            self.assertEqual(state, expected[index])
-
-    def test_mode_receive(self):
-        """ Verify that all output pins are set correctly. """
-        self.__gpio.set_mode_power_down(self.__pi)
-        expected = [1, 1, 0]
-        for index, pin in enumerate(nrf905gpio.output_pins):
-            state = self.__pi.read(pin)
-            self.assertEqual(state, expected[index])
-
-    def test_mode_transmit(self):
-        """ Verify that all output pins are set correctly. """
-        self.__gpio.set_mode_power_down(self.__pi)
-        expected = [1, 1, 1]
-        for index, pin in enumerate(nrf905gpio.output_pins):
-            state = self.__pi.read(pin)
-            self.assertEqual(state, expected[index])
+        self.check_output_pins([0, 0, 0])
+        # Set receive
+        self.__gpio.set_mode_receive(self.__pi)
+        self.check_output_pins([1, 1, 0])
+        # Set transmit
+        self.__gpio.set_mode_transmit(self.__pi)
+        self.check_output_pins([1, 1, 1])
 
     def test_set_callback(self):
         """ Create a callback and then verify that the callback function is

@@ -132,7 +132,7 @@ class nrf905gpio:
             callback = self.__callback_dict[pin]
             callback.cancel()
             del self.__callback_dict[pin]
-            self.reset_pin(pin)
+            self.reset_pin(pi, pin)
             result = True
         except KeyError:
             pass
