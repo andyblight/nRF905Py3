@@ -54,6 +54,7 @@ class nrf905gpio:
         print("term")
         for pin in self.callback_pins:
             self.clear_callback(pi, pin)
+            self.reset_pin(pi, pin)
         for pin in self.output_pins:
             self.reset_pin(pi, pin)
 

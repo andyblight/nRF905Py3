@@ -61,9 +61,18 @@ class Testnrf905gpio(unittest.TestCase):
         This is done outside a loop so that the pin that fails can be identified
         in the text output.
         """
-        self.assertEqual(self.__pi.read(nrf905gpio.DATA_READY), 1)
-        self.assertEqual(self.__pi.read(nrf905gpio.CARRIER_DETECT), 1)
-        self.assertEqual(self.__pi.read(nrf905gpio.ADDRESS_MATCHED), 1)
+        pin = nrf905gpio.DATA_READY
+        mode = self.__pi.get_mode(pin)
+        self.assertEqual(mode, pigpio.INPUT)
+        self.assertEqual(self.__pi.read(pin), 1)
+        pin = nrf905gpio.CARRIER_DETECT
+        mode = self.__pi.get_mode(pin)
+        self.assertEqual(mode, pigpio.INPUT)
+        self.assertEqual(self.__pi.read(pin), 1)
+        pin = nrf905gpio.ADDRESS_MATCHED
+        mode = self.__pi.get_mode(pin)
+        self.assertEqual(mode, pigpio.INPUT)
+        self.assertEqual(self.__pi.read(pin), 1)
 
     def test_term(self):
         """ All pins should be in input mode with state = 0.
