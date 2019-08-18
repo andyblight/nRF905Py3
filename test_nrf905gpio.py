@@ -29,24 +29,17 @@ class Testnrf905gpio(unittest.TestCase):
         self.__pi.stop()
 
     def test_init(self):
-        """__init__ already called so verify GPIO pins are in correct state.
+        """__init__ already called so verify GPIO output pins are in correct
+        state.  The callback pins are left as default.
         """
-        # Output pins
         for pin in nrf905gpio.output_pins:
             mode = self.__pi.get_mode(pin)
             self.assertEqual(mode, pigpio.OUTPUT)
             state = self.__pi.read(pin)
             self.assertEqual(state, 0)
-        # Input pins. Mode = input, state = 1 for the callback pins.
-        for pin in nrf905gpio.callback_pins:
-            mode = self.__pi.get_mode(pin)
-            self.assertEqual(mode, pigpio.INPUT)
-            state = self.__pi.read(pin)
-            self.assertEqual(state, 1)
 
     def test_term(self):
-        """__init__ already called so verify GPIO pins restored to default state.
-        The state of the pins should all be 0 if nothing is connected.
+        """ All pins should be in input mode with state = 0.
         """
         self.__gpio.term(self.__pi)
         all_pins = nrf905gpio.callback_pins + nrf905gpio.output_pins
@@ -57,10 +50,13 @@ class Testnrf905gpio(unittest.TestCase):
             self.assertEqual(state, 0)
 
     def test_reset_pin(self):
-        """ Test all pin values, 0-27.  All pins should be inputs.
+        """ Test all usable GPIO pins.  All pins should be inputs.
         Pins 0-8 should be set high, pins 9-27 should be set low.
+        TODO The GPIOs are only for the RPi 1A/B.  Fix so that the tests are
+        extended for RPi 2 and later.
         """
-        for pin in range(0, 27):
+        pins_to_reset = [2, 3, 4, 7, 8, 9, 10, 11, 14, 15, 17, 18, 22, 23, 24, 25, 27]
+        for pin in pins_to_reset:
             self.__gpio.reset_pin(self.__pi, pin)
             mode = self.__pi.get_mode(pin)
             self.assertEqual(mode, pigpio.INPUT)
