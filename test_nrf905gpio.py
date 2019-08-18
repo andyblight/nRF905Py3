@@ -127,11 +127,12 @@ class Testnrf905gpio(unittest.TestCase):
     def test_clear_callback(self):
         # Setup callback
         self.__gpio.set_callback(self.__pi, nrf905gpio.ADDRESS_MATCHED, callback_function)
-        # Clear non-existent callback - should cause exception.
-        with self.assertRaises(ValueError):
-            self.__gpio.clear_callback(self.__pi, nrf905gpio.CARRIER_DETECT)
-        # Clear existing callback.
-        self.__gpio.clear_callback(self.__pi, nrf905gpio.ADDRESS_MATCHED)
+        # Clear non-existent callback - should return False.
+        result = self.__gpio.clear_callback(self.__pi, nrf905gpio.CARRIER_DETECT)
+        self.assertFalse(result)
+        # Clear existing callback - should return True.
+        result = self.__gpio.clear_callback(self.__pi, nrf905gpio.ADDRESS_MATCHED)
+        self.assertTrue(result)
     
 
 if __name__ == '__main__':

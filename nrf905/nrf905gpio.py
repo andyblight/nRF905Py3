@@ -111,7 +111,7 @@ class nrf905gpio:
 
     def clear_callback(self, pi, pin):
         """ Clears the callback for the given pin.
-        KeyError exception if pin not found.
+        Returns True if pin found.
         """
         # callback_obj = None
         # if pin == self.DATA_READY:
@@ -127,11 +127,13 @@ class nrf905gpio:
         #     callback_obj.cancel()
         # else:
         #     raise ValueError("Invalid pin", pin)
-        callback = self.__callback_dict[pin]
-        if callback:
+        result = False
+        try:
+            callback = self.__callback_dict[pin]
             callback.cancel()
             del self.__callback_dict[pin]
             self.reset_pin(pin)
-        else:
-            raise ValueError("Invalid pin", pin)
-        
+            result = True
+        except KeyError:
+            pass
+        return result
