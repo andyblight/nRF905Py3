@@ -8,7 +8,8 @@ import unittest
 
 from nrf905.nrf905gpio import nrf905gpio
 
-# Queue instance for the callback to post to.  10 slots should be plenty for testing. 
+# Queue instance for the callback to post to.  10 slots should be plenty for testing.
+# The queue is important as it allows the callback to communicate with the test thread.
 callback_queue = queue.Queue(10)
 
 # The callback function must have this template to work.
