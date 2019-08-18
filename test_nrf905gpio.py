@@ -54,7 +54,7 @@ class Testnrf905gpio(unittest.TestCase):
 
     def check_callback_pins(self):
         """ The state of each callback pin is tested.
-        Each pin should be an input pin and have a state of 1.  The pins are:
+        Each pin should be an input pin and have a state of 0.  The pins are:
             DATA_READY
             CARRIER_DETECT
             ADDRESS_MATCHED
@@ -64,15 +64,15 @@ class Testnrf905gpio(unittest.TestCase):
         pin = nrf905gpio.DATA_READY
         mode = self.__pi.get_mode(pin)
         self.assertEqual(mode, pigpio.INPUT)
-        self.assertEqual(self.__pi.read(pin), 1)
+        self.assertEqual(self.__pi.read(pin), 0)
         pin = nrf905gpio.CARRIER_DETECT
         mode = self.__pi.get_mode(pin)
         self.assertEqual(mode, pigpio.INPUT)
-        self.assertEqual(self.__pi.read(pin), 1)
+        self.assertEqual(self.__pi.read(pin), 0)
         pin = nrf905gpio.ADDRESS_MATCHED
         mode = self.__pi.get_mode(pin)
         self.assertEqual(mode, pigpio.INPUT)
-        self.assertEqual(self.__pi.read(pin), 1)
+        self.assertEqual(self.__pi.read(pin), 0)
 
     def test_term(self):
         """ All pins should be in input mode with state = 0.
