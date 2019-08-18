@@ -39,7 +39,6 @@ class Testnrf905gpio(unittest.TestCase):
             self.assertEqual(state, 0)
         # Input pins. Mode = input, state = 1 for the callback pins.
         for pin in nrf905gpio.callback_pins:
-            pin = nrf905gpio.DATA_READY
             mode = self.__pi.get_mode(pin)
             self.assertEqual(mode, pigpio.INPUT)
             state = self.__pi.read(pin)
