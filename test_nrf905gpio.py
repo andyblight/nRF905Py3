@@ -38,38 +38,6 @@ class Testnrf905gpio(unittest.TestCase):
             state = self.__pi.read(pin)
             self.assertEqual(state, 0)
 
-    def test_term(self):
-        """ All pins should be in input mode with state = 0.
-        """
-        self.__gpio.term(self.__pi)
-        all_pins = nrf905gpio.callback_pins + nrf905gpio.output_pins
-        for pin in all_pins:
-            mode = self.__pi.get_mode(pin)
-            self.assertEqual(mode, pigpio.INPUT)
-            state = self.__pi.read(pin)
-            self.assertEqual(state, 0)
-
-    def test_reset_pin(self):
-        """ Test all usable GPIO pins.  All pins should be inputs.
-        Pins 0-8 should be set high, pins 9-27 should be set low.
-        Note: Some pins are not usable by pigpio so a list of pins is used.
-        When you try to use a pin that is not allowed, you get the message
-        "pigpio.error: 'no permission to update GPIO'".
-        TODO The GPIOs are only for the RPi 1A/B.  Fix so that the tests are
-        extended for RPi 2 and later.
-        """
-        # pins_to_reset = [2, 3, 4, 7, 8, 9, 10, 11, 14, 15, 17, 18, 22, 23, 24, 25, 27]
-        pins_to_reset = [2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20, 21, 22, 23, 24, 25, 26, 27]
-        for pin in pins_to_reset:
-            self.__gpio.reset_pin(self.__pi, pin)
-            mode = self.__pi.get_mode(pin)
-            self.assertEqual(mode, pigpio.INPUT)
-            state = self.__pi.read(pin)
-            if pin <= 8:
-                self.assertEqual(state, 1)
-            else:
-                self.assertEqual(state, 0)
-
     def check_output_pins(self, expected):
         """ The state of each output pin is tested against 'expected'.
         'expected' is a list that contains the expected state of the output pins
@@ -83,6 +51,48 @@ class Testnrf905gpio(unittest.TestCase):
         self.assertEqual(self.__pi.read(nrf905gpio.POWER_UP), expected[0])
         self.assertEqual(self.__pi.read(nrf905gpio.TRANSMIT_RECEIVE_CHIP_ENABLE), expected[1])
         self.assertEqual(self.__pi.read(nrf905gpio.TRANSMIT_ENABLE), expected[2])
+
+    def check_callback_pins(self):
+        """ The state of each callback pin is tested.
+        Each pin should be an input pin and have a state of 1.  The pins are:
+            DATA_READY
+            CARRIER_DETECT
+            ADDRESS_MATCHED
+        This is done outside a loop so that the pin that fails can be identified
+        in the text output.
+        """
+        self.assertEqual(self.__pi.read(nrf905gpio.DATA_READY), 1)
+        self.assertEqual(self.__pi.read(nrf905gpio.CARRIER_DETECT), 1)
+        self.assertEqual(self.__pi.read(nrf905gpio.ADDRESS_MATCHED), 1)
+
+    def test_term(self):
+        """ All pins should be in input mode with state = 0.
+        """
+        self.__gpio.term(self.__pi)
+        self.check_output_pins([0, 0, 0])
+        self.check_callback_pins()
+
+    def test_reset_pin(self):
+        """ Test all usable GPIO pins.  All pins should be inputs.
+        Pins 0-8 should be set high, pins 9-27 should be set low.
+        Note: Some pins are not usable by pigpio so a list of pins is used.
+        When you try to use a pin that is not allowed, you get the message
+        "pigpio.error: 'no permission to update GPIO'".
+        TODO The GPIOs are only for the RPi 1A/B.  Fix so that the tests are
+        extended for RPi 1B+ and later.
+        """
+        pins_to_reset = [2, 3, 4, 7, 8, 9, 10, 11, 14, 15, 17, 18, 22, 23, 24, 25, 27]
+        # This is the full list of pins on the RPi B+ but this causes a failure on the 1B.
+        # pins_to_reset = [2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20, 21, 22, 23, 24, 25, 26, 27]
+        for pin in pins_to_reset:
+            self.__gpio.reset_pin(self.__pi, pin)
+            mode = self.__pi.get_mode(pin)
+            self.assertEqual(mode, pigpio.INPUT)
+            state = self.__pi.read(pin)
+            if pin <= 8:
+                self.assertEqual(state, 1)
+            else:
+                self.assertEqual(state, 0)
 
     def test_output_pins(self):
         """ Verify that all output pins are set correctly. """
