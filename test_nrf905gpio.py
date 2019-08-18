@@ -1,19 +1,21 @@
 #!/usr/bin/env python3
 
 import pigpio
-import unittest
+import queue
 import sys
 import time
+import unittest
 
 from nrf905.nrf905gpio import nrf905gpio
 
-# Outside class so that callback function has correct template.
-__callback_pin = -1
-__callback_pin_state = -1
+# Queue instance for the callback to post to.  10 slots should be plenty for testing. 
+callback_queue = queue.Queue(10)
 
+# The callback function must have this template to work.
 def callback_function(num, level, tick):
-    __callback_pin = num
-    __callback_pin_state = level
+    item = (num, level, tick)
+    callback_queue.put(item)
+    print("callback queue size ", callback_queue.qsize())
 
 
 class Testnrf905gpio(unittest.TestCase):
@@ -101,26 +103,24 @@ class Testnrf905gpio(unittest.TestCase):
             self.assertEqual(state, expected[index])
 
     def test_set_callback(self):
-        # Ensure callback vars are set to known invalid state.
-        __callback_pin = -1
-        __callback_pin_state = -1
         # Setup callback
         self.__gpio.set_callback(self.__pi, nrf905gpio.DATA_READY, callback_function)
-        # Force DR low then high to trigger callback.
+        # Force DR low then high to trigger callbacks.
         self.__pi.set_pull_up_down(nrf905gpio.DATA_READY, pigpio.PUD_DOWN)
         self.__pi.set_pull_up_down(nrf905gpio.DATA_READY, pigpio.PUD_UP)
-        # Wait for 5 ms to allow the callback to trigger.
-        time.sleep(0.005)
-        # Check that the callback variables have been set correctly.
-        self.assertEqual(__callback_pin, nrf905gpio.DATA_READY)
-        self.assertEqual(__callback_pin_state, 1)
+        # Wait for the queue to have an item
+        pass = False
+        while not pass:
+            item = callback_queue.get():
+            # Check callback level = 1 (simulate DR being asserted).
+            if item[1] == 1:
+                lf.assertEqual(item[0], nrf905gpio.DATA_READY)
+                lf.assertEqual(item[1], 1)
+                pass = True
         # Restore the pin to normal
         self.__pi.set_pull_up_down(nrf905gpio.DATA_READY, pigpio.PUD_OFF)
 
     def test_clear_callback(self):
-        # Ensure callback vars are set to known invalid state.
-        __callback_pin = -1
-        __callback_pin_state = -1
         # Setup callback
         self.__gpio.set_callback(self.__pi, nrf905gpio.ADDRESS_MATCHED, callback_function)
         # Clear non-existent callback - should cause exception.
