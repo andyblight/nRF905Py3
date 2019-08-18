@@ -15,7 +15,7 @@ callback_queue = queue.Queue(10)
 def callback_function(num, level, tick):
     item = (num, level, tick)
     callback_queue.put(item)
-    print("callback queue size ", callback_queue.qsize())
+    # print("callback queue size ", callback_queue.qsize())
 
 
 class Testnrf905gpio(unittest.TestCase):
@@ -109,14 +109,14 @@ class Testnrf905gpio(unittest.TestCase):
         self.__pi.set_pull_up_down(nrf905gpio.DATA_READY, pigpio.PUD_DOWN)
         self.__pi.set_pull_up_down(nrf905gpio.DATA_READY, pigpio.PUD_UP)
         # Wait for the queue to have an item
-        pass = False
-        while not pass:
-            item = callback_queue.get():
+        test_pass = False
+        while not test_pass:
+            item = callback_queue.get()
             # Check callback level = 1 (simulate DR being asserted).
             if item[1] == 1:
-                lf.assertEqual(item[0], nrf905gpio.DATA_READY)
-                lf.assertEqual(item[1], 1)
-                pass = True
+                self.assertEqual(item[0], nrf905gpio.DATA_READY)
+                self.assertEqual(item[1], 1)
+                test_pass = True
         # Restore the pin to normal
         self.__pi.set_pull_up_down(nrf905gpio.DATA_READY, pigpio.PUD_OFF)
 
