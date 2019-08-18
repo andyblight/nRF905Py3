@@ -62,8 +62,8 @@ class nrf905gpio:
     def reset_pin(self, pi, pin):
         print("reset_in")
         # Set the given pin to input mode. 
-        # GPIO0-8 have pull up resistor.
-        # GPIO9-27 have pull down resistor.
+        # GPIO0-8 default to use pull up resistor.
+        # GPIO9-27 default to use pull down resistor.
         if pin >= 0 and pin <= 27:
             pi.set_mode(pin, pigpio.INPUT)
             if pin <=8:
@@ -94,11 +94,11 @@ class nrf905gpio:
     def set_callback(self, pi, pin, callback_function):
         # Using index() causes a ValueError exception if the pin is not found.
         self.callback_pins.index(pin)
-        # Set up the pin.
+        # Set up the pin as an input.
         # PUD_OFF is used as this is what works with the nRF905 module.
         pi.set_mode(pin, pigpio.INPUT)
         pi.set_pull_up_down(pin, pigpio.PUD_OFF)
-        # Create callback object and store it for cancel.
+        # Create callback object and store it for use by the cancel function.
         callback_obj = pi.callback(pin, pigpio.EITHER_EDGE, callback_function)
         if pin == self.DATA_READY:
             self.__callback_data_ready = callback_obj
