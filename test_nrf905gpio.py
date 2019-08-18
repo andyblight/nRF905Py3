@@ -52,10 +52,14 @@ class Testnrf905gpio(unittest.TestCase):
     def test_reset_pin(self):
         """ Test all usable GPIO pins.  All pins should be inputs.
         Pins 0-8 should be set high, pins 9-27 should be set low.
+        Note: Some pins are not usable by pigpio so a list of pins is used.
+        When you try to use a pin that is not allowed, you get the message
+        "pigpio.error: 'no permission to update GPIO'".
         TODO The GPIOs are only for the RPi 1A/B.  Fix so that the tests are
         extended for RPi 2 and later.
         """
-        pins_to_reset = [2, 3, 4, 7, 8, 9, 10, 11, 14, 15, 17, 18, 22, 23, 24, 25, 27]
+        # pins_to_reset = [2, 3, 4, 7, 8, 9, 10, 11, 14, 15, 17, 18, 22, 23, 24, 25, 27]
+        pins_to_reset = [2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20, 21, 22, 23, 24, 25, 26, 27]
         for pin in pins_to_reset:
             self.__gpio.reset_pin(self.__pi, pin)
             mode = self.__pi.get_mode(pin)
