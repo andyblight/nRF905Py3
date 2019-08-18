@@ -42,7 +42,7 @@ class nrf905gpio:
     SHOCKBURST_TX = 3
 
     def __init__(self, pi):
-        print("__init__")
+        # print("__init__")
         # Output pins controlling nRF905 - set all to 0.
         for pin in self.output_pins:
             pi.set_mode(pin, pigpio.OUTPUT)
@@ -51,7 +51,7 @@ class nrf905gpio:
 
 
     def term(self, pi):
-        print("term")
+        # print("term")
         for pin in self.callback_pins:
             self.clear_callback(pi, pin)
             self.reset_pin(pi, pin)
@@ -59,7 +59,7 @@ class nrf905gpio:
             self.reset_pin(pi, pin)
 
     def reset_pin(self, pi, pin):
-        print("reset_pin", pin)
+        # print("reset_pin", pin)
         # Set the given pin to input mode. 
         # GPIO0-8 default to use pull up resistor.
         # GPIO9-27 default to use pull down resistor.
@@ -91,7 +91,7 @@ class nrf905gpio:
         pi.write(self.TRANSMIT_ENABLE, 1)
 
     def set_callback(self, pi, pin, callback_function):
-        print("set_callback", pin)
+        # print("set_callback", pin)
         # Using index() causes a ValueError exception if the pin is not found.
         self.callback_pins.index(pin)
         # Set up the pin as an input.
@@ -106,7 +106,7 @@ class nrf905gpio:
         """ Clears the callback for the given pin.
         Returns True if pin found.
         """
-        print("clear_callback", pin)
+        # print("clear_callback", pin)
         result = False
         try:
             callback = self.__callback_dict[pin]
