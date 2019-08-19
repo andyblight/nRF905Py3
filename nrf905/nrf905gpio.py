@@ -1,14 +1,17 @@
 #!/usr/bin/env python3
 
 import pigpio
+import raspberrypi
 
 class nrf905gpio:
     """ Control the GPIO pins when using the nRF905.  Pins used are:
     
         RPi                         nRF905
         Pin No.     Name            Board   Datasheet   Notes
+TODO 17 and 18 are used by SPI1
         11          GPIO17          PWR     PWR_UP      0 = standby, 1 = working
         12          GPIO18          DR      DR          1 = Data ready (resistor)
+        
         15          GPIO22          TxEN    TX_EN       0 = receive, 1 = transmit
         16          GPIO23          CD      CD          1 = Carrier detetcted (resistor)
         18          GPIO24          AM      AM          1 = Address matched (resistor)
@@ -48,7 +51,6 @@ class nrf905gpio:
             pi.set_mode(pin, pigpio.OUTPUT)
             pi.write(pin, 0)
         self.__callback_dict = dict()
-
 
     def term(self, pi):
         # print("term")

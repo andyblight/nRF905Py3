@@ -19,7 +19,7 @@ class Testnrf905spinc(unittest.TestCase):
 
     def test_configuration_register_create(self):
         """ Tests various aspects of the create function """
-        # Test frequency values
+        # Test valid frequency values
         frequency_mhz = 433.2
         rx_address = 0xDDCCBBAA
         crc_mode = 16
@@ -45,6 +45,13 @@ class Testnrf905spinc(unittest.TestCase):
         crc_mode = 0
         data = self.spi.configuration_register_create(frequency_mhz, rx_address, crc_mode)
         self.spi.configuration_register_print(data)
+
+    def test_status_register(self):
+        """ Gets the last read value of the status register.  When not
+        connected, this is always 0.
+        """
+        result = self.spi.get_status_register()
+        self.assertEqual(result, 0)
 
 
 if __name__ == '__main__':
