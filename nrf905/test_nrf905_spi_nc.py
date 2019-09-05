@@ -4,7 +4,7 @@ import pigpio
 import unittest
 import sys
 
-from nrf905_spi import Nrf905Spi
+from nrf905.nrf905_spi import Nrf905Spi
 
 
 class TestNrf905SpiNc(unittest.TestCase):

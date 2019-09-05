@@ -6,7 +6,7 @@ import sys
 import time
 import unittest
 
-from nrf905_gpio import Nrf905Gpio
+from nrf905.nrf905_gpio import Nrf905Gpio
 
 # Queue instance for the callback to post to.  10 slots should be plenty for testing.
 # The queue is important as it allows the callback to communicate with the test thread.

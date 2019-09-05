@@ -2,8 +2,8 @@
 
 import Queue
 import pigpio
-import Nrf905Spi
-import Nrf905Gpio
+from nrf905.nrf905_spi import Nrf905Spi
+from nrf905.nrf905_gpio import Nrf905Gpio
 
 class Nrf905Hardware:
     """ Controls the nRF905 module.
