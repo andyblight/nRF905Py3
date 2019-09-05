@@ -1,0 +1,21 @@
+This is how I wired up the nRF905 to my RPi 1.
+
+Most wires go direct from nRF905 to RPi.  The 3 wires that need 1k resistors
+go via a breadboard using a separate group of wires.
+
+nRF905     Wire                        RPi pin
+------     ----                        -------
+VCC        Brown                       17
+TxEN       Red                         10
+CE         Orange                      13
+PWR        Yellow                      15
+UCK    NC
+CD         Purple to breadboard        16
+AM         White to breadboard         18
+DR         Grey to breadboard          22
+MISO       Purple                      21
+MOSI       Blue                        19
+SCK        White                       23
+CSN        Grey                        24
+GND        Black                       25
+GND    NC
