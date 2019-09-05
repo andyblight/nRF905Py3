@@ -1,7 +1,7 @@
-class nRF905:
+class Nrf905:
     """ The interface to control a nRF905 device.  This class does all the
     parameter checking and state checking.  The actual byte bashing is done in
-    the module nRF905Hardware.
+    the module Nrf905Hardware.
 
     Important points to note about the nRF905.
     The device can work as a transmitter or a receiver but not both together.

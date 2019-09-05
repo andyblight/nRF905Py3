@@ -3,7 +3,7 @@
 import pigpio
 import raspberrypi
 
-class nRF905_GPIO:
+class Nrf905Gpio:
     """ Control the GPIO pins when using the nRF905.  Pins used are:
     
         RPi                         nRF905
@@ -11,7 +11,7 @@ class nRF905_GPIO:
 TODO 17 and 18 are used by SPI1
         11          GPIO17          PWR     PWR_UP      0 = standby, 1 = working
         12          GPIO18          DR      DR          1 = Data ready (resistor)
-        
+
         15          GPIO22          TxEN    TX_EN       0 = receive, 1 = transmit
         16          GPIO23          CD      CD          1 = Carrier detetcted (resistor)
         18          GPIO24          AM      AM          1 = Address matched (resistor)
@@ -35,7 +35,7 @@ TODO 17 and 18 are used by SPI1
     ADDRESS_MATCHED = 24
     callback_pins = [DATA_READY, CARRIER_DETECT, ADDRESS_MATCHED]
 
-    # nRF905 modes, see nRF905 datasheet, table 11.
+    # Modes, see nRF905 datasheet, table 11.
     POWER_DOWN = 0
     # This mode allows reading data from the RX register.
     STANDBY = 1

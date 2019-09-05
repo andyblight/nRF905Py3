@@ -1,7 +1,7 @@
 #!/usr/bin/env python3
-""" Example program that uses the nRF905 class to print out whatever is being received by the nRF905 device. """
+""" Example program that uses the Nrf905 class to print out whatever is being received by the nRF905 device. """
 
-from nRF905.nRF905 import nRF905
+from nrf905.nrf905 import Nrf905
 
 def callback(data):
     """ Prints out the contents of the data received. """
@@ -12,7 +12,7 @@ def main():
         When data is received, print it out.
         Loop until a key is pressed.
     """
-    receiver = nRF905()
+    receiver = Nrf905()
     receiver.open(434, callback)
     input("Press enter to quit...")
     receiver.close()
