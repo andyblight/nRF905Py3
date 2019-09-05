@@ -2,7 +2,7 @@
 
 import pigpio
 
-class nrf905spi:
+class nRF905_SPI:
     """ Handles access to SPI bus and the nRF905 registers.
     Extracts from the data sheet.
         The device must be in a low power mode to access the registers.

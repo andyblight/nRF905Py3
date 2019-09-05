@@ -4,14 +4,14 @@ import pigpio
 import unittest
 import sys
 
-from nrf905.nrf905spi import nrf905spi
+from nRF905.nRF905_SPI import nRF905_SPI
 
 
-class Testnrf905spinc(unittest.TestCase):
+class TestnRF905_SPInc(unittest.TestCase):
 
     def setUp(self):
         self.pi = pigpio.pi()
-        self.spi = nrf905spi(self.pi)
+        self.spi = nRF905_SPI(self.pi)
 
     def tearDown(self):
         self.spi.close(self.pi)

@@ -3,7 +3,7 @@
 import pigpio
 import raspberrypi
 
-class nrf905gpio:
+class nRF905_GPIO:
     """ Control the GPIO pins when using the nRF905.  Pins used are:
     
         RPi                         nRF905

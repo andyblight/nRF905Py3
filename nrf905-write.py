@@ -1,7 +1,7 @@
 #!/usr/bin/env python3
 """ Example program that uses the nRF905 class to print out whatever is being received by the nRF905 device. """
 
-from nrf905.nrf905 import nrf905
+from nRF905.nRF905 import nRF905
 
 
 def main():
@@ -9,7 +9,7 @@ def main():
         Send a packet of up to 32 bytes.
     """
 
-    receiver = nrf905()
+    receiver = nRF905()
     receiver.open(434)
     # Bodge: should come from the command line arg.
     data_bytes = [20] * 32

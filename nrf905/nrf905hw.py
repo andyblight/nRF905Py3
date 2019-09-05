@@ -2,10 +2,10 @@
 
 import Queue
 import pigpio
-import nrf905spi
-import nrf905gpio
+import nRF905_SPI
+import nRF905_GPIO
 
-class nrf905hw:
+class nRF905Hardware:
     """ Controls the nRF905 module.
     
     The nRF905 terms are used in this module.
@@ -16,8 +16,8 @@ class nrf905hw:
     def __init__(self):
         print("init")
         self.__pi = pigpio.pi()
-        self.__gpio = nrf905gpio(self.__pi)
-        self.__spi = nrf905spi(self.__pi)
+        self.__gpio = nRF905_GPIO(self.__pi)
+        self.__spi = nRF905_SPI(self.__pi)
         self.__receive_queue = Queue.Queue()
 
     def term(self):
@@ -30,7 +30,7 @@ class nrf905hw:
         """ Set up the nRF905 module in power down mode. """
         print("open")
         if self.__pi.connected:
-            self.__gpio.set_mode(self.__pi, nrf905gpio.POWER_DOWN)
+            self.__gpio.set_mode(self.__pi, nRF905_GPIO.POWER_DOWN)
             self.__spi.open()
             self.__receive_queue = 0  # Clear the queue. 
         else:
@@ -44,9 +44,9 @@ class nrf905hw:
         been sent.
         """
         print("transmit", data)
-        self.__gpio.set_mode(self.__pi, nrf905gpio.STANDBY)
+        self.__gpio.set_mode(self.__pi, nRF905_GPIO.STANDBY)
         # Write to registers
-        self.__gpio.set_mode(self.__pi, nrf905gpio.TRANSMIT)
+        self.__gpio.set_mode(self.__pi, nRF905_GPIO.TRANSMIT)
 
     def data_ready_callback(self):
         """ When data is ready, drop out of receive mode, read the data from 
@@ -63,11 +63,11 @@ class nrf905hw:
 
     def receive(self, address):
         print("receive", address)
-        self.__gpio.set_mode(self.__pi, nrf905gpio.STANDBY)
+        self.__gpio.set_mode(self.__pi, nRF905_GPIO.STANDBY)
         self.__gpio.set_data_ready_callback(self.__pi, self.data_ready_callback)
         # Send data to registers for receive.
         self.__spi.set_address(self.__pi, address)
-        self.__gpio.set_mode(self.__pi, nrf905gpio.RECEIVE)
+        self.__gpio.set_mode(self.__pi, nRF905_GPIO.RECEIVE)
 
     def get_receive_data(self):
         """ Returns a list of all bytes in the RX queue.  If the queue is empty,
