@@ -202,7 +202,7 @@ class Nrf905Spi:
         """
         # Create the array of bytes to send.
         data = bytearray()
-        data.append(INSTRUCTION_W_TX_ADDRESS)
+        data.append(self.INSTRUCTION_W_TX_ADDRESS)
         for i in range(0, self.__transmit_address_width):
             byte = address & 0x000000FF
             data.append(byte)
