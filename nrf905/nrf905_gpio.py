@@ -1,7 +1,6 @@
 #!/usr/bin/env python3
 
 import pigpio
-import raspberrypi
 
 class Nrf905Gpio:
     """ Control the GPIO pins when using the nRF905.  Pins used are:

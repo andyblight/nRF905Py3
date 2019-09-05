@@ -17,7 +17,7 @@ class TestNrf905Spi(unittest.TestCase):
 
     def setUp(self):
         self.pi = pigpio.pi()
-        self.spi = Nrf905Spi(self.pi)
+        self.spi = Nrf905Spi(self.pi, 0)
 
     def tearDown(self):
         self.spi.close(self.pi)
