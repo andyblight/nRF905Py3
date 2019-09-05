@@ -4,7 +4,7 @@ import pigpio
 import unittest
 import sys
 
-from nrf905_spi import Nrf905Spi
+from nrf905.nrf905_spi import Nrf905Spi
 
 
 def callback(data):
@@ -32,7 +32,7 @@ class TestNrf905Spi(unittest.TestCase):
         """ Verify that the functions that write to and read from the TX_ADDRESS
         register work as expected. """
         # Verify that default value, E7E7E7E7, can be read.
-        address = self.spi.read_transmit_address()
+        address = self.spi.read_transmit_address(self.pi)
         self.assertEqual(address, 0xe7e7e7e7)
 
 

@@ -27,7 +27,7 @@ Looking at the top (the side with the antenna sticking up) the nRF905 pin out is
  __________________________________________________
 | VCC         TxEN                                 |
 | CE          PWR                                  |
-| CLK         CD                                   |
+| UCK         CD                                   |
 | AM          DR            CHIP          ANTENNA  |
 | MISO        MOSI                                 |
 | SCK         CSN                                  |

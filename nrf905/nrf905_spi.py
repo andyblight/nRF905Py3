@@ -61,6 +61,7 @@ class Nrf905Spi:
                 self.__spi_bus = 1
         else:
             raise ValueError("spi_bus out of range")
+        # Open using validated SPI bus.
         if self.__spi_bus == -1:
             raise ValueError("spi_bus value not supported for this board")
         else:
@@ -200,7 +201,7 @@ class Nrf905Spi:
         needs to be broken down into bytes before sending.
         """
         # Create the array of bytes to send.
-        data = []
+        data = bytearray()
         data.append(INSTRUCTION_W_TX_ADDRESS)
         for i in range(0, self.__transmit_address_width):
             byte = address & 0x000000FF
@@ -220,9 +221,10 @@ class Nrf905Spi:
         bytes need to be reversed.
         """
         # Send the instruction to read the TX ADDRESS register.
-        command = INSTRUCTION_R_TX_ADDRESS
+        command = bytearray()
+        command.append(self.INSTRUCTION_R_TX_ADDRESS)
         (count, address) = pi.spi_xfer(self.__spi_handle, command)
-        print("rta:", count, address)
+        print("rta:", count, address.hex())
         # The first byte received is the status register.
         self.__status_register = address.pop(0)
         # What is left is the address so reverse the bytes.

@@ -3,7 +3,7 @@
 import unittest
 import sys
 
-from nrf905 import Nrf905, StateError
+from nrf905.nrf905 import Nrf905, StateError
 
 
 def callback(data):
