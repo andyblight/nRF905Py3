@@ -3,7 +3,7 @@
 import unittest
 import sys
 
-from nrf905.nrf905 import nrf905, StateError
+from nrf905 import Nrf905, StateError
 
 
 def callback(data):
@@ -12,18 +12,18 @@ def callback(data):
     print()
 
 
-class Testnrf905(unittest.TestCase):
+class TestNrf905(unittest.TestCase):
 
     def test_open_rx_rx(self):
         # No exceptions expected
-        transceiver = nrf905()
+        transceiver = Nrf905()
         transceiver.open(434, callback)
         transceiver.open(434, callback)
         transceiver.close()
 
     def test_open_tx_rx(self):
         # Expect exception on second call
-        transceiver = nrf905()
+        transceiver = Nrf905()
         transceiver.open(434)
         with self.assertRaises(StateError):
             transceiver.open(434, callback)
@@ -31,7 +31,7 @@ class Testnrf905(unittest.TestCase):
 
     def test_open_rx_tx(self):
         # Expect exception on second call
-        transceiver = nrf905()
+        transceiver = Nrf905()
         transceiver.open(434, callback)
         with self.assertRaises(StateError):
             transceiver.open(434)
@@ -39,13 +39,13 @@ class Testnrf905(unittest.TestCase):
 
     def test_open_tx_tx(self):
         # No exceptions expected
-        transceiver = nrf905()
+        transceiver = Nrf905()
         transceiver.open(434)
         transceiver.open(434)
         transceiver.close()
 
     def test_write(self):
-        transceiver = nrf905()
+        transceiver = Nrf905()
         data_bytes = [20] * 32
         # StateError if write before open
         with self.assertRaises(StateError):
@@ -57,12 +57,12 @@ class Testnrf905(unittest.TestCase):
 
     def test_read_success(self):
         # TODO This test needs to invoke the callback and verify what is returned.
-        transceiver = nrf905()
+        transceiver = Nrf905()
         transceiver.open(434, callback)
         transceiver.close()
 
     def test_set_pins(self):
-        transceiver = nrf905()
+        transceiver = Nrf905()
         pins = [11, 12, 13, 14, 15]
         # No exception before open.
         transceiver.set_pins(pins)
@@ -73,7 +73,7 @@ class Testnrf905(unittest.TestCase):
         transceiver.close()
 
     def test_set_spi_bus(self):
-        transceiver = nrf905()
+        transceiver = Nrf905()
         # Verify it works before open for 0 and 1 only.
         bus = 0
         transceiver.set_spi_bus(bus)
@@ -93,7 +93,7 @@ class Testnrf905(unittest.TestCase):
         transceiver.close()
 
     def test_set_address(self):
-        transceiver = nrf905()
+        transceiver = Nrf905()
         # Verify it works before open for unsigned 32 bit integers.
         address = 0
         transceiver.set_address(address)
@@ -114,7 +114,7 @@ class Testnrf905(unittest.TestCase):
         transceiver.close()
 
     def test_set_crc_mode(self):
-        transceiver = nrf905()
+        transceiver = Nrf905()
         # Verify it works before open for 0, 8 and 16.
         crc_mode = 0
         transceiver.set_crc_mode(crc_mode)

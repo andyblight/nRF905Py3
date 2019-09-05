@@ -3,4 +3,4 @@
 
 #DEBUG = -v
 
-python3 -m unittest ${DEBUG} test_nrf905gpio test_nrf905spinc
+python3 -m unittest ${DEBUG} nrf905.test_nrf905_gpio nrf905.test_nrf905_spi_nc
