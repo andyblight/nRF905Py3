@@ -86,10 +86,14 @@ Pin  Name     SPI pins    No. Board   Datasheet   Notes
 ```
 
 Where it says (resistor), use a 1k resistor.
-The AM and CD pins are optional.  Adding these pins improves control of the
-devices.  The CD pin improves transmission by only transmitting when the carrier
-is not detected.  The AM pin can be used to determine if the data packet is
-valid or not.
+The AM and CD pins are optional.  Adding these pins improves control of the devices.  The CD pin improves transmission by only transmitting when the carrier is not detected.  The AM pin can be used to determine if the data packet is valid or not.
+
+## TO DO List
+
+1. Make connected tests work.
+1. Make nrf905-monitor work.
+1. Make nrf905-write work.
+1. Add SPI bus 1 functionality.  The Nrf905Spi.\_\_init\_\_() function takes the spi_bus parameter but there is no implemented functionality.  Affects Nrf905SPI and Nrf905Gpio classes.  Needs RPi 2 or later to test.
 
 ## References
 
