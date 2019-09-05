@@ -52,10 +52,13 @@ class Nrf905Spi:
         # Open SPI device
         self.__spi_handle = 0
         spi_flags = 0  # For SPI0
-        if spi_bus == 0 or spi_bus == 1:
+        if spi_bus == 0:
+            self.__spi_bus = 0
+        elif spi_bus == 1:
+            # Only supported on model 2 and later.
             self.__hw_version = pi.get_hardware_revision()
-            if self.__hw_version == 2 or self.__hw_version == 3:
-                if spi_bus == 1:
+            if self.__hw_version >= 2:
+                self.__spi_bus = 1
         else:
             raise ValueError("spi_bus out of range")
         if self.__spi_bus == -1:
