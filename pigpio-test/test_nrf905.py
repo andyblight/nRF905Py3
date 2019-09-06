@@ -36,14 +36,12 @@ def set_tx_en(pi, state):
     TX_EN = 15
     set_gpio(pi, TX_EN, state)
 
-def set_csn(pi, state):
-    CSN = 8
-    set_gpio(pi, CSN, state)
-
-def send_command(pi, command):
-    print("Read transmit address command, 0x", command.hex())
+def send_command(pi, spi_h, command):
+    b_command = bytearray()
+    b_command.append(command)
+    print("Command is 0x", b_command.hex())
     # Transfer the data
-    count, data = pi.spi_xfer(spi_h, command)
+    count, data = pi.spi_xfer(spi_h, b_command)
     # Print what we received
     if count > 0:
         status_register = data.pop(0)
@@ -63,16 +61,10 @@ def test_spi(pi):
     # Open SPI device
     spi_h = pi.spi_open(channel, baud, flags)
     # Send all commands
-    commands = [0b00000000,
-                0b00010000,
-                0b00100000,
-                0b00100001,
-                0b00100010,
-                0b00100011,
-                0b00100100
-               ]
+    commands = [0b00000000, 0b00010000, 0b00100000, 0b00100001,
+                0b00100010, 0b00100011, 0b00100100]
     for command in commands:
-        send_command(pi, command)
+        send_command(pi, spi_h, command)
     # Close the spi bus
     pi.spi_close(spi_h)
 
