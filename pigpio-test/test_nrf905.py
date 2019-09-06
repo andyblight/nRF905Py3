@@ -40,27 +40,39 @@ def set_csn(pi, state):
     CSN = 8
     set_gpio(pi, CSN, state)
 
-def test_spi(pi):
-    # Can only use channel 0 on model B.
-    spi_channel = 0
-    # Baud in range 32k to 125M. nRF905 is max 10M.
-    baud = 1000 * 1000
-    # nRF905 supports SPI mode 0.
-    spi_flags = 0
-    # Open SPI device
-    spi_h = pi.spi_open(spi_channel, baud, spi_flags)
-    # Prepare command.
-    command = bytearray()
-    # INSTRUCTION_R_TX_ADDRESS = 0b00100011
-    command.append(0b00100011)
+def send_command(pi, command):
     print("Read transmit address command, 0x", command.hex())
     # Transfer the data
     count, data = pi.spi_xfer(spi_h, command)
     # Print what we received
-    print("Received ", count, "0x", data.hex())
     if count > 0:
         status_register = data.pop(0)
+        print("Status 0x", status_register)
         print("Data bytes", len(data), "0x", data.hex())
+    else:
+        print("Received ", count, "0x", data.hex())
+    
+
+def test_spi(pi):
+    # Can only use channel 0 on model B.
+    channel = 0
+    # Baud in range 32k to 125M. nRF905 is 10M.
+    baud = 10 * 1000 * 1000
+    # nRF905 supports SPI mode 0.
+    flags = 0
+    # Open SPI device
+    spi_h = pi.spi_open(channel, baud, flags)
+    # Send all commands
+    commands = [0b00000000,
+                0b00010000,
+                0b00100000,
+                0b00100001,
+                0b00100010,
+                0b00100011,
+                0b00100100
+               ]
+    for command in commands:
+        send_command(pi, command)
     # Close the spi bus
     pi.spi_close(spi_h)
 
