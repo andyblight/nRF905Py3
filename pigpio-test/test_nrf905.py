@@ -1,6 +1,9 @@
 #!/usr/bin/env python3
 
 """ This file was created so that I could understand how to make the nRF905 SPI registers work.
+NOTES:
+The pigpio SPI driver controls all the SPI pins including the chip enable lines.
+This means RPi GPIO pins 7, 8, 9, 10, 11 should not be used by this code.
 """
 
 import sys
@@ -10,16 +13,16 @@ import pigpio
 
 def reset_gpios(pi):
     print("reset_gpios")
-    gpios = [2, 3, 4, 7, 8, 9, 10, 11, 14, 15, 17, 18, 22, 23, 24, 25, 27]
+    gpios = [2, 3, 4, 14, 15, 17, 18, 22, 23, 24, 25, 27]
     for pin in gpios:
         pi.set_mode(pin, pigpio.INPUT)
-    sleep(0.1)
+    time.sleep(0.1)
 
 def set_gpio(pi, pin, state):
-    print("set_gpio", pi, state)
+    print("set_gpio", pin, state)
     pi.set_mode(pin, pigpio.OUTPUT)
     pi.write(pin, state)
-    sleep(0.1)
+    time.sleep(0.1)
 
 def set_pwr_up(pi, state):
     PWR_UP = 22
@@ -37,13 +40,12 @@ def set_csn(pi, state):
     CSN = 8
     set_gpio(pi, CSN, state)
 
-
 def test_spi(pi):
     # Can only use channel 0 on model B.
     spi_channel = 0
-    # Baud in range 32k to 125M.  50k seems like a good speed to start with.
-    baud = 50 * 1000
-    # nRF905 support SPI mode 0.
+    # Baud in range 32k to 125M. nRF905 is max 10M.
+    baud = 1000 * 1000
+    # nRF905 supports SPI mode 0.
     spi_flags = 0
     # Open SPI device
     spi_h = pi.spi_open(spi_channel, baud, spi_flags)
@@ -52,14 +54,13 @@ def test_spi(pi):
     # INSTRUCTION_R_TX_ADDRESS = 0b00100011
     command.append(0b00100011)
     print("Read transmit address command, 0x", command.hex())
-    # Set CSN low (selected)
-    set_csn(pi, 0)
     # Transfer the data
-    (count, data) = pi.spi_xfer(spi_h, command)
-    # Set CSN high (not selected)
-    set_csn(pi, 1)
+    count, data = pi.spi_xfer(spi_h, command)
     # Print what we received
     print("Received ", count, "0x", data.hex())
+    if count > 0:
+        status_register = data.pop(0)
+        print("Data bytes", len(data), "0x", data.hex())
     # Close the spi bus
     pi.spi_close(spi_h)
 
@@ -75,7 +76,6 @@ if pi.connected:
     set_pwr_up(pi, 0)
     set_tx_en(pi, 0)
     set_tx_ce(pi, 0)
-    set_csn(pi, 1)
     test_spi(pi)
     print("Tests finished.")
     set_pwr_up(pi, 0)
