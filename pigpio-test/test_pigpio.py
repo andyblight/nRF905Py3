@@ -12,8 +12,8 @@ the SPI bus could be controlled using the pigpio library.
     SPI
         GPIO7/CE1       26
         GPIO8/CE0       24              CE
-        GPIO9/MISO      19              MISO
-        GPIO10/MOSI     17              MOSI
+        GPIO9/MISO      19              MISO    Connect to MOSI (loopback)
+        GPIO10/MOSI     17              MOSI    Connect to MISO (loopback)
         GPIO11/SCK      21              SCK
 
     Other GPIO pins
@@ -44,6 +44,7 @@ def test_gpios():
         time.sleep(0.5)
 
 def test_spi():
+    """ MOSI and MISO are connected so whatever is sent is echoed back."""
     print("test_spi")
     # From http://abyz.me.uk/rpi/pigpio/python.html#spi_open
     # Can only use channel 0 on model B.

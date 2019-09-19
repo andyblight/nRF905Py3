@@ -36,37 +36,46 @@ def set_tx_en(pi, state):
     TX_EN = 15
     set_gpio(pi, TX_EN, state)
 
-def send_command(pi, spi_h, command):
-    b_command = bytearray()
-    b_command.append(command)
+def command_read_config(pii, spi_h):
+    # Command to read all 10 bytes
+    read_config_command = bytearray()
+    read_config_command.append(0b00100000)
+    for _ in range(1, 10):
+        read_config_command.append(0)
+    send_command(pi, spi_h, read_config_command)
+
+def send_command(pi, spi_h, b_command):
     print("Command is 0x", b_command.hex())
     # Transfer the data
+    #pi.spi_write(spi_h, b_command)
     count, data = pi.spi_xfer(spi_h, b_command)
     # Print what we received
+    print("Received", count, data)
     if count > 0:
         status_register = data.pop(0)
         print("Status 0x", status_register)
         print("Data bytes", len(data), "0x", data.hex())
     else:
         print("Received ", count, "0x", data.hex())
-    
 
 def test_spi(pi):
     # Can only use channel 0 on model B.
     channel = 0
     # Baud in range 32k to 125M. nRF905 is 10M.
-    baud = 10 * 1000 * 1000
-    # nRF905 supports SPI mode 0.
-    flags = 0
+    # Works in range 32k to 10M.
+    baud = 1 * 1000 * 1000
+    # nRF905 supports SPI mode 1 only.  This is not supported on SPI bus 1.
+    flags = 1
+    set_tx_ce(pi, 1)
+    # Here to CSN beeing set to 0 takes about 100ms.
     # Open SPI device
     spi_h = pi.spi_open(channel, baud, flags)
-    # Send all commands
-    commands = [0b00000000, 0b00010000, 0b00100000, 0b00100001,
-                0b00100010, 0b00100011, 0b00100100]
-    for command in commands:
-        send_command(pi, spi_h, command)
+    # Send commands
+    command_read_config(pi, spi_h)
     # Close the spi bus
+    # CSN high to tx_ce lo takes about 27ms.
     pi.spi_close(spi_h)
+    set_tx_ce(pi, 0)
 
 
 #### START HERE ####

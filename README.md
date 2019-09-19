@@ -17,6 +17,10 @@ running:
 ./run-tests.py
 ```
 
+## Preparing the RPi
+
+Firstly (and probably most importantly) is to enable the SPI interface.  This actually loads a kernel module that communicates with the SPI bus and without this module, nothing works!
+
 ## Wiring
 
 ### The nRF905 board
@@ -87,6 +91,8 @@ Pin  Name     SPI pins    No. Board   Datasheet   Notes
 
 Where it says (resistor), use a 1k resistor.
 The AM and CD pins are optional.  Adding these pins improves control of the devices.  The CD pin improves transmission by only transmitting when the carrier is not detected.  The AM pin can be used to determine if the data packet is valid or not.
+
+NOTE: The file 'wiring.txt' shows the colours of the wires I used during development.
 
 ## TO DO List
 
