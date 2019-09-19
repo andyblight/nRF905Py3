@@ -40,7 +40,7 @@ class Nrf905Spi:
     INSTRUCTION_R_RX_ADDRESS = 0b00100100
     INSTRUCTION_CHANNEL_CONFIG = 0b10000000
 
-    def __set_spi_flags(mode):
+    def __set_spi_flags(self, mode):
         flags = 0
         if 0 <= mode <= 3:
             flags = mode
@@ -57,7 +57,7 @@ class Nrf905Spi:
         # Open SPI device
         self.__spi_handle = 0
         # Mode 1 works even though the datasheet says mode 0.
-        spi_flags = __set_spi_flags(1)
+        spi_flags = self.__set_spi_flags(1)
         if spi_bus == 0:
             self.__spi_bus = 0
         elif spi_bus == 1:
@@ -79,27 +79,36 @@ class Nrf905Spi:
     def configuration_register_write(self, pi, data):
         """ Writes data to the RF configuration register.
             Raises ValueError exception if data does not contain 10 bytes.
+            data must also be a bytearray.
         """
         if len(data) == 10:
+            command = bytearray(11)
             # Prepend the instruction for writing all bytes to the config 
             # register.  The 4 least significant bytes are set to 0 so all 
             # bytes are written to. 
-            data.insert(0, INSTRUCTION_W_CONFIG)
-            # Write the data to the register.
-            pi.spi_write(self.__spi_handle, data)
+            command[0] = self.INSTRUCTION_W_CONFIG
+            # Copy the rest of the data into the command.
+            command[1:1 + len(data)] = data
+            # Write the command to the config register.
+            pi.spi_write(self.__spi_handle, command)
         else:
             raise ValueError("data must contain 10 bytes")
 
     def configuration_register_read(self, pi):
         """ Returns an array of 10 bytes read from the RF configuration register.
             If the read was not successful, returns empty array.
-            We need to write an instruction byte before reading back the data
-            so we use spi_xfer instead of spi_read.
-            The command for reading all bytes is 0x10.
         """
-        (count, data) = pi.spi_xfer(self.__spi_handle, b'\0x10')
+        # Create empty bytearray that contains the command (first element)
+        # followed by 10 empty bytes to clock through the 10 bytes of the config
+        # register.
+        command = bytearray(11)
+        command[0] = self.INSTRUCTION_R_CONFIG
+        (count, data) = pi.spi_xfer(self.__spi_handle, command)
         if count < 0:
             data = []
+        else:
+            # The first byte received is the status register.
+            self.__status_register = data.pop(0)
         return data
 
     def configuration_register_print(self, data):
@@ -131,36 +140,41 @@ class Nrf905Spi:
         writing to the device.
         crc_bits is one of 0, 8, 16.
         """
+        register = bytearray(10)
         frequency_bits = self.__frequency_to_bits(frequency_mhz)
-        byte_0 = frequency_bits[0]
-        byte_1 = frequency_bits[1]
+        register[0] = frequency_bits[0]
+        register[1] = frequency_bits[1]
         # Byte 1 also has:
         # PA_PWR.  Use lowset setting, 0b00000000
         # RX_RED_PWR. Normal operation = 0
         # AUTO_RETRAN 0 = no auto retransmit.
         # All 0 for now so nothing to do.
-        byte_1 |= 0b00000000
+        register[1] |= 0b00000000
         # Byte 2 TX_AFW = 0b01110000, RX_AFW = 0b00000111
         # Use 4 byte address widths for both.
-        byte_2 = 0b01000100
+        register[2] = 0b01000100
         # Byte 3. RX_PW 1 to 32. Set to 32 byte for now.
-        byte_3 = 32
+        register[3] = 32
         # Byte 4. TX_PW 1 to 32. Set to 32 byte for now.
-        byte_4 = 32
-        byte_5 = rx_address & 0x000000ff
-        byte_6 = (rx_address & 0x0000ff00) >> 8
-        byte_7 = (rx_address & 0x00ff0000) >> 16
-        byte_8 = (rx_address & 0xff000000) >> 24
+        register[4] = 32
+        # Bytes 5 to 8, the RX address.
+        register[5] = rx_address & 0x000000ff
+        register[6] = (rx_address & 0x0000ff00) >> 8
+        register[7] = (rx_address & 0x00ff0000) >> 16
+        register[8] = (rx_address & 0xff000000) >> 24
         # Byte 9
         # XOF is 16MHz, 0b00011000
         # UP_CLK_EN = 0, UP_CLK_FREQ = 00
-        byte_9 = 0b00011000
+        register[9] = 0b00011000
         if crc_bits == 8:
-            byte_9 |= 0b01000000
-        if crc_bits == 16:
-            byte_9 |= 0b11000000
-        result = [byte_0, byte_1, byte_2, byte_3, byte_4, byte_5, byte_6, byte_7, byte_8, byte_9]
-        return result
+            register[9] |= 0b01000000
+        elif crc_bits == 16:
+            register[9] |= 0b11000000
+        elif crc_bits == 0:
+            pass
+        else:
+            raise ValueError("crc_bits must be one of 0, 8, 16.")
+        return register
 
     def __frequency_to_bits(self, frequency):
         """ Returns a pair of bytes correct values of CH_NO and HFREQ_PLL.
@@ -212,7 +226,7 @@ class Nrf905Spi:
         for i in range(0, self.__transmit_address_width):
             byte = address & 0x000000FF
             data.append(byte)
-            address = address >> 8
+            address >>= 8
         print("wta:", address, data)
         # Send the bytes.
         (count, status) = pi.spi_xfer(self.__spi_handle, data)
@@ -221,21 +235,21 @@ class Nrf905Spi:
         self.__status_register = status
 
     def read_transmit_address(self, pi):
-        """ Returns a 32 bit value representing the address.
-        The value returned is  1 to 4 bytes long (dependent on the value in the 
-        config register).   Multi-byte values are returned LSB first, so the 
-        bytes need to be reversed.
-        """
+        """ Returns a 32 bit value representing the address. """
         # Send the instruction to read the TX ADDRESS register.
-        command = bytearray()
-        command.append(self.INSTRUCTION_R_TX_ADDRESS)
-        (count, address) = pi.spi_xfer(self.__spi_handle, command)
-        print("rta:", count, address.hex())
+        command_width = self.__receive_address_width + 1
+        command = bytearray(command_width)
+        command[0] = self.INSTRUCTION_R_TX_ADDRESS
+        (count, data) = pi.spi_xfer(self.__spi_handle, command)
+        print("rta:", count, data)
         # The first byte received is the status register.
-        self.__status_register = address.pop(0)
-        # What is left is the address so reverse the bytes.
-        address.reverse()
-        #  TODO Convert the byte array into a 32 bit value. 
+        self.__status_register = data[0]
+        print("rts status", self.__status_register)
+        # What is left is the address in reverse order.
+        address = 0
+        for i in range(1, len(data)):
+            address = data[i]
+            address <<= 8
         return address
 
     def read_receive_payload(self, pi):
