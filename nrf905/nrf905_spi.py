@@ -37,7 +37,7 @@ class Nrf905Spi:
     INSTRUCTION_R_TX_PAYLOAD = 0b00100001
     INSTRUCTION_W_TX_ADDRESS = 0b00100010
     INSTRUCTION_R_TX_ADDRESS = 0b00100011
-    INSTRUCTION_R_RX_ADDRESS = 0b00100100
+    INSTRUCTION_R_RX_PAYLOAD = 0b00100100
     INSTRUCTION_CHANNEL_CONFIG = 0b10000000
 
     def __set_spi_flags(self, mode):
@@ -166,12 +166,18 @@ class Nrf905Spi:
         # XOF is 16MHz, 0b00011000
         # UP_CLK_EN = 0, UP_CLK_FREQ = 00
         register[9] = 0b00011000
-        if crc_bits == 8:
+        # crc_bits is used to set CRC_EN (bit 6) and CRC_MODE (bit 7).
+        if crc_bits == 0:
+            # CRC_EN = 0 (disable)
+            pass
+        elif crc_bits == 8:
+            # CRC_EN = 1 (enable)
+            # CRC_MODE = 0 (8 bits)
             register[9] |= 0b01000000
         elif crc_bits == 16:
+            # CRC_EN = 1 (enable)
+            # CRC_MODE = 1 (16 bits)
             register[9] |= 0b11000000
-        elif crc_bits == 0:
-            pass
         else:
             raise ValueError("crc_bits must be one of 0, 8, 16.")
         return register
@@ -221,8 +227,8 @@ class Nrf905Spi:
         needs to be broken down into bytes before sending.
         """
         # Create the array of bytes to send.
-        data = bytearray()
-        data.append(self.INSTRUCTION_W_TX_ADDRESS)
+        command = bytearray(self.__transmit_address_width + 1)
+        command[0] = self.INSTRUCTION_W_TX_ADDRESS
         for i in range(0, self.__transmit_address_width):
             byte = address & 0x000000FF
             data.append(byte)
@@ -237,6 +243,7 @@ class Nrf905Spi:
     def read_transmit_address(self, pi):
         """ Returns a 32 bit value representing the address. """
         # Send the instruction to read the TX ADDRESS register.
+        # Also needs a 0 byte for each of the bytes to read.
         command_width = self.__receive_address_width + 1
         command = bytearray(command_width)
         command[0] = self.INSTRUCTION_R_TX_ADDRESS
