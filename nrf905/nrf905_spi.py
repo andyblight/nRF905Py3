@@ -40,6 +40,11 @@ class Nrf905Spi:
     INSTRUCTION_R_RX_ADDRESS = 0b00100100
     INSTRUCTION_CHANNEL_CONFIG = 0b10000000
 
+    def __set_spi_flags(mode):
+        flags = 0
+        if 0 <= mode <= 3:
+            flags = mode
+        return flags
 
     def __init__(self, pi, spi_bus):
         # Width of nRF905 registers. Defaults set to chip defaults.
@@ -51,7 +56,8 @@ class Nrf905Spi:
         self.__status_register = 0
         # Open SPI device
         self.__spi_handle = 0
-        spi_flags = 0  # For SPI0
+        # Mode 1 works even though the datasheet says mode 0.
+        spi_flags = __set_spi_flags(1)
         if spi_bus == 0:
             self.__spi_bus = 0
         elif spi_bus == 1:
