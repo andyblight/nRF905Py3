@@ -31,17 +31,17 @@ class Nrf905Spi:
         self.__pi.spi_close(self.__spi_h)
 
     def default_config_register(self):
-        register = bytearray(9)
-        register[-1] = 0b01101100
-        register[0] = 0
-        register[1] = 0b01000100
-        register[2] = 0b00100000
+        register = bytearray(10)
+        register[0] = 0b01101100
+        register[1] = 0
+        register[2] = 0b01000100
         register[3] = 0b00100000
-        register[4] = 0xE7
+        register[4] = 0b00100000
         register[5] = 0xE7
         register[6] = 0xE7
         register[7] = 0xE7
-        register[8] = 0b11100111
+        register[8] = 0xE7
+        register[9] = 0b11100111
         return register
 
     def command_read_config(self):
