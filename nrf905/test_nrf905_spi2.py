@@ -21,12 +21,12 @@ class Nrf905Spi:
 
     def open(self, pi):
         print("open")
-        self.pi = pi
+        self.__pi = pi
         self.__spi_h = pi.spi_open(0, 32000, 2)
 
-    def close(self, pi):
+    def close(self:
         print("close")
-        self.pi.spi_close(self.__spi_h)
+        self.__pi.spi_close(self.__spi_h)
 
     def default_config_register(self):
         register = bytearray(9)
@@ -42,7 +42,7 @@ class Nrf905Spi:
         register[8] = 0b11100111
         return register
 
-    def command_read_config(pi, self):
+    def command_read_config(self):
         # Command to read all 9 bytes
         read_config_command = bytearray(10)
         read_config_command[-1] = 0b00100000
@@ -53,7 +53,7 @@ class Nrf905Spi:
     def send_command(self, b_command):
         print("Command is 0x", b_command.hex())
         # Transfer the data
-        (count, data) = self.pi.spi_xfer(self.__spi_h, b_command)
+        (count, data) = self.__pi.spi_xfer(self.__spi_h, b_command)
         # Print what we received
         print("Received", count, data)
         if count > 0:
@@ -67,12 +67,11 @@ class TestNrf905Spi(unittest.TestCase):
 
     def setUp(self):
         self.pi = pigpio.pi()
-        self.spi = Nrf905Spi(self.pi)
-        self.spi.open()
-        print("setUp: spi:", self.spi_h)
+        self.spi = Nrf905Spi()
+        self.spi.open(self.pi)
 
     def tearDown(self):
-        self.spi.close(self.pi)
+        self.spi.close()
         self.pi.stop()
 
     def test_configuration_register_read_write(self):
