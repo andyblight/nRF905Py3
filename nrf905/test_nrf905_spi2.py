@@ -20,12 +20,14 @@ class Nrf905Spi:
         self.__status = 0
 
     def open(self, pi):
-        print("open")
+        print("open:", pi)
         self.__pi = pi
-        self.__spi_h = pi.spi_open(0, 32000, 2)
+        print("open self.__pi:", self.__pi)
+        self.__spi_h = self.__pi.spi_open(0, 32000, 2)
+        print("open self.__spi_h:", self.__spi_h)
 
     def close(self):
-        print("close")
+        print("close: self.__pi:", self.__pi)
         self.__pi.spi_close(self.__spi_h)
 
     def default_config_register(self):
@@ -53,6 +55,8 @@ class Nrf905Spi:
     def send_command(self, b_command):
         print("Command is 0x", b_command.hex())
         # Transfer the data
+        print("send_command: self.__pi:", self.__pi)
+        print("send_command self.__spi_h:", self.__spi_h)
         (count, data) = self.__pi.spi_xfer(self.__spi_h, b_command)
         # Print what we received
         print("Received", count, data)
@@ -67,11 +71,15 @@ class TestNrf905Spi(unittest.TestCase):
 
     def setUp(self):
         self.pi = pigpio.pi()
+        print("setUp: self.pi:", self.pi)
         self.spi = Nrf905Spi()
+        print("setUp: self.spi:", self.spi)
         self.spi.open(self.pi)
 
     def tearDown(self):
+        print("tearDown: self.spi:", self.spi)
         self.spi.close()
+        print("tearDown: self.pi:", self.pi)
         self.pi.stop()
 
     def test_configuration_register_read_write(self):
@@ -79,7 +87,7 @@ class TestNrf905Spi(unittest.TestCase):
         Verify that certain values can be modified.
         """
         # Test defaults
-        print("tcrrw: spi:")
+        print("tcrrw: self.spi:", self.spi)
         self.spi.command_read_config()
 #        data = self.spi.configuration_register_read(self.pi)
 #        self.assertEqual(len(data), 10)
