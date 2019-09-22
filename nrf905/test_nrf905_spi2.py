@@ -24,7 +24,7 @@ class Nrf905Spi:
         self.__pi = pi
         self.__spi_h = pi.spi_open(0, 32000, 2)
 
-    def close(self:
+    def close(self):
         print("close")
         self.__pi.spi_close(self.__spi_h)
 
@@ -58,7 +58,7 @@ class Nrf905Spi:
         print("Received", count, data)
         if count > 0:
             self.__status = data.pop(0)
-            print("Status 0x", status_register)
+            print("Status 0x", self.__status)
             print("Data bytes", len(data), "0x", data.hex())
         return data
 
