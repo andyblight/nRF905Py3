@@ -20,16 +20,6 @@ class Nrf905Spi:
     SPI_BUS_1_FLAGS = 0
     SPI_SCK_HZ = 1 * 1000 * 1000  # Set to 1MHz.  10MHz max. (data sheet)
     
-    # pigpio SPI flag values
-    SPI_MODE = 0  # nRF905 supports SPI mode 0 only. 2 bits
-    SPI_CE_ACTIVE_HIGH = 0 # nRF905 active low. 1 bit
-    SPI_CE_PIN = 0 # Use SPIx_CE0_N. 1 bit
-    SPI_USE_AUX = 0 # Use main for RPi1A/B. 1 bit
-    SPI_3WIRE = 0  # nRF905 is 4 wire. 1 bit
-    SPI_TX_LSB_FIRST = 0  # nRF905 is MSB first. 1 bit
-    SPI_RX_LSB_FIRST = 0  # nRF905 is MSB first. 1 bit
-    SPI_AUX_WORD_SIZE = 0  # Using main SPI bus. 6 bits
-
     # nRF905 SPI instructions (table 13)
     INSTRUCTION_W_CONFIG = 0b00000000
     INSTRUCTION_R_CONFIG = 0b00010000
@@ -40,12 +30,6 @@ class Nrf905Spi:
     INSTRUCTION_R_RX_PAYLOAD = 0b00100100
     INSTRUCTION_CHANNEL_CONFIG = 0b10000000
 
-    def __set_spi_flags(self, mode):
-        flags = 0
-        if 0 <= mode <= 3:
-            flags = mode
-        return flags
-
     def __init__(self, pi, spi_bus):
         # Width of nRF905 registers. Defaults set to chip defaults.
         self.__receive_address_width = 0b100  # 4 bytes
@@ -54,27 +38,46 @@ class Nrf905Spi:
         self.__transmit_payload_width = 0b100000  # 32 bytes
         # The last value of the status register.
         self.__status_register = 0
-        # Open SPI device
-        self.__spi_handle = 0
-        # Mode 1 works even though the datasheet says mode 0.
-        spi_flags = self.__set_spi_flags(1)
-        if spi_bus == 0:
-            self.__spi_bus = 0
-        elif spi_bus == 1:
+        # Set SPI bus, speed and flags.
+        self.__bus = 0
+        self.__sck_hz = 0
+        self.__flags = 0
+        self.__set_bus(spi_bus)
+        # Open using validated SPI bus.
+        self.__handle = pi.spi_open(self.__bus, self.__sck_hz, self.__flags)
+
+    def __set_flags(self):
+        """ See http://abyz.me.uk/rpi/pigpio/python.html#spi_open for details.
+        The nRF095 works with most values set to 0.
+        Only need to set the mode and bus values.
+        """
+        # Mode = 2.
+        self.__flags = 2
+        if self.__bus == 1:
+            # Set bit 8 = 1 for aux bus.
+            self.__flags |= 0x10
+
+    def __set_bus(self, bus):
+        """Sets bus, clock speed and flags. """
+        spi_bus = -1
+        if bus == 0:
+            spi_bus = 0
+        elif bus == 1:
             # Only supported on model 2 and later.
             self.__hw_version = pi.get_hardware_revision()
             if self.__hw_version >= 2:
-                self.__spi_bus = 1
+                spi_bus = 1
         else:
-            raise ValueError("spi_bus out of range")
-        # Open using validated SPI bus.
-        if self.__spi_bus == -1:
-            raise ValueError("spi_bus value not supported for this board")
-        else:
-            self.__spi_handle = pi.spi_open(self.__spi_bus, self.SPI_SCK_HZ, spi_flags)
+            raise ValueError(" SPI bus out of range")
+        if spi_bus == -1:
+            raise ValueError("SPI bus not supported for this board")
+        # Set vars now that bus has been validated.
+        self.__sck_hz = self.SPI_SCK_HZ
+        self.__bus = spi_bus
+        self.__set_flags()
 
     def close(self, pi):
-        pi.spi_close(self.__spi_handle)
+        pi.spi_close(self.__handle)
 
     def configuration_register_write(self, pi, data):
         """ Writes data to the RF configuration register.
@@ -89,8 +92,9 @@ class Nrf905Spi:
             command[0] = self.INSTRUCTION_W_CONFIG
             # Copy the rest of the data into the command.
             command[1:1 + len(data)] = data
+            print("crw:", command)
             # Write the command to the config register.
-            pi.spi_write(self.__spi_handle, command)
+            pi.spi_write(self.__handle, command)
         else:
             raise ValueError("data must contain 10 bytes")
 
@@ -103,7 +107,8 @@ class Nrf905Spi:
         # register.
         command = bytearray(11)
         command[0] = self.INSTRUCTION_R_CONFIG
-        (count, data) = pi.spi_xfer(self.__spi_handle, command)
+        (count, data) = pi.spi_xfer(self.__handle, command)
+        print("crr:", count, data)
         if count < 0:
             data = []
         else:
@@ -235,7 +240,7 @@ class Nrf905Spi:
             address >>= 8
         print("wta:", address, data)
         # Send the bytes.
-        (count, status) = pi.spi_xfer(self.__spi_handle, data)
+        (count, status) = pi.spi_xfer(self.__handle, data)
         # There should only be one byte received, the value of the status register.
         print("wta:", count, status)
         self.__status_register = status
@@ -247,7 +252,7 @@ class Nrf905Spi:
         command_width = self.__receive_address_width + 1
         command = bytearray(command_width)
         command[0] = self.INSTRUCTION_R_TX_ADDRESS
-        (count, data) = pi.spi_xfer(self.__spi_handle, command)
+        (count, data) = pi.spi_xfer(self.__handle, command)
         print("rta:", count, data)
         # The first byte received is the status register.
         self.__status_register = data[0]
