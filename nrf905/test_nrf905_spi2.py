@@ -45,9 +45,9 @@ class Nrf905Spi:
         return register
 
     def command_read_config(self):
-        # Command to read all 9 bytes
-        read_config_command = bytearray(10)
-        read_config_command[-1] = 0b00100000
+        # Command to read all 10 bytes
+        read_config_command = bytearray(11)
+        read_config_command[0] = 0b00100000
         result = self.send_command(read_config_command)
         print("default register", self.default_config_register().hex())
         return result
@@ -89,6 +89,22 @@ class TestNrf905Spi(unittest.TestCase):
         # Test defaults
         print("tcrrw: self.spi:", self.spi)
         self.spi.command_read_config()
+
+    def test_the_old_way(self):
+        spi_h = self.pi.spi_open(0, 32000, 2)
+        print("ttow: spi_h:", spi_h)
+        read_config_command = bytearray(11)
+        read_config_command[0] = 0b00100000
+        (count, data) = self.pi.spi_xfer(spi_h, read_config_command)
+        # Print what we received
+        print("Received", count, data)
+        if count > 0:
+            status = data.pop(0)
+            print("Status 0x", status)
+            print("Data bytes", len(data), "0x", data.hex())
+        print("ttow: spi_h:", spi_h)
+        self.pi.spi_close(spi_h)
+
 #        data = self.spi.configuration_register_read(self.pi)
 #        self.assertEqual(len(data), 10)
 #        self.spi.configuration_register_print(data)
