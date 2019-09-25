@@ -123,19 +123,17 @@ class Nrf905Spi:
         where: CH_NO= ccccccccc, HFREQ_PLL = h PA_PWR = pp
         """
         command = bytearray(2)
-        command[1] = self.__INSTRUCTION_CHANNEL_CONFIG
-        if 0 < pa_pwr < 4:
-            # If 0 nothing to do.
-            command[1] |= (pa_pwr << 2)
+        command[0] = self.__INSTRUCTION_CHANNEL_CONFIG
+        if 0 <= pa_pwr < 4:
+            command[0] |= ((pa_pwr & 0x03) << 2)
         else:
             raise ValueError("Out of range: 0 <= pa_pwr < 4")
         if hfreq_pll:
-            command[1] |= 0x02
-        if 0 < channel_number < 0x200:
-            # If 0 nothing to do.
-            command[0] = (channel_number &= 0x0FF)
-            if channel_number &= 0x100:
-                command[1] |= 1
+            command[0] |= 0x02
+        if 0 <= channel_number < 0x200:
+            command[1] = (channel_number & 0xFF)
+            if channel_number & 0x100:
+                command[0] |= 1
         else:
             raise ValueError("Out of range: 0 <= channel_number < 0x200")
         print("channel_config", command.hex())
