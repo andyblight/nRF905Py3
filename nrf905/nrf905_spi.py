@@ -3,20 +3,45 @@
 import pigpio
 
 class Nrf905Spi:
+    """ Handles access to SPI bus and the nRF905 registers.
+    Extracts from the data sheet.
+        The device must be in a low power mode to access the SPI registers.
+        Whenever CSN is set low the interface expects an instruction.
+        Every new instruction must be started by a high to low transition on CSN.
+        The content of the status register (S[7:0]) is always read to
+        MISO after a high to low transition on CSN.
+    """
+
+    __CRYSTAL_FREQUENCY_HZ = 16 * 1000 * 1000  # 16MHz is on the board I'm using.
+
+    # SPI pins are defaults for pigpio bus 0 (RPi 1 A&B only have SPI bus 0).
+    __SPI_BUS_0_FLAGS = 0
+    __SPI_BUS_1_FLAGS = 0
+    __SPI_SCK_HZ = 10 * 1000 * 1000  # Set to 10MHz.  10MHz max. (data sheet)
+
+    # nRF905 SPI instructions (table 13)
+    __INSTRUCTION_W_CONFIG = 0b00000000
+    __INSTRUCTION_R_CONFIG = 0b00010000
+    __INSTRUCTION_W_TX_PAYLOAD = 0b00100000
+    __INSTRUCTION_R_TX_PAYLOAD = 0b00100001
+    __INSTRUCTION_W_TX_ADDRESS = 0b00100010
+    __INSTRUCTION_R_TX_ADDRESS = 0b00100011
+    __INSTRUCTION_R_RX_PAYLOAD = 0b00100100
+    __INSTRUCTION_CHANNEL_CONFIG = 0b10000000
 
     def __init__(self):
         self.__spi_h = None
         self.__status = 0
 
     def open(self, pi):
-        print("open:", pi)
+        # print("open:", pi)
         self.__pi = pi
-        print("open self.__pi:", self.__pi)
+        # print("open self.__pi:", self.__pi)
         self.__spi_h = self.__pi.spi_open(0, 32000, 2)
-        print("open self.__spi_h:", self.__spi_h)
+        # print("open self.__spi_h:", self.__spi_h)
 
     def close(self):
-        print("close: self.__pi:", self.__pi)
+        # print("close: self.__pi:", self.__pi)
         self.__pi.spi_close(self.__spi_h)
 
     def __send_command(self, b_command):
@@ -40,12 +65,15 @@ class Nrf905Spi:
             data = bytearray()
         return data
 
+    def status_register_get(self):
+        """Gets the last read value of the status register. """
+        return self.__status
+
     def configuration_register_read(self):
         """ Command to read all 10 bytes of the configuration register. """
-        read_config_command = bytearray(11)
-        read_config_command[0] = 0b00100000
-        result = self.__send_command(read_config_command)
-        # print("default register", self.configuration_register_default().hex())
+        command = bytearray(11)
+        command[0] = self.__INSTRUCTION_R_CONFIG
+        result = self.__send_command(command)
         return result
 
     def configuration_register_print(self, data):
@@ -88,37 +116,33 @@ class Nrf905Spi:
         register[9] = 0b11100111
         return register
 
-    def status_register_get(self):
-        """Gets the last read value of the status register. """
-        return self.__status
+    def channel_config(self, channel_number, hfreq_pll, pa_pwr):
+        """ Special command for fast setting of CH_NO, HFREQ_Pand PA_PWR in the
+        CONFIGURATION REGISTER.  SPI command has structure:
+            1000 pphc cccc cccc
+        where: CH_NO= ccccccccc, HFREQ_PLL = h PA_PWR = pp
+        """
+        command = bytearray(2)
+        command[1] = self.__INSTRUCTION_CHANNEL_CONFIG
+        if 0 < pa_pwr < 4:
+            # If 0 nothing to do.
+            command[1] |= (pa_pwr << 2)
+        else:
+            raise ValueError("Out of range: 0 <= pa_pwr < 4")
+        if hfreq_pll:
+            command[1] |= 0x02
+        if 0 < channel_number < 0x200:
+            # If 0 nothing to do.
+            command[0] = (channel_number &= 0x0FF)
+            if channel_number &= 0x100:
+                command[1] |= 1
+        else:
+            raise ValueError("Out of range: 0 <= channel_number < 0x200")
+        print("channel_config", command.hex())
+        self.__send_command(command)
+
 
 # class Nrf905Spi:
-#     """ Handles access to SPI bus and the nRF905 registers.
-#     Extracts from the data sheet.
-#         The device must be in a low power mode to access the registers.
-#         Whenever CSN is set low the interface expects an instruction. 
-#         Every new instruction must be started by a high to low transition on CSN.
-#         The content of the status register (S[7:0]) is always read to
-#         MISO after a high to low transition on CSN.
-
-#     """
-
-#     CRYSTAL_FREQUENCY_HZ = 16 * 1000 * 1000  # 16MHz is on the board I'm using.
-    
-#     # SPI pins are defaults for pigpio bus 0 (RPi 1 A&B only have SPI bus 0).
-#     SPI_BUS_0_FLAGS = 0
-#     SPI_BUS_1_FLAGS = 0
-#     SPI_SCK_HZ = 1 * 1000 * 1000  # Set to 1MHz.  10MHz max. (data sheet)
-    
-#     # nRF905 SPI instructions (table 13)
-#     INSTRUCTION_W_CONFIG = 0b00000000
-#     INSTRUCTION_R_CONFIG = 0b00010000
-#     INSTRUCTION_W_TX_PAYLOAD = 0b00100000
-#     INSTRUCTION_R_TX_PAYLOAD = 0b00100001
-#     INSTRUCTION_W_TX_ADDRESS = 0b00100010
-#     INSTRUCTION_R_TX_ADDRESS = 0b00100011
-#     INSTRUCTION_R_RX_PAYLOAD = 0b00100100
-#     INSTRUCTION_CHANNEL_CONFIG = 0b10000000
 
 #     def __init__(self, pi, spi_bus):
 #         # Width of nRF905 registers. Defaults set to chip defaults.

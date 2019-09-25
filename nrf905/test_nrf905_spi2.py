@@ -40,6 +40,17 @@ class TestNrf905Spi(unittest.TestCase):
         print("Data bytes", len(config_register), "0x", config_register.hex())
         print("default register", self.spi.configuration_register_default().hex())
         self.spi.configuration_register_print(config_register)
+
+        # Test channel_config()
+        self.spi.channel_config(0, False, 0)
+        print("Expected command: 0x8000")
+        self.spi.channel_config(15, True, 3)
+        print("Expected command: 0x8E0F")
+        self.spi.channel_config(0x1FF, False, 1)
+        print("Expected command: 0x85FF")
+        self.spi.channel_config(0x1FF, False, 1)
+        print("Expected command: 0x85FF")
+
 #        # Modify values.
 #        frequency_mhz = 433.2
 #        rx_address = 0xABABABAB
