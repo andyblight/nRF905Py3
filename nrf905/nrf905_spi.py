@@ -20,20 +20,24 @@ class Nrf905Spi:
         self.__pi.spi_close(self.__spi_h)
 
     def __send_command(self, b_command):
-        """ Sends the command to the nRF905 and returns any results. 
-        Also updates the internal copy of the status register.
+        """ Sends the command to the nRF905 and returns any results.
+        If a valid transfer takes place:
+            1. The internal copy of the status register is updated.
+            2. The function returns a bytearray that contains the result.
+        If the transfer fails, returns an empty bytearray.
         """
-        print("Command is 0x", b_command.hex())
-        # Transfer the data
-        print("send_command: self.__pi:", self.__pi)
-        print("send_command self.__spi_h:", self.__spi_h)
+        # print("Command is 0x", b_command.hex())
+        # print("send_command: self.__pi:", self.__pi)
+        # print("send_command self.__spi_h:", self.__spi_h)
         (count, data) = self.__pi.spi_xfer(self.__spi_h, b_command)
         # Print what we received
-        print("Received", count, data)
+        # print("Received", count, data)
         if count > 0:
             self.__status = data.pop(0)
-            print("Status 0x", self.__status)
-            print("Data bytes", len(data), "0x", data.hex())
+            # print("Status 0x", self.__status)
+            # print("Data bytes", len(data), "0x", data.hex())
+        else:
+            data = bytearray()
         return data
 
     def configuration_register_read(self):

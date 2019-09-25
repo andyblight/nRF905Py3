@@ -39,7 +39,7 @@ class TestNrf905Spi(unittest.TestCase):
         print("Status 0x", self.spi.status_register_get())
         print("Data bytes", len(config_register), "0x", config_register.hex())
         print("default register", self.spi.configuration_register_default().hex())
-        self.spi.configuration_register_print(data)
+        self.spi.configuration_register_print(config_register)
 #        # Modify values.
 #        frequency_mhz = 433.2
 #        rx_address = 0xABABABAB
