@@ -44,7 +44,11 @@ class Nrf905Spi:
         # print("close: self.__pi:", self.__pi)
         self.__pi.spi_close(self.__spi_h)
 
-    def __send_command(self, b_command):
+    def status_register_get(self):
+        """Returns the last read value of the status register. """
+        return self.__status
+
+    def send_command(self, b_command):
         """ Sends the command to the nRF905 and returns any results.
         If a valid transfer takes place:
             1. The internal copy of the status register is updated.
@@ -55,7 +59,6 @@ class Nrf905Spi:
         # print("send_command: self.__pi:", self.__pi)
         # print("send_command self.__spi_h:", self.__spi_h)
         (count, data) = self.__pi.spi_xfer(self.__spi_h, b_command)
-        # Print what we received
         # print("Received", count, data)
         if count > 0:
             self.__status = data.pop(0)
@@ -65,56 +68,31 @@ class Nrf905Spi:
             data = bytearray()
         return data
 
-    def status_register_get(self):
-        """Gets the last read value of the status register. """
-        return self.__status
-
     def configuration_register_read(self):
         """ Command to read all 10 bytes of the configuration register. """
         command = bytearray(11)
         command[0] = self.__INSTRUCTION_R_CONFIG
-        result = self.__send_command(command)
+        result = self.send_command(command)
         return result
 
-    def configuration_register_print(self, data):
-        """ Prints the values using data sheet names. """
+    def configuration_register_write(self, register):
+        """ Writes a data to the RF configuration register.
+            Raises ValueError exception if data does not contain 10 bytes.
+            data must also be a bytearray.
+        """
         if len(data) == 10:
-            channel_number = ((data[1] & 0x01) * 256) + data[0]
-            print("Configuration register contents:")
-            print("CH_NO:", channel_number)
-            print("AUTO_RETRAN:", data[1] & 0x10)
-            print("RX_RED_PWR:", data[1] & 0x10)
-            print("PA_PWR:", data[1] & 0x10)
-            print("HFREQ_PLL:", data[1] & 0x10)
-            print("TX_AFW:", data[2] & 0x70)
-            print("RX_AFW", data[2] & 0x07)
-            print("RX_PWR:", data[3] & 0x3f)
-            print("TX_PWR:", data[4] & 0x3f)
-            print("RX_ADDRESS:", data[8], data[7], data[6], data[5])
-            print("CRC_MODE:", data[9] & 0x80)
-            print("CRC_EN:", data[9] & 0x40)
-            print("XOF:", data[9] & 0x38)
-            print("UP_CLK_EN:", data[9] & 0x04)
-            print("UP_CLK_FREQ:", data[9] & 0x03)
+            command = bytearray(11)
+            # Prepend the instruction for writing all bytes to the config 
+            # register.  The 4 least significant bytes are set to 0 so all 
+            # bytes are written to. 
+            command[0] = self.INSTRUCTION_W_CONFIG
+            # Copy the rest of the data into the command.
+            command[1:1 + len(data)] = data
+            print("crw:", command)
+            # Write the command to the config register.
+            pi.spi_write(self.__handle, command)
         else:
             raise ValueError("data must contain 10 bytes")
-
-    def configuration_register_default(self):
-        """ Returns a bytearray containing the values of all 10 configuration 
-        registers with their default values.  
-        """
-        register = bytearray(10)
-        register[0] = 0b01101100
-        register[1] = 0
-        register[2] = 0b01000100
-        register[3] = 0b00100000
-        register[4] = 0b00100000
-        register[5] = 0xE7
-        register[6] = 0xE7
-        register[7] = 0xE7
-        register[8] = 0xE7
-        register[9] = 0b11100111
-        return register
 
     def channel_config(self, channel_number, hfreq_pll, pa_pwr):
         """ Special command for fast setting of CH_NO, HFREQ_Pand PA_PWR in the
@@ -137,7 +115,7 @@ class Nrf905Spi:
         else:
             raise ValueError("Out of range: 0 <= channel_number < 0x200")
         print("channel_config", command.hex())
-        self.__send_command(command)
+        self.send_command(command)
 
 
 # class Nrf905Spi:
@@ -187,46 +165,6 @@ class Nrf905Spi:
 #         self.__sck_hz = self.SPI_SCK_HZ
 #         self.__bus = spi_bus
 #         self.__set_flags()
-
-#     def close(self, pi):
-#         pi.spi_close(self.__handle)
-
-#     def configuration_register_write(self, pi, data):
-#         """ Writes data to the RF configuration register.
-#             Raises ValueError exception if data does not contain 10 bytes.
-#             data must also be a bytearray.
-#         """
-#         if len(data) == 10:
-#             command = bytearray(11)
-#             # Prepend the instruction for writing all bytes to the config 
-#             # register.  The 4 least significant bytes are set to 0 so all 
-#             # bytes are written to. 
-#             command[0] = self.INSTRUCTION_W_CONFIG
-#             # Copy the rest of the data into the command.
-#             command[1:1 + len(data)] = data
-#             print("crw:", command)
-#             # Write the command to the config register.
-#             pi.spi_write(self.__handle, command)
-#         else:
-#             raise ValueError("data must contain 10 bytes")
-
-#     def configuration_register_read(self, pi):
-#         """ Returns an array of 10 bytes read from the RF configuration register.
-#             If the read was not successful, returns empty array.
-#         """
-#         # Create empty bytearray that contains the command (first element)
-#         # followed by 10 empty bytes to clock through the 10 bytes of the config
-#         # register.
-#         command = bytearray(11)
-#         command[0] = self.INSTRUCTION_R_CONFIG
-#         (count, data) = pi.spi_xfer(self.__handle, command)
-#         print("crr:", count, data)
-#         if count < 0:
-#             data = []
-#         else:
-#             # The first byte received is the status register.
-#             self.__status_register = data.pop(0)
-#         return data
 
 #     # TODO add named fields for the address and payload field widths. 
 #     def configuration_register_create(self, frequency_mhz, rx_address, crc_bits):
@@ -358,5 +296,6 @@ class Nrf905Spi:
 
 #     def set_channel_config(self, pi, channel, hfreq_pll, pa_pwr):
 #         pass
+
 
 

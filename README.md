@@ -94,6 +94,11 @@ The AM and CD pins are optional.  Adding these pins improves control of the devi
 
 NOTE: The file 'wiring.txt' shows the colours of the wires I used during development.
 
+## Tests
+
+The tests have been written with the aim of getting the code working with the
+nRF905.  The code could be made more testable but 
+
 ## TO DO List
 
 1. Make connected tests work.
