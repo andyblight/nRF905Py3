@@ -34,11 +34,12 @@ class TestNrf905Spi(unittest.TestCase):
         """
         # Test defaults
         print("tcrrw: self.spi:", self.spi)
-        self.spi.command_read_config()
-
-#        data = self.spi.configuration_register_read(self.pi)
-#        self.assertEqual(len(data), 10)
-#        self.spi.configuration_register_print(data)
+        config_register = self.spi.configuration_register_read()
+        self.assertEqual(len(config_register), 10)
+        print("Status 0x", self.spi.status_register_get())
+        print("Data bytes", len(config_register), "0x", config_register.hex())
+        print("default register", self.spi.configuration_register_default().hex())
+        self.spi.configuration_register_print(data)
 #        # Modify values.
 #        frequency_mhz = 433.2
 #        rx_address = 0xABABABAB
