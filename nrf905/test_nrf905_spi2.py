@@ -4,67 +4,13 @@ import pigpio
 import unittest
 import sys
 
-# from nrf905.nrf905_spi import Nrf905Spi
+from nrf905.nrf905_spi import Nrf905Spi
 
 
 def callback(data):
     """ Prints out the contents of the data received. """
     print("callback", data)
     print()
-
-
-class Nrf905Spi:
-
-    def __init__(self):
-        self.__spi_h = None
-        self.__status = 0
-
-    def open(self, pi):
-        print("open:", pi)
-        self.__pi = pi
-        print("open self.__pi:", self.__pi)
-        self.__spi_h = self.__pi.spi_open(0, 32000, 2)
-        print("open self.__spi_h:", self.__spi_h)
-
-    def close(self):
-        print("close: self.__pi:", self.__pi)
-        self.__pi.spi_close(self.__spi_h)
-
-    def default_config_register(self):
-        register = bytearray(10)
-        register[0] = 0b01101100
-        register[1] = 0
-        register[2] = 0b01000100
-        register[3] = 0b00100000
-        register[4] = 0b00100000
-        register[5] = 0xE7
-        register[6] = 0xE7
-        register[7] = 0xE7
-        register[8] = 0xE7
-        register[9] = 0b11100111
-        return register
-
-    def command_read_config(self):
-        # Command to read all 10 bytes
-        read_config_command = bytearray(11)
-        read_config_command[0] = 0b00100000
-        result = self.send_command(read_config_command)
-        print("default register", self.default_config_register().hex())
-        return result
-
-    def send_command(self, b_command):
-        print("Command is 0x", b_command.hex())
-        # Transfer the data
-        print("send_command: self.__pi:", self.__pi)
-        print("send_command self.__spi_h:", self.__spi_h)
-        (count, data) = self.__pi.spi_xfer(self.__spi_h, b_command)
-        # Print what we received
-        print("Received", count, data)
-        if count > 0:
-            self.__status = data.pop(0)
-            print("Status 0x", self.__status)
-            print("Data bytes", len(data), "0x", data.hex())
-        return data
 
 
 class TestNrf905Spi(unittest.TestCase):
