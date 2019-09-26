@@ -41,7 +41,7 @@ class TestNrf905Spi(unittest.TestCase):
         print("Status 0x", self.spi.status_register_get())
         config_register.print()
         # Modify and write back.
-        new_address = 0xABABABAB
+        new_address = 0xDEADBEEF
         config_register.set_rx_address(new_address)
         self.spi.configuration_register_write(config_register)
         # Read back and verify change have happened.

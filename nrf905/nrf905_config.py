@@ -39,7 +39,7 @@ class Nrf905ConfigRegister:
         print("RX_AFW", self.get_rx_afw())
         print("RX_PWR:", self.get_rx_pw())
         print("TX_PWR:", self.get_tx_pw())
-        print("RX_ADDRESS:", self.get_rx_address())
+        print("RX_ADDRESS:", hex(self.get_rx_address()))
         print("CRC_MODE:", self.get_crc_mode())
         print("CRC_EN:", self.get_crc_en())
         print("XOF:", self.get_xof_mhz())
@@ -167,25 +167,22 @@ class Nrf905ConfigRegister:
 
     def get_rx_address(self):
         # TODO This should only read the bytes that are specified in the width.
-        address = self.registers[8]
-        address <<= 8
-        address = self.registers[7]
-        address <<= 8
-        address = self.registers[6]
-        address <<= 8
-        address = self.registers[5]
+        regs = self.registers[5:9]
+        # print("gra regs", regs)
+        address = int.from_bytes(regs, 'little')
+        # print("gra test", hex(address))
         return address
 
     def set_rx_address(self, address):
         # TODO This should only accept the number of bytes that are specified in
         # the width.
-        self.registers[5] = address & 0xFF
-        address >>= 8
-        self.registers[6] = address & 0xFF
-        address >>= 8
-        self.registers[7] = address & 0xFF
-        address >>= 8
-        self.registers[8] = address & 0xFF
+        # Reg 5 = byte 0, reg 6 = byte 1, reg 7 = byte 2, reg 8 = byte 3
+        # print("sra", hex(address))
+        regs = address.to_bytes(4, 'little')
+        # print("sra bytes", regs)
+        for i in range(0, 4):
+            self.registers[5 + i] = regs[i]
+        # print("sra::", self.registers)
 
     def get_crc_mode(self):
         result = 0

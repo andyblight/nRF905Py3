@@ -90,12 +90,12 @@ class Nrf905Spi:
         register_bytes = register.get_all()
         if len(register_bytes) == 10:
             command = bytearray(11)
-            command[0] = self.INSTRUCTION_W_CONFIG
+            command[0] = self.__INSTRUCTION_W_CONFIG
             # Copy the rest of the data into the command.
             command[1:1 + len(register_bytes)] = register_bytes
             print("crw:", command)
             # Write the command to the config register.
-            pi.spi_write(self.__handle, command)
+            self.send_command(command)
         else:
             raise ValueError("register_bytes must contain exactly 10 bytes")
 
