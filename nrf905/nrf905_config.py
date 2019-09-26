@@ -166,6 +166,7 @@ class Nrf905ConfigRegister:
             raise ValueError("tx_pw must be in range 1 to 32")
 
     def get_rx_address(self):
+        # TODO This should only read the bytes that are specified in the width.
         address = self.registers[8]
         address <<= 8
         address = self.registers[7]
@@ -176,6 +177,8 @@ class Nrf905ConfigRegister:
         return address
 
     def set_rx_address(self, address):
+        # TODO This should only accept the number of bytes that are specified in
+        # the width.
         self.registers[5] = address & 0xFF
         address >>= 8
         self.registers[6] = address & 0xFF

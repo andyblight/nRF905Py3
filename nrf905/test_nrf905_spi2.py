@@ -40,6 +40,16 @@ class TestNrf905Spi(unittest.TestCase):
         self.assertEqual(len(data_bytes), 10)
         print("Status 0x", self.spi.status_register_get())
         config_register.print()
+        # Modify and write back.
+        new_address = 0xABABABAB
+        config_register.set_rx_address(new_address)
+        self.spi.configuration_register_write(config_register)
+        # Read back and verify change have happened.
+        config_register = self.spi.configuration_register_read()
+        data_bytes = config_register.get_all()
+        self.assertEqual(len(data_bytes), 10)
+        print("Status 0x", self.spi.status_register_get())
+        config_register.print()
 
         # # Test channel_config()
         # self.spi.channel_config(0, False, 0)
