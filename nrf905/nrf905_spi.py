@@ -17,7 +17,7 @@ class Nrf905Spi:
     __CRYSTAL_FREQUENCY_HZ = 16 * 1000 * 1000  # 16MHz is on the board I'm using.
 
     # SPI pins are defaults for pigpio bus 0 (RPi 1 A&B only have SPI bus 0).
-    __SPI_BUS_0_FLAGS = 0
+    __SPI_BUS_0_FLAGS = 0 
     __SPI_BUS_1_FLAGS = 0
     __SPI_SCK_HZ = 10 * 1000 * 1000  # Set to 10MHz.  10MHz max. (data sheet)
 
@@ -32,18 +32,19 @@ class Nrf905Spi:
     __INSTRUCTION_CHANNEL_CONFIG = 0b10000000
 
     def __init__(self):
+        self.__pi = None
         self.__spi_h = None
         self.__status = 0
 
     def open(self, pi):
-        # print("open:", pi)
+        print("open:", pi)
         self.__pi = pi
-        # print("open self.__pi:", self.__pi)
-        self.__spi_h = self.__pi.spi_open(0, 32000, 2)
-        # print("open self.__spi_h:", self.__spi_h)
+        print("open self.__pi:", self.__pi)
+        self.__spi_h = self.__pi.spi_open(0, self.__SPI_SCK_HZ, self.__SPI_BUS_0_FLAGS)
+        print("open self.__spi_h:", self.__spi_h)
 
     def close(self):
-        # print("close: self.__pi:", self.__pi)
+        print("close: self.__pi:", self.__pi)
         self.__pi.spi_close(self.__spi_h)
 
     def status_register_get(self):
@@ -57,15 +58,15 @@ class Nrf905Spi:
             2. The function returns a bytearray that contains the result.
         If the transfer fails, returns an empty bytearray.
         """
-        # print("Command is 0x", b_command.hex())
-        # print("send_command: self.__pi:", self.__pi)
-        # print("send_command self.__spi_h:", self.__spi_h)
+        print("Command is 0x", b_command.hex())
+        print("send_command: self.__pi:", self.__pi)
+        print("send_command self.__spi_h:", self.__spi_h)
         (count, data) = self.__pi.spi_xfer(self.__spi_h, b_command)
-        # print("Received", count, data)
+        print("Received", count, data)
         if count > 0:
             self.__status = data.pop(0)
-            # print("Status 0x", self.__status)
-            # print("Data bytes", len(data), "0x", data.hex())
+            print("Status 0x", self.__status)
+            print("Data bytes", len(data), "0x", data.hex())
         else:
             data = bytearray()
         return data
