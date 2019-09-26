@@ -1,10 +1,12 @@
 #!/usr/bin/env python3
 
 class Nrf905ConfigRegister:
-    """ The config register class has many functions so it was worth splitting
-    these functions out to keep the Nrf905Spi class simple.
+    """ The config register class has many functions so made sense to move them
+    out of the Nrf905Spi class.
     As the datasheet and most uses of this class revolve around the byte 
     values, use the bytearray internally.
+    Function names for getters and setters match the datasheet names for the
+    registers.
     """
 
     def __init__(self):
@@ -38,11 +40,11 @@ class Nrf905ConfigRegister:
         print("RX_PWR:", self.get_rx_pwr())
         print("TX_PWR:", self.get_tx_pwr())
         print("RX_ADDRESS:", self.get_rx_address())
-        print("CRC_MODE:", self.registers[9] & 0x80)
-        print("CRC_EN:", self.registers[9] & 0x40)
-        print("XOF:", self.registers[9] & 0x38)
-        print("UP_CLK_EN:", self.registers[9] & 0x04)
-        print("UP_CLK_FREQ:", self.registers[9] & 0x03)
+        print("CRC_MODE:", self.get_crc_mode())
+        print("CRC_EN:", self.get_crc_en())
+        print("XOF:", self.get_xof_mhz())
+        print("UP_CLK_EN:", self.get_up_clk_en())
+        print("UP_CLK_FREQ:", self.get_up_clk_freq_mhz())
 
     def get_all(self):
         """ Return a bytearray representing the configuration registers. """

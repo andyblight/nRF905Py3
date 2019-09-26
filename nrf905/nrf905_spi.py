@@ -72,27 +72,27 @@ class Nrf905Spi:
         """ Command to read all 10 bytes of the configuration register. """
         command = bytearray(11)
         command[0] = self.__INSTRUCTION_R_CONFIG
-        result = self.send_command(command)
+        data = self.send_command(command)
+        register = Nrf905ConfigRegister()
+        register.set_all(data)
         return result
 
     def configuration_register_write(self, register):
-        """ Writes a data to the RF configuration register.
-            Raises ValueError exception if data does not contain 10 bytes.
-            data must also be a bytearray.
+        """ Writes the data from the register object to the RF configuration
+        register.
+        Raises ValueError exception if data does not contain 10 bytes.
         """
-        if len(data) == 10:
+        register_bytes = register.get_all()
+        if len(register_bytes) == 10:
             command = bytearray(11)
-            # Prepend the instruction for writing all bytes to the config 
-            # register.  The 4 least significant bytes are set to 0 so all 
-            # bytes are written to. 
             command[0] = self.INSTRUCTION_W_CONFIG
             # Copy the rest of the data into the command.
-            command[1:1 + len(data)] = data
+            command[1:1 + len(register_bytes)] = register_bytes
             print("crw:", command)
             # Write the command to the config register.
             pi.spi_write(self.__handle, command)
         else:
-            raise ValueError("data must contain 10 bytes")
+            raise ValueError("register_bytes must contain exactly 10 bytes")
 
     def channel_config(self, channel_number, hfreq_pll, pa_pwr):
         """ Special command for fast setting of CH_NO, HFREQ_Pand PA_PWR in the

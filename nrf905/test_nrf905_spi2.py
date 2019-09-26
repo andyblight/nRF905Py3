@@ -5,6 +5,7 @@ import unittest
 import sys
 
 from nrf905.nrf905_spi import Nrf905Spi
+from nrf905.nrf905_config import Nrf905ConfigRegister
 
 
 def callback(data):
@@ -35,11 +36,10 @@ class TestNrf905Spi(unittest.TestCase):
         # Test defaults
         print("tcrrw: self.spi:", self.spi)
         config_register = self.spi.configuration_register_read()
-        self.assertEqual(len(config_register), 10)
+        data_bytes = config_register.get_all()
+        self.assertEqual(len(data_bytes, 10)
         print("Status 0x", self.spi.status_register_get())
-        print("Data bytes", len(config_register), "0x", config_register.hex())
-        print("default register", self.spi.configuration_register_power_on_defaults().hex())
-        self.spi.configuration_register_print(config_register)
+        config_register.print()
 
         # # Test channel_config()
         # self.spi.channel_config(0, False, 0)
