@@ -37,7 +37,7 @@ class TestNrf905Spi(unittest.TestCase):
         print("tcrrw: self.spi:", self.spi)
         config_register = self.spi.configuration_register_read()
         data_bytes = config_register.get_all()
-        self.assertEqual(len(data_bytes, 10)
+        self.assertEqual(len(data_bytes), 10)
         print("Status 0x", self.spi.status_register_get())
         config_register.print()
 

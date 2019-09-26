@@ -37,8 +37,8 @@ class Nrf905ConfigRegister:
         print("HFREQ_PLL:", self.get_hfreq_pll())
         print("TX_AFW:", self.get_tx_afw())
         print("RX_AFW", self.get_rx_afw())
-        print("RX_PWR:", self.get_rx_pwr())
-        print("TX_PWR:", self.get_tx_pwr())
+        print("RX_PWR:", self.get_rx_pw())
+        print("TX_PWR:", self.get_tx_pw())
         print("RX_ADDRESS:", self.get_rx_address())
         print("CRC_MODE:", self.get_crc_mode())
         print("CRC_EN:", self.get_crc_en())
@@ -166,23 +166,23 @@ class Nrf905ConfigRegister:
             raise ValueError("tx_pw must be in range 1 to 32")
 
     def get_rx_address(self):
-        address = registers[8]
+        address = self.registers[8]
         address <<= 8
-        address = registers[7]
+        address = self.registers[7]
         address <<= 8
-        address = registers[6]
+        address = self.registers[6]
         address <<= 8
-        address = registers[5]
+        address = self.registers[5]
         return address
 
     def set_rx_address(self, address):
-        registers[5] = address & 0xFF
+        self.registers[5] = address & 0xFF
         address >>= 8
-        registers[6] = address & 0xFF
+        self.registers[6] = address & 0xFF
         address >>= 8
-        registers[7] = address & 0xFF
+        self.registers[7] = address & 0xFF
         address >>= 8
-        registers[8] = address & 0xFF
+        self.registers[8] = address & 0xFF
 
     def get_crc_mode(self):
         result = 0

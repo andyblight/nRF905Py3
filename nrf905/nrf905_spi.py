@@ -2,6 +2,8 @@
 
 import pigpio
 
+from nrf905.nrf905_config import Nrf905ConfigRegister
+
 class Nrf905Spi:
     """ Handles access to SPI bus and the nRF905 registers.
     Extracts from the data sheet.
@@ -69,13 +71,15 @@ class Nrf905Spi:
         return data
 
     def configuration_register_read(self):
-        """ Command to read all 10 bytes of the configuration register. """
+        """ Command to read all 10 bytes of the configuration register.
+        Returns an instance of Nrf905ConfigRegister.
+        """
         command = bytearray(11)
         command[0] = self.__INSTRUCTION_R_CONFIG
         data = self.send_command(command)
         register = Nrf905ConfigRegister()
         register.set_all(data)
-        return result
+        return register
 
     def configuration_register_write(self, register):
         """ Writes the data from the register object to the RF configuration
