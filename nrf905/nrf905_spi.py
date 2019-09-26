@@ -37,14 +37,14 @@ class Nrf905Spi:
         self.__status = 0
 
     def open(self, pi):
-        print("open:", pi)
+        # print("open:", pi)
         self.__pi = pi
-        print("open self.__pi:", self.__pi)
+        # print("open self.__pi:", self.__pi)
         self.__spi_h = self.__pi.spi_open(0, self.__SPI_SCK_HZ, self.__SPI_BUS_0_FLAGS)
-        print("open self.__spi_h:", self.__spi_h)
+        # print("open self.__spi_h:", self.__spi_h)
 
     def close(self):
-        print("close: self.__pi:", self.__pi)
+        # print("close: self.__pi:", self.__pi)
         self.__pi.spi_close(self.__spi_h)
 
     def status_register_get(self):
@@ -58,15 +58,15 @@ class Nrf905Spi:
             2. The function returns a bytearray that contains the result.
         If the transfer fails, returns an empty bytearray.
         """
-        print("Command is 0x", b_command.hex())
-        print("send_command: self.__pi:", self.__pi)
-        print("send_command self.__spi_h:", self.__spi_h)
+        # print("Command is 0x", b_command.hex())
+        # print("send_command: self.__pi:", self.__pi)
+        # print("send_command self.__spi_h:", self.__spi_h)
         (count, data) = self.__pi.spi_xfer(self.__spi_h, b_command)
-        print("Received", count, data)
+        # print("Received", count, data)
         if count > 0:
             self.__status = data.pop(0)
-            print("Status 0x", self.__status)
-            print("Data bytes", len(data), "0x", data.hex())
+            # print("Status 0x", self.__status)
+            # print("Data bytes", len(data), "0x", data.hex())
         else:
             data = bytearray()
         return data
@@ -140,7 +140,6 @@ class Nrf905Spi:
 #         self.__set_bus(spi_bus)
 #         # Open using validated SPI bus.
 #         self.__handle = pi.spi_open(self.__bus, self.__sck_hz, self.__flags)
-
 #     def __set_flags(self):
 #         """ See http://abyz.me.uk/rpi/pigpio/python.html#spi_open for details.
 #         The nRF095 works with most values set to 0.
