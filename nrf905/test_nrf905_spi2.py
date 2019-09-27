@@ -35,21 +35,25 @@ class TestNrf905Spi(unittest.TestCase):
         """
         # Test defaults
         print("tcrrw: self.spi:", self.spi)
+        # Check that we can read 10 bytes
         config_register = self.spi.configuration_register_read()
         data_bytes = config_register.get_all()
         self.assertEqual(len(data_bytes), 10)
-        print("Status 0x", self.spi.status_register_get())
         config_register.print()
-        # Modify and write back.
+        # Set registers to power on defaults
+        default_register = Nrf905ConfigRegister()
+        self.spi.configuration_register_write(default_register)
+        # Read back and verify that defaults are correct
+        config_register = self.spi.configuration_register_read()
+        self.assertTrue(config_register == default_register)
+        # Modify address
         new_address = 0xDEADBEEF
+        default_register.set_rx_address(new_address)
         config_register.set_rx_address(new_address)
+        # Write, read back and verify that they are equal
         self.spi.configuration_register_write(config_register)
-        # Read back and verify change have happened.
         config_register = self.spi.configuration_register_read()
-        data_bytes = config_register.get_all()
-        self.assertEqual(len(data_bytes), 10)
-        print("Status 0x", self.spi.status_register_get())
-        config_register.print()
+        self.assertTrue(config_register == default_register)
 
         # # Test channel_config()
         # self.spi.channel_config(0, False, 0)
