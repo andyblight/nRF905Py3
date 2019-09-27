@@ -60,6 +60,17 @@ class TestNrf905Spi(unittest.TestCase):
         config_register = self.spi.configuration_register_read()
         self.assertTrue(config_register == check_register)
 
+   def test_transmit_address_read_write(self):
+       """ Verify the TX_ADDRESS register functions. """
+       write_address = 0xe7e7e7e7
+       self.spi.write_transmit_address(write_address)
+       read_address = self.spi.read_transmit_address()
+       self.assertEqual(write_address, read_address)
+       write_address = 0x18181818
+       self.spi.write_transmit_address(write_address)
+       read_address = self.spi.read_transmit_address()
+       self.assertEqual(write_address, read_address)
+
     def test_channel_config(self):
         # Set config register to known state
         check_register = Nrf905ConfigRegister()
@@ -73,7 +84,7 @@ class TestNrf905Spi(unittest.TestCase):
         ]
         for test in passing_tests:
             # Write to device
-            print("tcc:", test[0], test[1], test[2])
+            # print("tcc:", test[0], test[1], test[2])
             self.spi.channel_config(test[0], test[1], test[2])
             # Update check_register with same data
             check_register.set_channel_number(test[0])
@@ -81,7 +92,7 @@ class TestNrf905Spi(unittest.TestCase):
             check_register.set_pa_pwr(test[2])
             # Read back and verify expected data matches
             config_register = self.spi.configuration_register_read()
-            config_register.print()
+            # config_register.print()
             self.assertTrue(config_register == check_register)
         # Tests that should fail
         value_errors = [
@@ -92,27 +103,6 @@ class TestNrf905Spi(unittest.TestCase):
             # Attempt writing to device.
             with self.assertRaises(ValueError):
                 self.spi.channel_config(test[0], test[1], test[2])
-
-#        # Modify values.
-#        frequency_mhz = 433.2
-#        rx_address = 0xABABABAB
-#        crc_bits = 8
-#        config_register = self.spi.configuration_register_create(frequency_mhz, rx_address, crc_bits)
-#        self.spi.configuration_register_write(self.pi, config_register)
-#        # Verify changes have been written. 
-#        data = self.spi.configuration_register_read(self.pi)
-#        self.assertEqual(len(data), 10)
-#        self.spi.configuration_register_print(data)
-
-#    def test_transmit_address_read_write(self):
-#        """ Verify that the functions that write to and read from the TX_ADDRESS
-#        register work as expected. """
-#        # Verify that default value, E7E7E7E7, can be read.
-#        address = self.spi.read_transmit_address(self.pi)
-#        expected_address = 0xE7E7E7E7
-#        print("Expected address", expected_address, "actual address", address)
-#        # self.assertEqual(address, expected_address)
-#        self.assertEqual(0, self.spi.get_status_register())
 
 
 if __name__ == '__main__':

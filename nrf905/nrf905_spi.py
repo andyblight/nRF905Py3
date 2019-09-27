@@ -99,6 +99,25 @@ class Nrf905Spi:
         else:
             raise ValueError("register_bytes must contain exactly 10 bytes")
 
+    def write_transmit_address(self, address):
+        """ Writes the value of address to the transmit address register. """
+        command = bytearray()
+        command.append(self.__INSTRUCTION_W_TX_ADDRESS)
+        b_address = address.to_bytes(self.__transmit_address_width, 'little')
+        command.append(b_address)
+        print("wta:", address, command)
+        self.send_command(command)
+
+    def read_transmit_address(self):
+        """ Returns a 32 bit value representing the address. """
+        # Send the instruction to read the TX ADDRESS register.
+        # Also needs a 0 byte for each of the bytes to read.
+        command = bytearray(self.__receive_address_width + 1)
+        command[0] = self.__INSTRUCTION_R_TX_ADDRESS
+        data = self.send_command(command)
+        address = int.from_bytes(data, 'little')
+        return address
+
     def channel_config(self, channel_number, hfreq_pll, pa_pwr):
         """ Special command for fast setting of CH_NO, HFREQ_Pand PA_PWR in the
         CONFIGURATION REGISTER.  SPI command has structure:
@@ -119,8 +138,9 @@ class Nrf905Spi:
                 command[0] |= 1
         else:
             raise ValueError("Out of range: 0 <= channel_number < 0x200")
-        print("channel_config", command.hex())
+        # print("channel_config", command.hex())
         self.send_command(command)
+
 
 
 # class Nrf905Spi:
@@ -170,54 +190,6 @@ class Nrf905Spi:
 #         self.__bus = spi_bus
 #         self.__set_flags()
 
-#     # TODO add named fields for the address and payload field widths. 
-#     def configuration_register_create(self, frequency_mhz, rx_address, crc_bits):
-#         """ Creates an array of data bytes from the given parameters suitable for
-#         writing to the device.
-#         crc_bits is one of 0, 8, 16.
-#         """
-#         register = bytearray(10)
-#         frequency_bits = self.__frequency_to_bits(frequency_mhz)
-#         register[0] = frequency_bits[0]
-#         register[1] = frequency_bits[1]
-#         # Byte 1 also has:
-#         # PA_PWR.  Use lowset setting, 0b00000000
-#         # RX_RED_PWR. Normal operation = 0
-#         # AUTO_RETRAN 0 = no auto retransmit.
-#         # All 0 for now so nothing to do.
-#         register[1] |= 0b00000000
-#         # Byte 2 TX_AFW = 0b01110000, RX_AFW = 0b00000111
-#         # Use 4 byte address widths for both.
-#         register[2] = 0b01000100
-#         # Byte 3. RX_PW 1 to 32. Set to 32 byte for now.
-#         register[3] = 32
-#         # Byte 4. TX_PW 1 to 32. Set to 32 byte for now.
-#         register[4] = 32
-#         # Bytes 5 to 8, the RX address.
-#         register[5] = rx_address & 0x000000ff
-#         register[6] = (rx_address & 0x0000ff00) >> 8
-#         register[7] = (rx_address & 0x00ff0000) >> 16
-#         register[8] = (rx_address & 0xff000000) >> 24
-#         # Byte 9
-#         # XOF is 16MHz, 0b00011000
-#         # UP_CLK_EN = 0, UP_CLK_FREQ = 00
-#         register[9] = 0b00011000
-#         # crc_bits is used to set CRC_EN (bit 6) and CRC_MODE (bit 7).
-#         if crc_bits == 0:
-#             # CRC_EN = 0 (disable)
-#             pass
-#         elif crc_bits == 8:
-#             # CRC_EN = 1 (enable)
-#             # CRC_MODE = 0 (8 bits)
-#             register[9] |= 0b01000000
-#         elif crc_bits == 16:
-#             # CRC_EN = 1 (enable)
-#             # CRC_MODE = 1 (16 bits)
-#             register[9] |= 0b11000000
-#         else:
-#             raise ValueError("crc_bits must be one of 0, 8, 16.")
-#         return register
-
 #     def __frequency_to_bits(self, frequency):
 #         """ Returns a pair of bytes correct values of CH_NO and HFREQ_PLL.
 #         Raises exception if frequency is invalid.
@@ -257,43 +229,6 @@ class Nrf905Spi:
 #     def read_transmit_payload(self, pi, payload):
 #         pass
 
-#     def write_transmit_address(self, pi, address):
-#         """ Writes the value of address to the transmit address register.
-#         Multi-byte values are transmitted LSB first, so the address
-#         needs to be broken down into bytes before sending.
-#         """
-#         # Create the array of bytes to send.
-#         command = bytearray(self.__transmit_address_width + 1)
-#         command[0] = self.INSTRUCTION_W_TX_ADDRESS
-#         for i in range(0, self.__transmit_address_width):
-#             byte = address & 0x000000FF
-#             data.append(byte)
-#             address >>= 8
-#         print("wta:", address, data)
-#         # Send the bytes.
-#         (count, status) = pi.spi_xfer(self.__handle, data)
-#         # There should only be one byte received, the value of the status register.
-#         print("wta:", count, status)
-#         self.__status_register = status
-
-#     def read_transmit_address(self, pi):
-#         """ Returns a 32 bit value representing the address. """
-#         # Send the instruction to read the TX ADDRESS register.
-#         # Also needs a 0 byte for each of the bytes to read.
-#         command_width = self.__receive_address_width + 1
-#         command = bytearray(command_width)
-#         command[0] = self.INSTRUCTION_R_TX_ADDRESS
-#         (count, data) = pi.spi_xfer(self.__handle, command)
-#         print("rta:", count, data)
-#         # The first byte received is the status register.
-#         self.__status_register = data[0]
-#         print("rts status", self.__status_register)
-#         # What is left is the address in reverse order.
-#         address = 0
-#         for i in range(1, len(data)):
-#             address = data[i]
-#             address <<= 8
-#         return address
 
 #     def read_receive_payload(self, pi):
 #         pass
