@@ -113,8 +113,7 @@ class Nrf905Spi:
         """ Writes the value of address to the transmit address register. """
         command = bytearray()
         command.append(self.__INSTRUCTION_W_TX_ADDRESS)
-        b_address = address.to_bytes(self.__transmit_address_width, 'little')
-        command.append(b_address)
+        command += address.to_bytes(self.__transmit_address_width, 'little')
         print("wta:", address, command)
         self.send_command(command)
 
