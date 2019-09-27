@@ -261,3 +261,14 @@ class Nrf905ConfigRegister:
         else:
             raise ValueError("up_clk_freq_mhz must be one of 0.5, 1, 2, 4")
         self.registers[9] = self.set_byte(up_clk_freq[0], 0x03, self.registers[9])
+
+    def board_defaults(self):
+        """ Set the contents of the registers to values that work for the device
+        being used.  This can vary from supplier to supplier so may need to be
+        changed.
+        """
+        self.reset()
+        # 16 Mhz crystal
+        self.set_xof_mhz(16)
+        # Output clock not used.
+        self.up_clk_en(0)
