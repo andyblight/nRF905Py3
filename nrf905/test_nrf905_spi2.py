@@ -47,7 +47,7 @@ class TestNrf905Spi(unittest.TestCase):
         config_register = self.spi.configuration_register_read()
         self.assertTrue(config_register == default_register)
         # Modify address
-        new_address = 0xDEADBEEF
+        new_address = 0x012345678
         default_register.set_rx_address(new_address)
         config_register.set_rx_address(new_address)
         # Write, read back and verify that they are equal

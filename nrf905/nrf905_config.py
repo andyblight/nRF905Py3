@@ -14,6 +14,15 @@ class Nrf905ConfigRegister:
         self.registers = bytearray(10)
         self.reset()
 
+    def __eq__(self, other):
+        """ Equality operator """
+        equal = True
+        for i in range(0, len(self.registers)):
+            if self.registers[i] != other.registers[i]:
+                equal = False
+                break
+        return equal
+
     def reset(self):
         """ Reset the object to power on default values. """
         self.registers[0] = 0b01101100

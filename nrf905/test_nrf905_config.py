@@ -5,9 +5,9 @@ import unittest
 from nrf905.nrf905_config import Nrf905ConfigRegister
 
 
-class TestNrf905SpiNc(unittest.TestCase):
+class TestNrf905Config(unittest.TestCase):
 
-    def test_config_register_init_get(self):
+    def test_init_get(self):
         """ Test the methods: __init__(), get().  """ 
         # Create the object.
         register = Nrf905ConfigRegister()
@@ -24,7 +24,14 @@ class TestNrf905SpiNc(unittest.TestCase):
         self.assertEqual(register_bytes[8], 0xE7)
         self.assertEqual(register_bytes[9], 0xE7)
 
-    def test_config_register_set_reset(self):
+    def test_equality(self):
+        # Create two objects.
+        register1 = Nrf905ConfigRegister()
+        register2 = Nrf905ConfigRegister()
+        # Verify equality test works
+        self.assertTrue(register1 == register2)
+
+    def test_set_reset(self):
         """ Test the methods: set(), reset().  """ 
         register = Nrf905ConfigRegister()
         register_bytes = register.get_all()
@@ -44,16 +51,8 @@ class TestNrf905SpiNc(unittest.TestCase):
         self.assertEqual(register_bytes[8], 0xE7)
         self.assertEqual(register_bytes[9], 0x99)
         register.reset()
-        self.assertEqual(register_bytes[0], 0x6C)
-        self.assertEqual(register_bytes[1], 0x00)
-        self.assertEqual(register_bytes[2], 0x44)
-        self.assertEqual(register_bytes[3], 0x20)
-        self.assertEqual(register_bytes[4], 0x20)
-        self.assertEqual(register_bytes[5], 0xE7)
-        self.assertEqual(register_bytes[6], 0xE7)
-        self.assertEqual(register_bytes[7], 0xE7)
-        self.assertEqual(register_bytes[8], 0xE7)
-        self.assertEqual(register_bytes[9], 0xE7)
+        register2 = Nrf905ConfigRegister()
+        self.assertTrue(register == register2)
 
     def test_set_byte(self):
         """ Tests the set_byte function. """
@@ -83,8 +82,7 @@ class TestNrf905SpiNc(unittest.TestCase):
         result = register.set_byte(value, mask, byte_value)
         self.assertEqual(result, 0x13)
 
-
-    def test_config_register_channel_number(self):
+    def test_channel_number(self):
         register = Nrf905ConfigRegister()
         channel_number = register.get_channel_number()
         self.assertEqual(channel_number, 0x6C)
@@ -95,7 +93,7 @@ class TestNrf905SpiNc(unittest.TestCase):
         channel_number = register.get_channel_number()
         self.assertEqual(channel_number, 0x077)
 
-    def test_config_register_auto_retran(self):
+    def test_auto_retran(self):
         register = Nrf905ConfigRegister()
         auto_retran = register.get_auto_retran()
         self.assertEqual(auto_retran, 0)
@@ -106,7 +104,7 @@ class TestNrf905SpiNc(unittest.TestCase):
         auto_retran = register.get_auto_retran()
         self.assertEqual(auto_retran, 0)
 
-    def test_config_register_rx_red_pwr(self):
+    def test_rx_red_pwr(self):
         register = Nrf905ConfigRegister()
         rx_red_pwr = register.get_rx_red_pwr()
         self.assertEqual(rx_red_pwr, 0)
@@ -117,7 +115,7 @@ class TestNrf905SpiNc(unittest.TestCase):
         rx_red_pwr = register.get_rx_red_pwr()
         self.assertEqual(rx_red_pwr, 0)
 
-    def test_config_register_pa_pwr(self):
+    def test_pa_pwr(self):
         register = Nrf905ConfigRegister()
         pa_pwr = register.get_pa_pwr()
         self.assertEqual(pa_pwr, 0)
@@ -128,7 +126,7 @@ class TestNrf905SpiNc(unittest.TestCase):
         pa_pwr = register.get_pa_pwr()
         self.assertEqual(pa_pwr, 0)
 
-    def test_config_register_hfreq_pll(self):
+    def test_hfreq_pll(self):
         register = Nrf905ConfigRegister()
         hfreq_pll = register.get_hfreq_pll()
         self.assertEqual(hfreq_pll, 0)
@@ -139,7 +137,7 @@ class TestNrf905SpiNc(unittest.TestCase):
         hfreq_pll = register.get_hfreq_pll()
         self.assertEqual(hfreq_pll, 0)
 
-    def test_config_register_tx_afw(self):
+    def test_tx_afw(self):
         register = Nrf905ConfigRegister()
         tx_afw = register.get_tx_afw()
         self.assertEqual(tx_afw, 4)
@@ -156,7 +154,7 @@ class TestNrf905SpiNc(unittest.TestCase):
         with self.assertRaises(ValueError):
             register.set_tx_afw(5)
 
-    def test_config_register_rx_afw(self):
+    def test_rx_afw(self):
         register = Nrf905ConfigRegister()
         rx_afw = register.get_rx_afw()
         self.assertEqual(rx_afw, 4)
@@ -173,7 +171,7 @@ class TestNrf905SpiNc(unittest.TestCase):
         with self.assertRaises(ValueError):
             register.set_rx_afw(5)
 
-    def test_config_register_rx_pw(self):
+    def test_rx_pw(self):
         register = Nrf905ConfigRegister()
         rx_pw = register.get_rx_pw()
         self.assertEqual(rx_pw, 32)
@@ -188,7 +186,7 @@ class TestNrf905SpiNc(unittest.TestCase):
         with self.assertRaises(ValueError):
             register.set_rx_pw(33)
 
-    def test_config_register_tx_pw(self):
+    def test_tx_pw(self):
         register = Nrf905ConfigRegister()
         tx_pw = register.get_tx_pw()
         self.assertEqual(tx_pw, 32)
@@ -203,7 +201,20 @@ class TestNrf905SpiNc(unittest.TestCase):
         with self.assertRaises(ValueError):
             register.set_tx_pw(33)
 
-    def test_config_register_crc_mode(self):
+    def test_rx_address(self):
+        register = Nrf905ConfigRegister()
+        rx_address = register.get_rx_address()
+        self.assertEqual(rx_address, 0xe7e7e7e7)
+        new_address = 0x012345678
+        register.set_rx_address(new_address)
+        rx_address = register.get_rx_address()
+        self.assertEqual(rx_address, new_address)
+        new_address = 0x89ABCDEF
+        register.set_rx_address(new_address)
+        rx_address = register.get_rx_address()
+        self.assertEqual(rx_address, new_address)
+
+    def test_crc_mode(self):
         register = Nrf905ConfigRegister()
         crc_mode = register.get_crc_mode()
         self.assertEqual(crc_mode, 1)
@@ -214,7 +225,7 @@ class TestNrf905SpiNc(unittest.TestCase):
         crc_mode = register.get_crc_mode()
         self.assertEqual(crc_mode, 1)
 
-    def test_config_register_crc_en(self):
+    def test_crc_en(self):
         register = Nrf905ConfigRegister()
         crc_en = register.get_crc_en()
         self.assertEqual(crc_en, 1)
@@ -225,7 +236,7 @@ class TestNrf905SpiNc(unittest.TestCase):
         crc_en = register.get_crc_en()
         self.assertEqual(crc_en, 1)
 
-    def test_config_register_up_clk_en(self):
+    def test_up_clk_en(self):
         register = Nrf905ConfigRegister()
         up_clk_en = register.get_up_clk_en()
         self.assertEqual(up_clk_en, 1)
@@ -236,7 +247,7 @@ class TestNrf905SpiNc(unittest.TestCase):
         up_clk_en = register.get_up_clk_en()
         self.assertEqual(up_clk_en, 1)
 
-    def test_config_register_xof_mhz(self):
+    def test_xof_mhz(self):
         register = Nrf905ConfigRegister()
         xof_mhz = register.get_xof_mhz()
         self.assertEqual(xof_mhz, 20)
@@ -257,7 +268,7 @@ class TestNrf905SpiNc(unittest.TestCase):
         with self.assertRaises(ValueError):
             register.set_xof_mhz(21)
 
-    def test_config_register_up_clk_freq_mhz(self):
+    def test_up_clk_freq_mhz(self):
         register = Nrf905ConfigRegister()
         up_clk_freq_mhz = register.get_up_clk_freq_mhz()
         self.assertEqual(up_clk_freq_mhz, 0.5)
