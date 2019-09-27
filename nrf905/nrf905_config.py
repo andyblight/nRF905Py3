@@ -271,4 +271,4 @@ class Nrf905ConfigRegister:
         # 16 Mhz crystal
         self.set_xof_mhz(16)
         # Output clock not used.
-        self.up_clk_en(0)
+        self.set_up_clk_en(0)
