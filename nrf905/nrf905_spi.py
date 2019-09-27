@@ -35,6 +35,11 @@ class Nrf905Spi:
         self.__pi = None
         self.__spi_h = None
         self.__status = 0
+        # Width of nRF905 registers. Defaults set to chip defaults.
+        self.__receive_address_width = 0b100  # 4 bytes
+        self.__transmit_address_width = 0b100   # 4 bytes
+        self.__receive_payload_width = 0b100000  # 32 bytes
+        self.__transmit_payload_width = 0b100000  # 32 bytes
 
     def open(self, pi):
         # print("open:", pi)
@@ -87,6 +92,11 @@ class Nrf905Spi:
         register.
         Raises ValueError exception if data does not contain 10 bytes.
         """
+        # Update internal width variables.
+        self.__receive_address_width = register.get_rx_afw()
+        self.__transmit_address_width = register.get_tx_afw()
+        self.__receive_payload_width = register.get_rx_pw()
+        self.__transmit_payload_width = register.get_tx_pw()
         register_bytes = register.get_all()
         if len(register_bytes) == 10:
             command = bytearray(11)
@@ -112,7 +122,7 @@ class Nrf905Spi:
         """ Returns a 32 bit value representing the address. """
         # Send the instruction to read the TX ADDRESS register.
         # Also needs a 0 byte for each of the bytes to read.
-        command = bytearray(self.__receive_address_width + 1)
+        command = bytearray(self.__transmit_address_width + 1)
         command[0] = self.__INSTRUCTION_R_TX_ADDRESS
         data = self.send_command(command)
         address = int.from_bytes(data, 'little')

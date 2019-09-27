@@ -60,16 +60,16 @@ class TestNrf905Spi(unittest.TestCase):
         config_register = self.spi.configuration_register_read()
         self.assertTrue(config_register == check_register)
 
-   def test_transmit_address_read_write(self):
-       """ Verify the TX_ADDRESS register functions. """
-       write_address = 0xe7e7e7e7
-       self.spi.write_transmit_address(write_address)
-       read_address = self.spi.read_transmit_address()
-       self.assertEqual(write_address, read_address)
-       write_address = 0x18181818
-       self.spi.write_transmit_address(write_address)
-       read_address = self.spi.read_transmit_address()
-       self.assertEqual(write_address, read_address)
+    def test_transmit_address_read_write(self):
+        """ Verify the TX_ADDRESS register functions. """
+        write_address = 0xe7e7e7e7
+        self.spi.write_transmit_address(write_address)
+        read_address = self.spi.read_transmit_address()
+        self.assertEqual(write_address, read_address)
+        write_address = 0x18181818
+        self.spi.write_transmit_address(write_address)
+        read_address = self.spi.read_transmit_address()
+        self.assertEqual(write_address, read_address)
 
     def test_channel_config(self):
         # Set config register to known state
