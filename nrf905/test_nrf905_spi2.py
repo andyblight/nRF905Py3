@@ -41,39 +41,52 @@ class TestNrf905Spi(unittest.TestCase):
         self.assertEqual(len(data_bytes), 10)
         config_register.print()
         # Set registers to power on defaults
-        default_register = Nrf905ConfigRegister()
-        self.spi.configuration_register_write(default_register)
+        check_register = Nrf905ConfigRegister()
+        self.spi.configuration_register_write(check_register)
         # Read back and verify that defaults are correct
         config_register = self.spi.configuration_register_read()
-        self.assertTrue(config_register == default_register)
+        self.assertTrue(config_register == check_register)
         # Verify board defaults
-        default_register.board_defaults()
-        self.spi.configuration_register_write(default_register)
+        check_register.board_defaults()
+        self.spi.configuration_register_write(check_register)
         config_register = self.spi.configuration_register_read()
-        self.assertTrue(config_register == default_register)
+        self.assertTrue(config_register == check_register)
         # Modify RX address
         new_address = 0x012345678
-        default_register.set_rx_address(new_address)
+        check_register.set_rx_address(new_address)
         config_register.set_rx_address(new_address)
         # Write, read back and verify that they are equal
         self.spi.configuration_register_write(config_register)
         config_register = self.spi.configuration_register_read()
-        self.assertTrue(config_register == default_register)
+        self.assertTrue(config_register == check_register)
 
     def test_channel_config(self):
-        self.spi.channel_config(0, False, 0)
-        print("Expected command: 0x8000")
-        self.spi.channel_config(15, True, 3)
-        print("Expected command: 0x8E0F")
-        self.spi.channel_config(0x1FF, False, 1)
-        print("Expected command: 0x85FF")
-        # Check that values were actually written.
+        # Set config register to known state
+        check_register = Nrf905ConfigRegister()
+        self.spi.configuration_register_write(check_register)
         config_register = self.spi.configuration_register_read()
-        self.assertEqual(len(config_register), 10)
-        print("Status 0x", self.spi.status_register_get())
-        print("Data bytes", len(config_register), "0x", config_register.hex())
-        print("default register", self.spi.configuration_register_default().hex())
-        self.spi.configuration_register_print(config_register)
+        self.assertTrue(config_register == check_register)
+        # Tests that should work
+        passing_tests = [
+            (0,     False, 0), (0x1FF, False, 1),
+            (0xFF,  True,  2), (15,    True,  3)
+        ]
+        for test in passing_tests:
+            # Write to device
+            self.spi.channel_config(test[0], test[1], test[2])
+            # Update check_register with same data
+            # Read back and verify expected data matches
+            config_register = self.spi.configuration_register_read()
+            self.assertTrue(config_register == check_register)
+        # Tests that should fail
+        value_errors = [
+            (-1,    False, 0), (0,     False, -1),
+            (0x200, False, 1), (0x200, False, -12)
+        ]
+        for test in value_errors:
+            # Attempt writing to device.
+            with self.assertRaises(ValueError):
+                self.spi.channel_config(test[0], test[1], test[2])
 
 #        # Modify values.
 #        frequency_mhz = 433.2
