@@ -114,7 +114,7 @@ class Nrf905Spi:
         command = bytearray()
         command.append(self.__INSTRUCTION_W_TX_ADDRESS)
         command += address.to_bytes(self.__transmit_address_width, 'little')
-        print("wta:", address, command)
+        # print("wta:", address, command)
         self.send_command(command)
 
     def read_transmit_address(self):
@@ -126,6 +126,26 @@ class Nrf905Spi:
         data = self.send_command(command)
         address = int.from_bytes(data, 'little')
         return address
+
+    def write_transmit_payload(self, payload):
+        """ Writes the first self.__transmit_payload_width bytes of the payload
+        to the transmit payload registers.
+        """
+        command = bytearray()
+        command.append(self.__INSTRUCTION_W_TX_PAYLOAD)
+        for i in range (0, self.__transmit_payload_width):
+            command.append(payload[i])
+        print("wtp:", address, command)
+        self.send_command(command)
+
+    def read_transmit_payload(self):
+        """ Reads self.__transmit_payload_width bytes from the transmit payload
+        registers.
+        """
+        command = bytearray(self.__transmit_payload_width + 1)
+        command[0] = self.__INSTRUCTION_R_CONFIG
+        payload = self.send_command(command)
+        return payload
 
     def channel_config(self, channel_number, hfreq_pll, pa_pwr):
         """ Special command for fast setting of CH_NO, HFREQ_Pand PA_PWR in the
@@ -231,13 +251,6 @@ class Nrf905Spi:
 #         if result == (0, 0):
 #             raise ValueError("Frequency not found.")
 #         return result
-
-#     def write_transmit_payload(self, pi, payload):
-#         pass
-
-#     def read_transmit_payload(self, pi, payload):
-#         pass
-
 
 #     def read_receive_payload(self, pi):
 #         pass
