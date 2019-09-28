@@ -63,11 +63,11 @@ class Nrf905Spi:
             2. The function returns a bytearray that contains the result.
         If the transfer fails, returns an empty bytearray.
         """
-        print("Command is 0x", b_command.hex())
+        # print("Command is 0x", b_command.hex())
         # print("send_command: self.__pi:", self.__pi)
         # print("send_command self.__spi_h:", self.__spi_h)
         (count, data) = self.__pi.spi_xfer(self.__spi_h, b_command)
-        print("Received", count, data)
+        # print("Received", count, data)
         if count > 0:
             self.__status = data.pop(0)
             # print("Status 0x", self.__status)
@@ -103,7 +103,7 @@ class Nrf905Spi:
             command[0] = self.__INSTRUCTION_W_CONFIG
             # Copy the rest of the data into the command.
             command[1:1 + len(register_bytes)] = register_bytes
-            print("crw:", command)
+            # print("crw:", command)
             # Write the command to the config register.
             self.send_command(command)
         else:
@@ -130,7 +130,7 @@ class Nrf905Spi:
         command = bytearray(self.__transmit_payload_width + 1)
         command[0] = self.__INSTRUCTION_R_TX_PAYLOAD
         payload = self.send_command(command)
-        print("rtp:", command, payload)
+        # print("rtp:", command, payload)
         return payload
 
     def write_transmit_address(self, address):
@@ -158,7 +158,7 @@ class Nrf905Spi:
         command = bytearray(self.__receive_payload_width + 1)
         command[0] = self.__INSTRUCTION_R_RX_PAYLOAD
         payload = self.send_command(command)
-        print("rtp:", command, payload)
+        # print("rtp:", command, payload)
         return payload
 
     def channel_config(self, channel_number, hfreq_pll, pa_pwr):

@@ -18,15 +18,15 @@ class TestNrf905Spi(unittest.TestCase):
 
     def setUp(self):
         self.pi = pigpio.pi()
-        print("setUp: self.pi:", self.pi)
+        # print("setUp: self.pi:", self.pi)
         self.spi = Nrf905Spi()
-        print("setUp: self.spi:", self.spi)
+        # print("setUp: self.spi:", self.spi)
         self.spi.open(self.pi)
 
     def tearDown(self):
-        print("tearDown: self.spi:", self.spi)
+        # print("tearDown: self.spi:", self.spi)
         self.spi.close()
-        print("tearDown: self.pi:", self.pi)
+        # print("tearDown: self.pi:", self.pi)
         self.pi.stop()
 
     def test_configuration_register_read_write(self):
@@ -34,7 +34,7 @@ class TestNrf905Spi(unittest.TestCase):
         Verify that certain values can be modified.
         """
         # Test defaults
-        print("tcrrw: self.spi:", self.spi)
+        # print("tcrrw: self.spi:", self.spi)
         # Check that we can read 10 bytes
         config_register = self.spi.configuration_register_read()
         data_bytes = config_register.get_all()
