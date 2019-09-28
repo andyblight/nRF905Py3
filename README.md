@@ -90,14 +90,75 @@ Pin  Name     SPI pins    No. Board   Datasheet   Notes
 ```
 
 Where it says (resistor), use a 1k resistor.
-The AM and CD pins are optional.  Adding these pins improves control of the devices.  The CD pin improves transmission by only transmitting when the carrier is not detected.  The AM pin can be used to determine if the data packet is valid or not.
+The AM and CD pins are optional.  Adding these pins improves control of the devices.
+The CD pin improves transmission by only transmitting when the carrier is not detected.
+The AM pin can be used to determine if the data packet is valid or not.
 
 NOTE: The file 'wiring.txt' shows the colours of the wires I used during development.
 
 ## Tests
 
 The tests have been written with the aim of getting the code working with the
-nRF905.  The code could be made more testable but 
+nRF905.  There are three sets of tests, each invoked by a different shell script.
+
+### run-pc-tests.sh
+
+Runs tests that can be run on the host PC (does not use pigpio or the nRF905).
+
+### run-nc-tests.sh
+
+Runs tests that must be run on the Raspberry Pi (calls pigpio) but does not try to use the nRF905 module.
+
+### run-c-tests.sh
+
+Runs tests that must be run on the Raspberry Pi (calls pigpio) and has the nRF905 module connected (tries to use registers on the device).
+
+## Design
+
+The code is arranged in a number of modules.
+
+```Z
+     ____________________________________
+    |             nrf905.py              |
+    |____________________________________|
+     ________________    ________________    __________________
+    | nrf905_gpio.py |  | nrf095_spi.py  |  | nrf905_config.py |
+    |________________|  |________________|  |__________________|
+     ____________________________________
+    |              pigpio                |
+    |____________________________________|
+
+```
+
+### nrf905.py
+
+Implements the class Nrf905.
+
+This class forms the interface that most coders will use.  An instance of this class will use one Nrf905Gpio object and one Nrf905Spi object.  These objects are used together to control the nRF905 module.
+
+Depends on Nrf905GPio and Nrf905Spi.
+
+### nrf905_gpio.py
+
+Implements the class Nrf905Gpio.
+
+Responsible for controlling and responding to the GPIO pins used by the nRF905 module.
+
+Depends on pigpio.
+
+### nrf905_spi.py
+
+Implements the class Nrf905Spi.
+
+Responsible for reading and writing messages using the SPI bus via the pigpio commands.  Also uses Nrf905ConfigRegister to read and write to the nRF905 config register.
+
+Depends on Nrf905ConfigRegister and pigpio.
+
+### nrf905_config.py
+
+Implements the class Nrf905ConfigRegister.  During development, this was split out from the Nrf905Spi class as it became so big.  Splitting it out also made unit testing of this whole class much easier.
+
+No dependencies.
 
 ## TO DO List
 
