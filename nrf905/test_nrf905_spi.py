@@ -60,6 +60,52 @@ class TestNrf905Spi(unittest.TestCase):
         config_register = self.spi.configuration_register_read()
         self.assertTrue(config_register == check_register)
 
+    def test_transmit_payload_read_write(self):
+        """ Verify that values can be written to and read from the transmit
+        payload registers.  Also verify that only the number of bytes specifed
+        in the payload width registers are used.
+        """
+        # Set config registers to power on defaults
+        check_register = Nrf905ConfigRegister()
+        self.spi.configuration_register_write(check_register)
+        config_register = self.spi.configuration_register_read()
+        self.assertTrue(config_register == check_register)
+        # Test 32 byte transfers
+        payload_width = 32
+        write_payload = bytearray(payload_width)
+        for i in range(0, payload_width):
+            write_payload[i] = i + 1
+        self.spi.write_transmit_payload(write_payload)
+        read_payload = self.spi.read_transmit_payload()
+        for i in range(0, payload_width):
+            self.assertEqual(write_payload[i], read_payload[i])
+        # Test 14 byte transfers
+        payload_width = 14
+        check_register.set_tx_pw(payload_width)
+        self.spi.configuration_register_write(check_register)
+        config_register = self.spi.configuration_register_read()
+        self.assertTrue(config_register == check_register)
+        write_payload = bytearray(payload_width)
+        for i in range(0, payload_width):
+            write_payload[i] = i + 2
+        self.spi.write_transmit_payload(write_payload)
+        read_payload = self.spi.read_transmit_payload()
+        for i in range(0, payload_width):
+            self.assertEqual(write_payload[i], read_payload[i])
+        # Test 1 byte transfers
+        payload_width = 1
+        check_register.set_tx_pw(payload_width)
+        self.spi.configuration_register_write(check_register)
+        config_register = self.spi.configuration_register_read()
+        self.assertTrue(config_register == check_register)
+        write_payload = bytearray(payload_width)
+        for i in range(0, payload_width):
+            write_payload[i] = i + 3
+        self.spi.write_transmit_payload(write_payload)
+        read_payload = self.spi.read_transmit_payload()
+        for i in range(0, payload_width):
+            self.assertEqual(write_payload[i], read_payload[i])
+
     def test_transmit_address_read_write(self):
         """ Verify the TX_ADDRESS register functions. """
         write_address = 0xe7e7e7e7
@@ -103,49 +149,6 @@ class TestNrf905Spi(unittest.TestCase):
             # Attempt writing to device.
             with self.assertRaises(ValueError):
                 self.spi.channel_config(test[0], test[1], test[2])
-
-    def test_transmit_address_read_write(self):
-        """ Verify that values can be written to and read from the transmit
-        payload registers.  Also verify that only the number of bytes specifed
-        in the payload width registers are used.
-        """
-        # Set config registers to power on defaults
-        check_register = Nrf905ConfigRegister()
-        self.spi.configuration_register_write(check_register)
-        config_register = self.spi.configuration_register_read()
-        self.assertTrue(config_register == check_register)
-        # Test 32 byte transfers
-        payload_width = 32
-        write_payload = bytearray(payload_width)
-        for i in range(0, payload_width):
-            write_payload[i] = i
-        self.spi.write_transmit_payload(write_payload)
-        read_payload = self.spi.read_transmit_address()
-        self.assertEqual(write_payload, read_payload)
-        # Test 14 byte transfers
-        payload_width = 14
-        check_register.set_tx_pw(payload_width)
-        self.spi.configuration_register_write(check_register)
-        config_register = self.spi.configuration_register_read()
-        self.assertTrue(config_register == check_register)
-        write_payload = bytearray(payload_width)
-        for i in range(0, payload_width):
-            write_payload[i] = i + 2
-        self.spi.write_transmit_payload(write_payload)
-        read_payload = self.spi.read_transmit_address()
-        self.assertEqual(write_payload, read_payload)
-        # Test 1 byte transfers
-        payload_width = 1
-        check_register.set_tx_pw(payload_width)
-        self.spi.configuration_register_write(check_register)
-        config_register = self.spi.configuration_register_read()
-        self.assertTrue(config_register == check_register)
-        write_payload = bytearray(payload_width)
-        for i in range(0, payload_width):
-            write_payload[i] = i + 2
-        self.spi.write_transmit_payload(write_payload)
-        read_payload = self.spi.read_transmit_address()
-        self.assertEqual(write_payload, read_payload)
 
 
 if __name__ == '__main__':

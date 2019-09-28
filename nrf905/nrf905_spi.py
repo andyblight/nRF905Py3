@@ -35,11 +35,11 @@ class Nrf905Spi:
         self.__pi = None
         self.__spi_h = None
         self.__status = 0
-        # Width of nRF905 registers. Defaults set to chip defaults.
-        self.__receive_address_width = 0b100  # 4 bytes
-        self.__transmit_address_width = 0b100   # 4 bytes
-        self.__receive_payload_width = 0b100000  # 32 bytes
-        self.__transmit_payload_width = 0b100000  # 32 bytes
+        # Width of nRF905 registers in bytes. Defaults set to chip defaults.
+        self.__receive_address_width = 4  # bytes
+        self.__transmit_address_width = 4  # bytes
+        self.__receive_payload_width = 32  # bytes
+        self.__transmit_payload_width = 32  # bytes
 
     def open(self, pi):
         # print("open:", pi)
@@ -63,11 +63,11 @@ class Nrf905Spi:
             2. The function returns a bytearray that contains the result.
         If the transfer fails, returns an empty bytearray.
         """
-        # print("Command is 0x", b_command.hex())
+        print("Command is 0x", b_command.hex())
         # print("send_command: self.__pi:", self.__pi)
         # print("send_command self.__spi_h:", self.__spi_h)
         (count, data) = self.__pi.spi_xfer(self.__spi_h, b_command)
-        # print("Received", count, data)
+        print("Received", count, data)
         if count > 0:
             self.__status = data.pop(0)
             # print("Status 0x", self.__status)
@@ -131,20 +131,24 @@ class Nrf905Spi:
         """ Writes the first self.__transmit_payload_width bytes of the payload
         to the transmit payload registers.
         """
-        command = bytearray()
-        command.append(self.__INSTRUCTION_W_TX_PAYLOAD)
-        for i in range (0, self.__transmit_payload_width):
-            command.append(payload[i])
-        print("wtp:", address, command)
-        self.send_command(command)
+        if len(payload) == self.__transmit_payload_width:
+            command = bytearray()
+            command.append(self.__INSTRUCTION_W_TX_PAYLOAD)
+            for i in range (0, self.__transmit_payload_width):
+                command.append(payload[i])
+            print("wtp:", payload, command)
+            self.send_command(command)
+        else:
+            raise ValueError("payload too big for payload width setting")
 
     def read_transmit_payload(self):
         """ Reads self.__transmit_payload_width bytes from the transmit payload
         registers.
         """
         command = bytearray(self.__transmit_payload_width + 1)
-        command[0] = self.__INSTRUCTION_R_CONFIG
+        command[0] = self.__INSTRUCTION_R_TX_PAYLOAD
         payload = self.send_command(command)
+        print("rtp:", command, payload)
         return payload
 
     def channel_config(self, channel_number, hfreq_pll, pa_pwr):
