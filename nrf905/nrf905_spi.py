@@ -118,7 +118,7 @@ class Nrf905Spi:
             command.append(self.__INSTRUCTION_W_TX_PAYLOAD)
             for i in range (0, self.__transmit_payload_width):
                 command.append(payload[i])
-            print("wtp:", payload, command)
+            # print("wtp:", payload, command)
             self.send_command(command)
         else:
             raise ValueError("payload too big for payload width setting")

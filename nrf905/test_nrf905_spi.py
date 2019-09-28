@@ -39,7 +39,7 @@ class TestNrf905Spi(unittest.TestCase):
         config_register = self.spi.configuration_register_read()
         data_bytes = config_register.get_all()
         self.assertEqual(len(data_bytes), 10)
-        config_register.print()
+        # config_register.print()
         # Set registers to power on defaults
         check_register = Nrf905ConfigRegister()
         self.spi.configuration_register_write(check_register)
