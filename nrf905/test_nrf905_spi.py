@@ -117,6 +117,38 @@ class TestNrf905Spi(unittest.TestCase):
         read_address = self.spi.read_transmit_address()
         self.assertEqual(write_address, read_address)
 
+    def test_receive_payload_read(self):
+        """ Verify that values can be read from the receive payload register.
+        This is difficult to test reliably as the data must be received and
+        that needs antoher transmitter.  All we can test for here is that the
+        number of bytes read is the same as the the number of bytes specified
+        by the receive payload width register.
+        """
+        # Set config registers to power on defaults, 32 bytes of payload.
+        check_register = Nrf905ConfigRegister()
+        payload_width = 32
+        self.spi.configuration_register_write(check_register)
+        config_register = self.spi.configuration_register_read()
+        self.assertTrue(config_register == check_register)
+        read_payload = self.spi.read_receive_payload()
+        self.assertEqual(len(read_payload), payload_width)
+        # Test 14 byte payload
+        payload_width = 14
+        check_register.set_rx_pw(payload_width)
+        self.spi.configuration_register_write(check_register)
+        config_register = self.spi.configuration_register_read()
+        self.assertTrue(config_register == check_register)
+        read_payload = self.spi.read_receive_payload()
+        self.assertEqual(len(read_payload), payload_width)
+        # Test 1 byte transfers
+        payload_width = 1
+        check_register.set_rx_pw(payload_width)
+        self.spi.configuration_register_write(check_register)
+        config_register = self.spi.configuration_register_read()
+        self.assertTrue(config_register == check_register)
+        read_payload = self.spi.read_receive_payload()
+        self.assertEqual(len(read_payload), payload_width)
+
     def test_channel_config(self):
         # Set config register to known state
         check_register = Nrf905ConfigRegister()

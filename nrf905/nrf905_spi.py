@@ -109,24 +109,6 @@ class Nrf905Spi:
         else:
             raise ValueError("register_bytes must contain exactly 10 bytes")
 
-    def write_transmit_address(self, address):
-        """ Writes the value of address to the transmit address register. """
-        command = bytearray()
-        command.append(self.__INSTRUCTION_W_TX_ADDRESS)
-        command += address.to_bytes(self.__transmit_address_width, 'little')
-        # print("wta:", address, command)
-        self.send_command(command)
-
-    def read_transmit_address(self):
-        """ Returns a 32 bit value representing the address. """
-        # Send the instruction to read the TX ADDRESS register.
-        # Also needs a 0 byte for each of the bytes to read.
-        command = bytearray(self.__transmit_address_width + 1)
-        command[0] = self.__INSTRUCTION_R_TX_ADDRESS
-        data = self.send_command(command)
-        address = int.from_bytes(data, 'little')
-        return address
-
     def write_transmit_payload(self, payload):
         """ Writes the first self.__transmit_payload_width bytes of the payload
         to the transmit payload registers.
@@ -147,6 +129,34 @@ class Nrf905Spi:
         """
         command = bytearray(self.__transmit_payload_width + 1)
         command[0] = self.__INSTRUCTION_R_TX_PAYLOAD
+        payload = self.send_command(command)
+        print("rtp:", command, payload)
+        return payload
+
+    def write_transmit_address(self, address):
+        """ Writes the value of address to the transmit address register. """
+        command = bytearray()
+        command.append(self.__INSTRUCTION_W_TX_ADDRESS)
+        command += address.to_bytes(self.__transmit_address_width, 'little')
+        # print("wta:", address, command)
+        self.send_command(command)
+
+    def read_transmit_address(self):
+        """ Returns a 32 bit value representing the address. """
+        # Send the instruction to read the TX ADDRESS register.
+        # Also needs a 0 byte for each of the bytes to read.
+        command = bytearray(self.__transmit_address_width + 1)
+        command[0] = self.__INSTRUCTION_R_TX_ADDRESS
+        data = self.send_command(command)
+        address = int.from_bytes(data, 'little')
+        return address
+
+    def read_receive_payload(self):
+        """ Reads self.__receive_payload_width bytes from the receive payload
+        registers.
+        """
+        command = bytearray(self.__receive_payload_width + 1)
+        command[0] = self.__INSTRUCTION_R_RX_PAYLOAD
         payload = self.send_command(command)
         print("rtp:", command, payload)
         return payload
