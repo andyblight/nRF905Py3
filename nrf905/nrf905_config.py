@@ -272,3 +272,26 @@ class Nrf905ConfigRegister:
         self.set_xof_mhz(16)
         # Output clock not used.
         self.set_up_clk_en(0)
+
+    @staticmethod
+    def frequency_to_channel(frequency_mhz):
+        """ Convert the given frequency in MHz to a channel and hfreq_pll value.
+        If the given frequency is out of range, channel will = -1.
+        If the given frequency is in range but not an exact match, the channel
+        nearest to the given frequency will be returned.
+        Output frequency = (422.4 + ( CH_NO / 10)) * ( 1 + HFREQ_PLL) MHz
+        where CH_NO in range 0 to 511 and HFREQ_PLL is 1 or 0.
+        Frequency ranges are 422.4 to 473.5MHz and 844.8 to 947MHz.
+        """
+        channel = -1  # Error value
+        hfreq_pll = 0
+        if 422.4 <= frequency_mhz <= 473.5 or 844.8 <= frequency_mhz <= 947:
+            # Valid range so calculate bit patterns.
+            if frequency_mhz >= 800:
+                hfreq_pll = 1
+                freq = frequency_mhz / 2
+            else:
+                freq = frequency_mhz
+            freq -= 422.4
+            channel = int(freq * 10)
+        return (channel, hfreq_pll)

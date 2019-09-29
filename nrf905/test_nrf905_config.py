@@ -293,6 +293,60 @@ class TestNrf905Config(unittest.TestCase):
         with self.assertRaises(ValueError):
             register.set_up_clk_freq_mhz(5)
 
+    def test_frequency_to_channel(self):
+        # Valid frequencies are 422.4 to 473.5MHz and 844.8 to 947MHz.
+        # Some valid values from the data sheet.
+        frequency_mhz = 430.0
+        channel, hfreq_pll = Nrf905ConfigRegister.frequency_to_channel(frequency_mhz)
+        self.assertEqual(channel, 0b001001100)
+        self.assertEqual(hfreq_pll, 0)
+        frequency_mhz = 434.7
+        channel, hfreq_pll = Nrf905ConfigRegister.frequency_to_channel(frequency_mhz)
+        self.assertEqual(channel, 0b001111011)
+        self.assertEqual(hfreq_pll, 0)
+        frequency_mhz = 862.0
+        channel, hfreq_pll = Nrf905ConfigRegister.frequency_to_channel(frequency_mhz)
+        self.assertEqual(channel, 0b001010110)
+        self.assertEqual(hfreq_pll, 1)
+        frequency_mhz = 927.8
+        channel, hfreq_pll = Nrf905ConfigRegister.frequency_to_channel(frequency_mhz)
+        self.assertEqual(channel, 0b110011111)
+        self.assertEqual(hfreq_pll, 1)
+        # Extreme valid values.
+        frequency_mhz = 422.4
+        channel, hfreq_pll = Nrf905ConfigRegister.frequency_to_channel(frequency_mhz)
+        self.assertEqual(channel, 0b000000000)
+        self.assertEqual(hfreq_pll, 0)
+        frequency_mhz = 473.5
+        channel, hfreq_pll = Nrf905ConfigRegister.frequency_to_channel(frequency_mhz)
+        self.assertEqual(channel, 0b111111111)
+        self.assertEqual(hfreq_pll, 0)
+        frequency_mhz = 844.8
+        channel, hfreq_pll = Nrf905ConfigRegister.frequency_to_channel(frequency_mhz)
+        self.assertEqual(channel, 0b000000000)
+        self.assertEqual(hfreq_pll, 1)
+        frequency_mhz = 947.0
+        channel, hfreq_pll = Nrf905ConfigRegister.frequency_to_channel(frequency_mhz)
+        self.assertEqual(channel, 0b111111111)
+        self.assertEqual(hfreq_pll, 1)
+        # Some invalid values
+        frequency_mhz = 422.35
+        channel, hfreq_pll = Nrf905ConfigRegister.frequency_to_channel(frequency_mhz)
+        self.assertEqual(channel, -1)
+        self.assertEqual(hfreq_pll, 0)
+        frequency_mhz = 473.6
+        channel, hfreq_pll = Nrf905ConfigRegister.frequency_to_channel(frequency_mhz)
+        self.assertEqual(channel, -1)
+        self.assertEqual(hfreq_pll, 0)
+        frequency_mhz = 844.7
+        channel, hfreq_pll = Nrf905ConfigRegister.frequency_to_channel(frequency_mhz)
+        self.assertEqual(channel, -1)
+        self.assertEqual(hfreq_pll, 0)
+        frequency_mhz = 947.1
+        channel, hfreq_pll = Nrf905ConfigRegister.frequency_to_channel(frequency_mhz)
+        self.assertEqual(channel, -1)
+        self.assertEqual(hfreq_pll, 0)
+
 
 if __name__ == '__main__':
     unittest.main()
