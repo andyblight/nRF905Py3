@@ -295,3 +295,17 @@ class Nrf905ConfigRegister:
             freq -= 422.4
             channel = int(freq * 10)
         return (channel, hfreq_pll)
+
+    @staticmethod
+    def is_valid_uk(frequency_mhz):
+        """ Returns True if the given frequency is legal in the UK. """
+        result = False
+        # 433MHz band.  Full range is 433.00 to 434.775MHz.
+        # Radio hams use some of the channels for repeaters.
+        # Exclude channels 1 to 11 and 62 to 69.
+        if 433.4 <= frequency_mhz <= 434.5:
+            result = True
+        # 866MHz band
+        if 863.0 <= frequency_mhz <= 870.0:
+            result = True
+        return result
