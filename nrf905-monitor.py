@@ -13,8 +13,10 @@ def main():
     Give the user a prompt and send any data they enter.
     """
     transceiver = Nrf905()
+    # Must be set before open is called.
     transceiver.set_frequency(434.25)
     transceiver.set_rx_address(0x43454749)
+    # Optional to set before open is called.
     transceiver.set_tx_address(0x4345474a)
     transceiver.open(callback)
     quit = False

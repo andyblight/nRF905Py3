@@ -5,6 +5,17 @@ import queue
 from nrf905.nrf905_spi import Nrf905Spi
 from nrf905.nrf905_gpio import Nrf905Gpio
 
+
+def data_ready_callback(data):
+    print("drc:", data)
+
+def carrier_detect_callback(data):
+    print("cdc:", data)
+
+def address_matched_callback(data):
+    print("amc:", data)
+
+
 class Nrf905:
     """ The interface to control a nRF905 device.  This class does all the
     parameter and state checking as well as any buffering.
@@ -17,9 +28,10 @@ class Nrf905:
 
     def main():
         transceiver = Nrf905()
+        # Must be set before open is called.
         transceiver.set_frequency(434.25)
         transceiver.set_rx_address(0x43454749)
-        transceiver.set_tx_address(0x4345474a)
+        # Optional to set before open is called.
         transceiver.open(callback)
         quit = False
         while not quit:
@@ -32,12 +44,19 @@ class Nrf905:
     """
 
     def __init__(self):
-        self.__channel = 0
-        self.__hfreq_pll = 0
-        self.__rx_address = 0
+        # nRF905 properties
+        self.__channel = -1
+        self.__hfreq_pll = -1
+        self.__rx_address = -1
         self.__tx_address = 0
+        # Properties to make the class work.
         self.__rx_callback = None
         self.__is_open = False
+        self.__queue = None
+        self.__thread = None
+        self.__pi = None
+        self.__spi = None
+        self.__gpio = None
         
     def set_frequency(self, frequency_mhz):
         """ Sets the frequency for the device in MHz. """
@@ -45,15 +64,18 @@ class Nrf905:
         if self.__is_open:
             raise StateError("Cannot change frequency when open.")
         else:
-            (channel, hfreq_pll) = Nrf905ConfigRegister.frequency_to_channel(frequency_mhz)
-            if channel < 0:
-                raise ValueError("Invalid frequency.")
+            if Nrf905ConfigRegister.is_valid_uk(frequency_mhz):
+                (channel, hfreq_pll) = Nrf905ConfigRegister.frequency_to_channel(frequency_mhz)
+                if channel < 0:
+                    raise ValueError("Invalid frequency.")
+                else:
+                    self.__channel = channel
+                    self.__hfreq_pll = hfreq_pll
             else:
-                self.__channel = channel
-                self.__hfreq_pll = hfreq_pll
+                raise ValueError("Frequency not valid in UK.")
 
     def set_rx_address(self, address):
-        """Sets the receive address. Must less than 4 bytes long. """
+        """ Sets the receive address. Must less than 4 bytes long. """
         print("set_rx_address:", address)
         if self.__is_open:
             raise StateError("Cannot change address when open.")
@@ -64,7 +86,7 @@ class Nrf905:
                 self.__rx_address = address
     
     def set_tx_address(self, address)
-        """Sets the transmit address. Must less than 4 bytes long. """
+        """ Sets the transmit address. Must less than 4 bytes long. """
         print("set_tx_address:", address)
         if self.__is_open:
             raise StateError("Cannot change address when open.")
@@ -76,18 +98,57 @@ class Nrf905:
 
     def open(self, callback):
         """ Creates the instances of Nrf905Spi and Nrf905Gpio.
+        Applies previously set values to nRF905 device.
+        Prepares callback for use.
         """
         print("open")
         if self.__is_open:
             raise StateError("Already open.")
         else:
-            self.__rx_callback = callback
+            # Frequency and RX address must be set before open is called.
+            if self.__channel == -1 or self.__hfreq_pll == -1 or 
+                    self.__rx_address == -1:
+                raise ValueError("Frequency and RX address must be set.")
+            else:
+                # Create SPI and GPIO objects.
+                self.__pi = pigpio.pi()
+                self.__gpio = Nrf905Gpio(self.__pi)
+                self.__spi = Nrf905Spi()
+                self.__spi.open(self.__pi)
+                # Set up nRF905
+                # Power down mode
+                self.__gpio.set_mode_power_down(self.__pi)
+                # Config register.  
+                config = Nrf905ConfigRegister()
+                config.board_defaults()
+                config.set_channel_number(self.__channel)
+                config.set_hfreq_pll(self.__hfreq_pll)
+                config.set_rx_address(self.__rx_address)
+                self.__spi.configuration_register_write(config)
+                # The TX address can be set later.
+                if self.__tx_address != 0:
+                    self.spi.write_transmit_address(write_address)
+                # Callbacks
+                self.__gpio.set_callback(self.__pi, Nrf905Gpio.DATA_READY, data_ready_callback)
+                self.__gpio.set_callback(self.__pi, Nrf905Gpio.CARRIER_DETECT, carrier_detect_callback)
+                self.__gpio.set_callback(self.__pi, Nrf905Gpio.ADDRESS_MATCHED, address_matched_callback)
+                # Start thread
+                self.__queue = queue.Queue()
+                self.__thread = threading.Thread(target=__worker)
+                self.__thread.start()
 
     def close(self):
         """ Releases the instances of Nrf905Spi and Nrf905Gpio.
         The nRF905 device is left in the state last used.
         """
         print("close")
+        # Close down thread nicely.
+        self.__queue.join()
+        self.__queue.put(None)
+        self.__thread.join()
+        # Release objects.
+        self.__spi.close()
+        self.__pi.stop()
 
     def send(self, data):
         """ Posts the data to the transmit queue in 32 byte packets.
@@ -97,9 +158,39 @@ class Nrf905:
         if not self.__is_open:
             raise StateError("Call Nrf905.open() first.")
         else:
-            self.__rx_callback = callback
-        
-        
+            self.__queue.put(data)
+
+    def __worker(self):
+        """ Wait for a packet. When a packet is ready, send the packet and 
+        repeat.
+        """
+        while True:
+            data = self.__queue.get()
+            if data is None:
+                break
+            self.__send(data)
+            self.__queue.task_done()
+
+    def __send(self, data):
+            # TODO Change modes.
+            self.__spi.write_transmit_payload(data)
+
+
+
+class Error(Exception):
+    """Base class for exceptions in this module."""
+    pass
+
+
+class StateError(Error):
+    """ Exception raised when functions are called when in the wrong state.
+    Attributes:
+        message -- explanation of the error
+    """    
+    def __init__(self, message):
+        self.message = message
+
+
 #     def open(self, frequency, callback=None):
 #         # print("open")
 #         if self.__is_open:
@@ -228,20 +319,6 @@ class Nrf905:
 #     def __hw_release(self):
 #         print("__hw_release")
 
-
-# class Error(Exception):
-#     """Base class for exceptions in this module."""
-#     pass
-
-
-# class StateError(Error):
-#     """ Exception raised when functions are called when in the wrong state.
-
-#     Attributes:
-#         message -- explanation of the error
-#     """    
-#     def __init__(self, message):
-#         self.message = message
 
 # import Queue
 # import pigpio
