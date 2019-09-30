@@ -14,47 +14,47 @@ class Nrf905Spi:
         MISO after a high to low transition on CSN.
     """
 
-    __CRYSTAL_FREQUENCY_HZ = 16 * 1000 * 1000  # 16MHz is on the board I'm using.
+    _CRYSTAL_FREQUENCY_HZ = 16 * 1000 * 1000  # 16MHz is on the board I'm using.
 
     # SPI pins are defaults for pigpio bus 0 (RPi 1 A&B only have SPI bus 0).
-    __SPI_BUS_0_FLAGS = 0 
-    __SPI_BUS_1_FLAGS = 0
-    __SPI_SCK_HZ = 10 * 1000 * 1000  # Set to 10MHz.  10MHz max. (data sheet)
+    _SPI_BUS_0_FLAGS = 0 
+    _SPI_BUS_1_FLAGS = 0
+    _SPI_SCK_HZ = 10 * 1000 * 1000  # Set to 10MHz.  10MHz max. (data sheet)
 
     # nRF905 SPI instructions (table 13)
-    __INSTRUCTION_W_CONFIG = 0b00000000
-    __INSTRUCTION_R_CONFIG = 0b00010000
-    __INSTRUCTION_W_TX_PAYLOAD = 0b00100000
-    __INSTRUCTION_R_TX_PAYLOAD = 0b00100001
-    __INSTRUCTION_W_TX_ADDRESS = 0b00100010
-    __INSTRUCTION_R_TX_ADDRESS = 0b00100011
-    __INSTRUCTION_R_RX_PAYLOAD = 0b00100100
-    __INSTRUCTION_CHANNEL_CONFIG = 0b10000000
+    _INSTRUCTION_W_CONFIG = 0b00000000
+    _INSTRUCTION_R_CONFIG = 0b00010000
+    _INSTRUCTION_W_TX_PAYLOAD = 0b00100000
+    _INSTRUCTION_R_TX_PAYLOAD = 0b00100001
+    _INSTRUCTION_W_TX_ADDRESS = 0b00100010
+    _INSTRUCTION_R_TX_ADDRESS = 0b00100011
+    _INSTRUCTION_R_RX_PAYLOAD = 0b00100100
+    _INSTRUCTION_CHANNEL_CONFIG = 0b10000000
 
     def __init__(self):
-        self.__pi = None
-        self.__spi_h = None
-        self.__status = 0
+        self._pi = None
+        self._spi_h = None
+        self._status = 0
         # Width of nRF905 registers in bytes. Defaults set to chip defaults.
-        self.__receive_address_width = 4  # bytes
-        self.__transmit_address_width = 4  # bytes
-        self.__receive_payload_width = 32  # bytes
-        self.__transmit_payload_width = 32  # bytes
+        self._receive_address_width = 4  # bytes
+        self._transmit_address_width = 4  # bytes
+        self._receive_payload_width = 32  # bytes
+        self._transmit_payload_width = 32  # bytes
 
     def open(self, pi):
         # print("open:", pi)
-        self.__pi = pi
-        # print("open self.__pi:", self.__pi)
-        self.__spi_h = self.__pi.spi_open(0, self.__SPI_SCK_HZ, self.__SPI_BUS_0_FLAGS)
-        # print("open self.__spi_h:", self.__spi_h)
+        self._pi = pi
+        # print("open self._pi:", self._pi)
+        self._spi_h = self._pi.spi_open(0, self._SPI_SCK_HZ, self._SPI_BUS_0_FLAGS)
+        # print("open self._spi_h:", self._spi_h)
 
     def close(self):
-        # print("close: self.__pi:", self.__pi)
-        self.__pi.spi_close(self.__spi_h)
+        # print("close: self._pi:", self._pi)
+        self._pi.spi_close(self._spi_h)
 
     def status_register_get(self):
         """Returns the last read value of the status register. """
-        return self.__status
+        return self._status
 
     def send_command(self, b_command):
         """ Sends the command to the nRF905 and returns any results.
@@ -64,13 +64,13 @@ class Nrf905Spi:
         If the transfer fails, returns an empty bytearray.
         """
         # print("Command is 0x", b_command.hex())
-        # print("send_command: self.__pi:", self.__pi)
-        # print("send_command self.__spi_h:", self.__spi_h)
-        (count, data) = self.__pi.spi_xfer(self.__spi_h, b_command)
+        # print("send_command: self._pi:", self._pi)
+        # print("send_command self._spi_h:", self._spi_h)
+        (count, data) = self._pi.spi_xfer(self._spi_h, b_command)
         # print("Received", count, data)
         if count > 0:
-            self.__status = data.pop(0)
-            # print("Status 0x", self.__status)
+            self._status = data.pop(0)
+            # print("Status 0x", self._status)
             # print("Data bytes", len(data), "0x", data.hex())
         else:
             data = bytearray()
@@ -81,7 +81,7 @@ class Nrf905Spi:
         Returns an instance of Nrf905ConfigRegister.
         """
         command = bytearray(11)
-        command[0] = self.__INSTRUCTION_R_CONFIG
+        command[0] = self._INSTRUCTION_R_CONFIG
         data = self.send_command(command)
         register = Nrf905ConfigRegister()
         register.set_all(data)
@@ -93,14 +93,14 @@ class Nrf905Spi:
         Raises ValueError exception if data does not contain 10 bytes.
         """
         # Update internal width variables.
-        self.__receive_address_width = register.get_rx_afw()
-        self.__transmit_address_width = register.get_tx_afw()
-        self.__receive_payload_width = register.get_rx_pw()
-        self.__transmit_payload_width = register.get_tx_pw()
+        self._receive_address_width = register.get_rx_afw()
+        self._transmit_address_width = register.get_tx_afw()
+        self._receive_payload_width = register.get_rx_pw()
+        self._transmit_payload_width = register.get_tx_pw()
         register_bytes = register.get_all()
         if len(register_bytes) == 10:
             command = bytearray(11)
-            command[0] = self.__INSTRUCTION_W_CONFIG
+            command[0] = self._INSTRUCTION_W_CONFIG
             # Copy the rest of the data into the command.
             command[1:1 + len(register_bytes)] = register_bytes
             # print("crw:", command)
@@ -110,13 +110,13 @@ class Nrf905Spi:
             raise ValueError("register_bytes must contain exactly 10 bytes")
 
     def write_transmit_payload(self, payload):
-        """ Writes the first self.__transmit_payload_width bytes of the payload
+        """ Writes the first self._transmit_payload_width bytes of the payload
         to the transmit payload registers.
         """
-        if len(payload) == self.__transmit_payload_width:
+        if len(payload) == self._transmit_payload_width:
             command = bytearray()
-            command.append(self.__INSTRUCTION_W_TX_PAYLOAD)
-            for i in range (0, self.__transmit_payload_width):
+            command.append(self._INSTRUCTION_W_TX_PAYLOAD)
+            for i in range (0, self._transmit_payload_width):
                 command.append(payload[i])
             # print("wtp:", payload, command)
             self.send_command(command)
@@ -124,11 +124,11 @@ class Nrf905Spi:
             raise ValueError("payload too big for payload width setting")
 
     def read_transmit_payload(self):
-        """ Reads self.__transmit_payload_width bytes from the transmit payload
+        """ Reads self._transmit_payload_width bytes from the transmit payload
         registers.
         """
-        command = bytearray(self.__transmit_payload_width + 1)
-        command[0] = self.__INSTRUCTION_R_TX_PAYLOAD
+        command = bytearray(self._transmit_payload_width + 1)
+        command[0] = self._INSTRUCTION_R_TX_PAYLOAD
         payload = self.send_command(command)
         # print("rtp:", command, payload)
         return payload
@@ -136,8 +136,8 @@ class Nrf905Spi:
     def write_transmit_address(self, address):
         """ Writes the value of address to the transmit address register. """
         command = bytearray()
-        command.append(self.__INSTRUCTION_W_TX_ADDRESS)
-        command += address.to_bytes(self.__transmit_address_width, 'little')
+        command.append(self._INSTRUCTION_W_TX_ADDRESS)
+        command += address.to_bytes(self._transmit_address_width, 'little')
         # print("wta:", address, command)
         self.send_command(command)
 
@@ -145,18 +145,18 @@ class Nrf905Spi:
         """ Returns a 32 bit value representing the address. """
         # Send the instruction to read the TX ADDRESS register.
         # Also needs a 0 byte for each of the bytes to read.
-        command = bytearray(self.__transmit_address_width + 1)
-        command[0] = self.__INSTRUCTION_R_TX_ADDRESS
+        command = bytearray(self._transmit_address_width + 1)
+        command[0] = self._INSTRUCTION_R_TX_ADDRESS
         data = self.send_command(command)
         address = int.from_bytes(data, 'little')
         return address
 
     def read_receive_payload(self):
-        """ Reads self.__receive_payload_width bytes from the receive payload
+        """ Reads self._receive_payload_width bytes from the receive payload
         registers.
         """
-        command = bytearray(self.__receive_payload_width + 1)
-        command[0] = self.__INSTRUCTION_R_RX_PAYLOAD
+        command = bytearray(self._receive_payload_width + 1)
+        command[0] = self._INSTRUCTION_R_RX_PAYLOAD
         payload = self.send_command(command)
         # print("rtp:", command, payload)
         return payload
@@ -168,7 +168,7 @@ class Nrf905Spi:
         where: CH_NO= ccccccccc, HFREQ_PLL = h PA_PWR = pp
         """
         command = bytearray(2)
-        command[0] = self.__INSTRUCTION_CHANNEL_CONFIG
+        command[0] = self._INSTRUCTION_CHANNEL_CONFIG
         if 0 <= pa_pwr < 4:
             command[0] |= ((pa_pwr & 0x03) << 2)
         else:

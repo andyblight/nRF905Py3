@@ -11,30 +11,30 @@ class Nrf905ConfigRegister:
 
     def __init__(self):
         """ Create an object with power on defaults. """
-        self.registers = bytearray(10)
+        self._registers = bytearray(10)
         self.reset()
 
     def __eq__(self, other):
         """ Equality operator """
         equal = True
-        for i in range(0, len(self.registers)):
-            if self.registers[i] != other.registers[i]:
+        for i in range(0, len(self._registers)):
+            if self._registers[i] != other._registers[i]:
                 equal = False
                 break
         return equal
 
     def reset(self):
         """ Reset the object to power on default values. """
-        self.registers[0] = 0b01101100
-        self.registers[1] = 0
-        self.registers[2] = 0b01000100
-        self.registers[3] = 0b00100000
-        self.registers[4] = 0b00100000
-        self.registers[5] = 0xE7
-        self.registers[6] = 0xE7
-        self.registers[7] = 0xE7
-        self.registers[8] = 0xE7
-        self.registers[9] = 0b11100111
+        self._registers[0] = 0b01101100
+        self._registers[1] = 0
+        self._registers[2] = 0b01000100
+        self._registers[3] = 0b00100000
+        self._registers[4] = 0b00100000
+        self._registers[5] = 0xE7
+        self._registers[6] = 0xE7
+        self._registers[7] = 0xE7
+        self._registers[8] = 0xE7
+        self._registers[9] = 0b11100111
 
     def print(self):
         """ Prints the values using data sheet names. """
@@ -57,11 +57,11 @@ class Nrf905ConfigRegister:
 
     def get_all(self):
         """ Return a bytearray representing the configuration registers. """
-        return self.registers
+        return self._registers
 
     def set_all(self, registers):
         """ Sets the internal values from the given bytearray. """
-        self.registers = registers
+        self._registers = registers
 
     def set_byte(self, value, mask, byte_value):
         # print("sb: ", value, mask, byte_value)
@@ -84,9 +84,9 @@ class Nrf905ConfigRegister:
         return result
 
     def get_channel_number(self):
-        # print("gcn: ", self.registers[0], self.registers[1])
-        channel_number = self.registers[0]
-        if (self.registers[1] & 0x01):
+        # print("gcn: ", self._registers[0], self._registers[1])
+        channel_number = self._registers[0]
+        if (self._registers[1] & 0x01):
             channel_number += 256
         # print("gcn: ", channel_number)
         return channel_number
@@ -94,89 +94,89 @@ class Nrf905ConfigRegister:
     def set_channel_number(self, channel_number):
         ch_num = channel_number.to_bytes(2, 'little')
         # print("scn: ", channel_number, ch_num)
-        self.registers[0] = ch_num[0]
-        self.registers[1] = self.set_byte((ch_num[1] & 0x01), 0x01, self.registers[1])
-        # print("scn: ", self.registers[0], self.registers[1])
+        self._registers[0] = ch_num[0]
+        self._registers[1] = self.set_byte((ch_num[1] & 0x01), 0x01, self._registers[1])
+        # print("scn: ", self._registers[0], self._registers[1])
         
     def get_auto_retran(self):
         result = 0
-        if self.registers[1] & 0x20:
+        if self._registers[1] & 0x20:
             result = 1
         return result
 
     def set_auto_retran(self, auto_retran):
-        self.registers[1] = self.set_byte((auto_retran & 0x01), 0x20, self.registers[1])
+        self._registers[1] = self.set_byte((auto_retran & 0x01), 0x20, self._registers[1])
 
     def get_rx_red_pwr(self):
         result = 0
-        if self.registers[1] & 0x08:
+        if self._registers[1] & 0x08:
             result = 1
         return result
 
     def set_rx_red_pwr(self, rx_red_pwr):
-        self.registers[1] = self.set_byte((rx_red_pwr & 0x01), 0x08, self.registers[1])
+        self._registers[1] = self.set_byte((rx_red_pwr & 0x01), 0x08, self._registers[1])
 
     def get_pa_pwr(self):
-        result = self.registers[1] & 0x0c
+        result = self._registers[1] & 0x0c
         result >>= 2
         return result
 
     def set_pa_pwr(self, pa_pwr):
-        self.registers[1] = self.set_byte((pa_pwr & 0x03), 0x0C, self.registers[1])
+        self._registers[1] = self.set_byte((pa_pwr & 0x03), 0x0C, self._registers[1])
 
     def get_hfreq_pll(self):
         result = 0
-        if self.registers[1] & 0x02:
+        if self._registers[1] & 0x02:
             result = 1
         return result
 
     def set_hfreq_pll(self, hfreq_pll):
-        self.registers[1] = self.set_byte((hfreq_pll & 0x01), 0x02, self.registers[1])
+        self._registers[1] = self.set_byte((hfreq_pll & 0x01), 0x02, self._registers[1])
 
     def get_tx_afw(self):
-        result = self.registers[2] & 0x70
+        result = self._registers[2] & 0x70
         result >>= 4
         return result
 
     def set_tx_afw(self, tx_afw):
         if tx_afw == 1 or tx_afw == 2 or tx_afw ==4:
-            self.registers[2] = self.set_byte((tx_afw & 0x07), 0x70, self.registers[2])
+            self._registers[2] = self.set_byte((tx_afw & 0x07), 0x70, self._registers[2])
         else:
             raise ValueError("tx_afw must be one of 1, 2 or 4")
 
     def get_rx_afw(self):
-        result = self.registers[2] & 0x07
+        result = self._registers[2] & 0x07
         return result
 
     def set_rx_afw(self, rx_afw):
         if rx_afw == 1 or rx_afw == 2 or rx_afw ==4:
-            self.registers[2] = self.set_byte((rx_afw & 0x07), 0x07, self.registers[2])
+            self._registers[2] = self.set_byte((rx_afw & 0x07), 0x07, self._registers[2])
         else:
             raise ValueError("rx_afw must be one of 1, 2 or 4")
 
     def get_rx_pw(self):
-        result = self.registers[3] & 0x3F
+        result = self._registers[3] & 0x3F
         return result
 
     def set_rx_pw(self, rx_pw):
         if 1 <= rx_pw <= 32:
-            self.registers[3] = self.set_byte((rx_pw & 0x3F), 0x3F, self.registers[3])
+            self._registers[3] = self.set_byte((rx_pw & 0x3F), 0x3F, self._registers[3])
         else:
             raise ValueError("rx_pw must be in range 1 to 32")
 
     def get_tx_pw(self):
-        result = self.registers[4] & 0x3F
+        result = self._registers[4] & 0x3F
         return result
 
     def set_tx_pw(self, tx_pw):
         if 1 <= tx_pw <= 32:
-            self.registers[4] = self.set_byte((tx_pw & 0x3F), 0x3F, self.registers[4])
+            self._registers[4] = self.set_byte((tx_pw & 0x3F), 0x3F, self._registers[4])
         else:
             raise ValueError("tx_pw must be in range 1 to 32")
 
     def get_rx_address(self):
         # TODO This should only read the bytes that are specified in the width.
-        regs = self.registers[5:9]
+        regs = self._registers[5:9]
         # print("gra regs", regs)
         address = int.from_bytes(regs, 'little')
         # print("gra test", hex(address))
@@ -190,30 +190,30 @@ class Nrf905ConfigRegister:
         regs = address.to_bytes(4, 'little')
         # print("sra bytes", regs)
         for i in range(0, 4):
-            self.registers[5 + i] = regs[i]
-        # print("sra::", self.registers)
+            self._registers[5 + i] = regs[i]
+        # print("sra::", self._registers)
 
     def get_crc_mode(self):
         result = 0
-        if self.registers[9] & 0x80:
+        if self._registers[9] & 0x80:
             result = 1
         return result
 
     def set_crc_mode(self, crc_mode):
-        self.registers[9] = self.set_byte((crc_mode & 0x01), 0x80, self.registers[9])
+        self._registers[9] = self.set_byte((crc_mode & 0x01), 0x80, self._registers[9])
 
     def get_crc_en(self):
         result = 0
-        if self.registers[9] & 0x40:
+        if self._registers[9] & 0x40:
             result = 1
         return result
 
     def set_crc_en(self, crc_en):
-        self.registers[9] = self.set_byte((crc_en & 0x01), 0x40, self.registers[9])
+        self._registers[9] = self.set_byte((crc_en & 0x01), 0x40, self._registers[9])
 
     def get_xof_mhz(self):
         """ Returns value in whole MHz """
-        result = self.registers[9] & 0x38
+        result = self._registers[9] & 0x38
         result >>= 3
         result_mhz = (result * 4) + 4
         return result_mhz
@@ -222,22 +222,22 @@ class Nrf905ConfigRegister:
         if xof_mhz == 4 or xof_mhz == 8 or xof_mhz == 12 or xof_mhz == 16 or xof_mhz ==20:
             xof = bytearray(1)
             xof[0] = int((xof_mhz - 4) / 4)
-            self.registers[9] = self.set_byte(xof[0], 0x38, self.registers[9])
+            self._registers[9] = self.set_byte(xof[0], 0x38, self._registers[9])
         else:
             raise ValueError("xof_mhz must be one of 4, 8, 12, 16 or 20")
 
     def get_up_clk_en(self):
         result = 0
-        if self.registers[9] & 0x04:
+        if self._registers[9] & 0x04:
             result = 1
         return result
 
     def set_up_clk_en(self, up_clk_en):
-        self.registers[9] = self.set_byte((up_clk_en & 0x01), 0x04, self.registers[9])
+        self._registers[9] = self.set_byte((up_clk_en & 0x01), 0x04, self._registers[9])
 
     def get_up_clk_freq_mhz(self):
         """ Returns value in whole MHz """
-        result = self.registers[9] & 0x03
+        result = self._registers[9] & 0x03
         if result == 3:
             result_mhz = 0.5
         elif result == 2:
@@ -260,7 +260,7 @@ class Nrf905ConfigRegister:
             up_clk_freq[0] = 0
         else:
             raise ValueError("up_clk_freq_mhz must be one of 0.5, 1, 2, 4")
-        self.registers[9] = self.set_byte(up_clk_freq[0], 0x03, self.registers[9])
+        self._registers[9] = self.set_byte(up_clk_freq[0], 0x03, self._registers[9])
 
     def board_defaults(self):
         """ Set the contents of the registers to values that work for the device

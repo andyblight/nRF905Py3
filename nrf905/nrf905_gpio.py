@@ -49,7 +49,7 @@ TODO 17 and 18 are used by SPI1
         for pin in self.output_pins:
             pi.set_mode(pin, pigpio.OUTPUT)
             pi.write(pin, 0)
-        self.__callback_dict = dict()
+        self._callback_dict = dict()
 
     def term(self, pi):
         # print("term")
@@ -101,7 +101,7 @@ TODO 17 and 18 are used by SPI1
         pi.set_pull_up_down(pin, pigpio.PUD_OFF)
         # Create callback object and store it for use by the cancel function.
         callback_obj = pi.callback(pin, pigpio.EITHER_EDGE, callback_function)
-        self.__callback_dict[pin] = callback_obj
+        self._callback_dict[pin] = callback_obj
 
     def clear_callback(self, pi, pin):
         """ Clears the callback for the given pin.
@@ -110,9 +110,9 @@ TODO 17 and 18 are used by SPI1
         # print("clear_callback", pin)
         result = False
         try:
-            callback = self.__callback_dict[pin]
+            callback = self._callback_dict[pin]
             callback.cancel()
-            del self.__callback_dict[pin]
+            del self._callback_dict[pin]
             self.reset_pin(pi, pin)
             result = True
         except KeyError:
