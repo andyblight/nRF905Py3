@@ -20,6 +20,11 @@ running:
 ## Preparing the RPi
 
 Firstly (and probably most importantly) is to enable the SPI interface.  This actually loads a kernel module that communicates with the SPI bus and without this module, nothing works!
+Secondly, you need to start the pigpio daemon using
+
+```bash
+sudo pigpiod
+```
 
 ## Wiring
 
@@ -130,6 +135,8 @@ The code is arranged in a number of modules.
 
 ```
 
+TODO EXPLAIN HOW nfrf905.py IS DESIGNED.
+
 ### nrf905.py
 
 Implements the class Nrf905.
@@ -163,10 +170,8 @@ No dependencies.
 ## TO DO List
 
 1. Make nrf905-monitor work.
-1. Make nrf905-write work.
 1. Add SPI bus 1 functionality.  The Nrf905Spi.\_\_init\_\_() function takes the spi_bus parameter but there is no implemented functionality.  Affects Nrf905SPI and Nrf905Gpio classes.  Needs RPi 2 or later to test.
 1. Deal with multiple users and one device problem.  Only allow single users?  Allow multiple users using queues and callbacks?  Multiple users means using queues, each user need unique handle (in the Nrf905 class).  Need to work out user privileges for each function.
-
 
 ## References
 

@@ -159,10 +159,12 @@ class Nrf905:
         if not self._is_open:
             raise StateError("Call Nrf905.open() first.")
         else:
-            self._queue.put(data)
+            while data:  # Contains something.
+                packet = data[0:32]  # Split in to 32 byte patckets.
+                self._queue.put(packet)
 
     def _worker(self):
-        """ Wait for a packet. When a packet is ready, send the packet and 
+        """ Wait for a packet. When a packet is available, send the packet and 
         repeat.
         """
         while True:
