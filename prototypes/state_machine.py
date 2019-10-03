@@ -7,8 +7,8 @@ from transitions.extensions import LockedHierarchicalGraphMachine as Machine
 
 class Nrf905StateMachine:
     """ This class will be a sub-calls of Nrf905. """
-    states = ['power_down', 'standby', 'listening', 'transmitting', 'transmitting_retran',
-              'carrier_busy', 'receiving_data', 'received']
+    states = ['power_down', 'standby', 'transmitting', 'retransmitting',
+              'listening', 'carrier_busy', 'receiving_data', 'received']
     
     def __init__(self):
         self._machine = Machine(model=self, states=self.states, initial='power_down')
@@ -17,18 +17,19 @@ class Nrf905StateMachine:
         # Transmit - single shot
         self._machine.add_transition('transmit', 'standby', 'transmitting', before='write_payload')
         self._machine.add_transition('data_ready_tx', 'transmitting', 'standby')
-        self._machine.add_transition('retransmit', 'standby', 'transmitting_retran', before='write_payload')
-        self._machine.add_transition('data_ready_tx_re', 'transmitting_retran', 'standby')
+        self._machine.add_transition('retransmit', 'standby', 'retransmitting', before='write_payload')
+        self._machine.add_transition('data_ready_tx_re', 'retransmitting', 'standby')
         # Receive
-        self._machine.add_transition('trx_ce_hi', 'standby', 'listening')
-        self._machine.add_transition('trx_ce_lo', 'listening', 'standby')
-        self._machine.add_transition('carrier', 'standby', 'carrier_busy')
-        self._machine.add_transition('no_carrier', 'carrier_busy', 'standby')
+        self._machine.add_transition('receiver_enable', 'standby', 'listening')
+        self._machine.add_transition('receiver_disable', 'listening', 'standby')
+        self._machine.add_transition('carrier', 'listening', 'carrier_busy')
+        self._machine.add_transition('no_carrier', 'carrier_busy', 'listening')
         self._machine.add_transition('address_match', 'carrier_busy', 'receiving_data')
-        self._machine.add_transition('no_address_match', 'receiving_data', 'standby')
+        self._machine.add_transition('no_address_match', 'receiving_data', 'listening')
         self._machine.add_transition('data_ready_rx', 'receiving_data', 'received', before='read_payload')
         # Two possible transitions.
-        self._machine.add_transition('not_data_ready_rx', 'received', 'standby')
+        self._machine.add_transition('received2standby', 'received', 'standby')
+        self._machine.add_transition('received2listening', 'received', 'listening')
 
     def write_payload(self):
         print("wp")
@@ -65,25 +66,37 @@ class Nrf905Test:
                 self._machine.no_address_match()
 
     def data_ready_function(self, value):
-        print("drf", value)
+        print("drf", value, self._retransmit_count)
         if self._machine.is_transmitting():
+            print("drf: 0")
             if value:
+                print("drf: 0a")
                 self._machine.data_ready_tx()
-        elif self._machine.is_transmitting_retran():
+        elif self._machine.is_retransmitting():
+            print("drf: 1")
             if value:
-                if self._retransmit_count <= 0:
-                    self._machine.data_ready_tx_re()
                 self._retransmit_count -= 1
+                print("drf: 1a")
+                if self._retransmit_count <= 0:
+                    print("drf: 1b")
+                    self._machine.data_ready_tx_re()
         elif self._machine.is_receiving_data():
+            print("drf: 2a")
             if value:
+                print("drf: 2b")
                 self._machine.data_ready_rx()
-            else:
-                # Receive complete
+        elif self._machine.is_received():
+            # Receive complete
+            # DR is HI->LO
+            print("drf: 3a")
+            if not value:
                 # Can go into two different states from here.
                 if self._is_rx_enabled:
-                    self._machine.not_data_ready_rx()
+                    print("drf: 3b")
+                    self._machine.received2listening()
                 else:
-                    self._machine.not_data_ready_rx()
+                    print("drf: 3c")
+                    self._machine.received2standby()
 
     # Other functions needed.
     @property
@@ -94,13 +107,14 @@ class Nrf905Test:
         self._machine.power_up()
 
     def enable_receiver(self, value):
+        print("er:", value)
+        self._is_rx_enabled = value
         if self._machine.is_standby():
             if value:
-                self._machine.trx_ce_hi()
-                self._is_rx_enabled = True
-            else:
-                self._machine.trx_ce_lo()
-                self._is_rx_enabled = False
+                self._machine.receiver_enable()
+        elif self._machine.is_listening():
+            if not value:
+                self._machine.receiver_disable()
 
     def transmit(self, data):
         """ Transmit data once. """
