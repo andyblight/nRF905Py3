@@ -22,26 +22,7 @@ class Nrf905:
     parameter and state checking as well as any buffering.
     The actual byte bashing is done in the modules Nrf905Gpio and Nrf905Spi.
 
-    Example usage:
-
-    def callback(data):
-        print("Received:", data)
-
-    def main():
-        transceiver = Nrf905()
-        # Must be set before open is called.
-        transceiver.set_frequency(434.25)
-        transceiver.set_rx_address(0x43454749)
-        # Optional to set before open is called.
-        transceiver.open(callback)
-        quit = False
-        while not quit:
-            data = input("Enter data ('q' to quit) >")
-            if data == "q" or data == "Q":
-                quit = True
-            else:
-                transceiver.send(data)
-        receiver.close()
+    Example usage: see ../nrf905-monitor.py
     """
 
     def __init__(self):

@@ -18,7 +18,9 @@ def main():
     transceiver.set_rx_address(0x43454749)
     # Optional to set before open is called.
     transceiver.set_tx_address(0x4345474a)
+    # Open.
     transceiver.open(callback)
+    # Send whatever data the user enters until quit.
     quit = False
     while not quit:
         data = input("Enter data ('q' to quit) >")
@@ -26,7 +28,8 @@ def main():
             quit = True
         else:
             transceiver.send(data)
-    receiver.close()
+    # Close.
+    transceiver.close()
 
 if __name__ == "__main__":
     main()
