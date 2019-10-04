@@ -2,8 +2,17 @@
 
 """ This file was created so that I could test the transitions state machine.
 """
+import logging
+
 # from transitions.extensions import LockedHierarchicalMachine as Machine
 from transitions.extensions import LockedHierarchicalGraphMachine as Machine
+
+# Set up logging; The basic log level will be DEBUG
+logging.basicConfig(level=logging.DEBUG)
+# Set transitions' log level to INFO; DEBUG messages will be omitted
+logging.getLogger('transitions').setLevel(logging.INFO)
+
+logger = logging.getLogger('Nrf905StateMachine')
 
 class Nrf905StateMachine:
     """ This class will be a sub-calls of Nrf905. """
@@ -32,10 +41,10 @@ class Nrf905StateMachine:
         self._machine.add_transition('received2listening', 'received', 'listening')
 
     def write_payload(self):
-        print("wp")
+        logger.debug("wp")
 
     def read_payload(self):
-        print("rp")
+        logger.debug("rp")
         
     def output_graph(self):
         self._machine.get_graph().draw('nrf905-state-machine.png', prog='dot')
@@ -51,14 +60,14 @@ class Nrf905Test:
     # These functions simulate those called by the callbacks from pigpio when
     # the GPIO pins changes state.
     def carrier_detect_function(self, value):
-        print("cdf", value)
+        logger.debug("cdf:" + str(value))
         if value:
             self._machine.carrier()
         else:
             self._machine.no_carrier()
             
     def address_matched_function(self, value):
-        print("afm", value)
+        logger.debug("afm:" + str(value))
         if value:
             self._machine.address_match()
         else:
@@ -66,36 +75,36 @@ class Nrf905Test:
                 self._machine.no_address_match()
 
     def data_ready_function(self, value):
-        print("drf", value, self._retransmit_count)
+        logger.debug("drf:" + str(value) + ", " + str(self._retransmit_count))
         if self._machine.is_transmitting():
-            print("drf: 0")
+            logger.debug("drf: 0")
             if value:
-                print("drf: 0a")
+                logger.debug("drf: 0a")
                 self._machine.data_ready_tx()
         elif self._machine.is_retransmitting():
-            print("drf: 1")
+            logger.debug("drf: 1")
             if value:
                 self._retransmit_count -= 1
-                print("drf: 1a")
+                logger.debug("drf: 1a")
                 if self._retransmit_count <= 0:
-                    print("drf: 1b")
+                    logger.debug("drf: 1b")
                     self._machine.data_ready_tx_re()
         elif self._machine.is_receiving_data():
-            print("drf: 2a")
+            logger.debug("drf: 2a")
             if value:
-                print("drf: 2b")
+                logger.debug("drf: 2b")
                 self._machine.data_ready_rx()
         elif self._machine.is_received():
             # Receive complete
             # DR is HI->LO
-            print("drf: 3a")
+            logger.debug("drf: 3a")
             if not value:
                 # Can go into two different states from here.
                 if self._is_rx_enabled:
-                    print("drf: 3b")
+                    logger.debug("drf: 3b")
                     self._machine.received2listening()
                 else:
-                    print("drf: 3c")
+                    logger.debug("drf: 3c")
                     self._machine.received2standby()
 
     # Other functions needed.
@@ -112,7 +121,7 @@ class Nrf905Test:
     
     @receiver_enabled.setter
     def receiver_enabled(self, value):
-        print("er:", value)
+        logger.debug("er:" + str(value))
         self._is_rx_enabled = value
         if self._machine.is_standby():
             if value:
@@ -123,13 +132,13 @@ class Nrf905Test:
 
     def transmit(self, data):
         """ Transmit data once. """
-        print("t: sending", data)
+        logger.debug("t:" + str(data))
         # Post to transmit queue first.
         self._machine.transmit()
 
     def retransmit(self, data, count):
         """ Transmit data count times. """
-        print("rt: sending", data, count, "times")
+        logger.debug("rt: sending '" + str(data) + "', " + str(count) + " times")
         self._retransmit_count = count
         # Post to transmit queue first.
         self._machine.retransmit()
