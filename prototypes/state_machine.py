@@ -106,7 +106,12 @@ class Nrf905Test:
     def power_up(self):
         self._machine.power_up()
 
-    def enable_receiver(self, value):
+    @property
+    def receiver_enabled(self):
+        return self._is_rx_enabled
+    
+    @receiver_enabled.setter
+    def receiver_enabled(self, value):
         print("er:", value)
         self._is_rx_enabled = value
         if self._machine.is_standby():

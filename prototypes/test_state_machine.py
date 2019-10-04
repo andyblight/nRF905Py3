@@ -51,17 +51,19 @@ class TestStateMachine(unittest.TestCase):
     def test_receiver_enable(self):
         self.nrf905.power_up()
         self.assertEqual('standby', self.nrf905.state)
-        self.nrf905.enable_receiver(True)
+        self.nrf905.receiver_enabled = True
         self.assertEqual('listening', self.nrf905.state)
-        self.nrf905.enable_receiver(False)
+        self.assertTrue(self.nrf905.receiver_enabled)
+        self.nrf905.receiver_enabled = False
         self.assertEqual('standby', self.nrf905.state)
+        self.assertFalse(self.nrf905.receiver_enabled)
 
     def test_receive(self):
         print()
         print("test_receive")
         self.nrf905.power_up()
         self.assertEqual('standby', self.nrf905.state)
-        self.nrf905.enable_receiver(True)
+        self.nrf905.receiver_enabled = True
         self.assertEqual('listening', self.nrf905.state)
         self.nrf905.carrier_detect_function(True)
         self.assertEqual('carrier_busy', self.nrf905.state)
@@ -79,14 +81,14 @@ class TestStateMachine(unittest.TestCase):
         print("test_receive_to_standby")
         self.nrf905.power_up()
         self.assertEqual('standby', self.nrf905.state)
-        self.nrf905.enable_receiver(True)
+        self.nrf905.receiver_enabled = True
         self.assertEqual('listening', self.nrf905.state)
         self.nrf905.carrier_detect_function(True)
         self.assertEqual('carrier_busy', self.nrf905.state)
         self.nrf905.address_matched_function(True)
         self.assertEqual('receiving_data', self.nrf905.state)
         self.nrf905.data_ready_function(True)
-        self.nrf905.enable_receiver(False)
+        self.nrf905.receiver_enabled = False
         self.assertEqual('received', self.nrf905.state)
         # Packet read from registers and posted to queue on exit. 
         self.nrf905.address_matched_function(False)
