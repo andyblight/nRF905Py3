@@ -171,7 +171,8 @@ No dependencies.
 
 1. Make nrf905-monitor work.
     1. Nrf905 is part way through a re-write as handling states was getting difficult.
-        1. Use setters and getters for exposed properties.
+        1. Use setters and getters for exposed properties. DONE.
+        1. threads.py can be used as an example of how to use threads, queues and semaphores to do what I need.  Merge in changes.
         1. Use state machine in prototypes dir instead of variables.
 1. Add SPI bus 1 functionality.  The Nrf905Spi.\_\_init\_\_() function takes the spi_bus parameter but there is no implemented functionality.  Affects Nrf905SPI and Nrf905Gpio classes.  Needs RPi 2 or later to test.
 1. Deal with multiple users and one device problem.  Only allow single users?  Allow multiple users using queues and callbacks?  Multiple users means using queues, each user need unique handle (in the Nrf905 class).  Need to work out user privileges for each function.

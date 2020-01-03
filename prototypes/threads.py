@@ -64,8 +64,8 @@ class ThreadTest:
         self._sending = True
 
     def _busy_worker(self):
-        print("_busy_worker: started.")
         # Fakes the DR callback.
+        print("_busy_worker: started.")
         while self._run_thread:
             # Emulate being busy
             time.sleep(0.2)
