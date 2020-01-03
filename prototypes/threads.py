@@ -4,6 +4,8 @@
 """
 
 import queue
+import signal
+import sys
 import time
 import threading
 
@@ -15,11 +17,13 @@ class ThreadTest:
         self._input_thread = None
         self._callback_fn = None
         self._busy_semaphore = threading.Semaphore()  # Count of 1.
+        self._run_thread = False
 
     def register_callback(self, callback_fn):
         self._callback_fn = callback_fn
 
     def start(self):
+        self._run_thread = True
         self._input_thread = threading.Thread(target=self._input_worker,
                                               name="Input")
         self._input_thread.start()
@@ -35,20 +39,21 @@ class ThreadTest:
             message = message[32:]
 
     def stop(self):
-        # block until all tasks are done
-        self._input_queue.join()
-        # stop workers
-        self._input_queue.put(None)
-        # join thread
+        print("stop: called")
+        self._run_thread = False
+        # join threads
         self._input_thread.join()
+        self._busy_thread.join()
+        sys.exit(1)
 
     def _input_worker(self):
-        # TODO add ctrl+c handling.
-        while True:
+        print("_input_worker: started.")
+        while self._run_thread:
             packet = self._input_queue.get()
             if packet is not None:
                 self._send(packet)
-            self._input_queue.task_done()
+                self._input_queue.task_done()
+        print("_input_worker: exit. p:", packet, ", rt:", self._run_thread)
 
     def _send(self, packet):
         print("Sending packet: '", packet, "'")
@@ -59,8 +64,9 @@ class ThreadTest:
         self._sending = True
 
     def _busy_worker(self):
-        # This attempts to fake the DR callback.
-        while True:
+        print("_busy_worker: started.")
+        # Fakes the DR callback.
+        while self._run_thread:
             # Emulate being busy
             time.sleep(0.2)
             if self._sending:
@@ -70,21 +76,45 @@ class ThreadTest:
                 self._sending = False
                 # When callback happens, release semaphore.
                 self._busy_semaphore.release()
+            else:
+                print("_busy_worker: Not sending.")
+        print("_busy_worker: exit. rt:", self._run_thread)
 
 def my_callback():
     print("my_callback")
 
 
+class ServiceExit(Exception):
+    """
+    Custom exception which is used to trigger the clean exit
+    of all running threads and the main program.
+    """
+    pass
+
+
+def service_shutdown(signum, frame):
+    print('Caught signal %d' % signum)
+    raise ServiceExit
+
 
 ##### START HERE ####
+# Register the signal handlers
+signal.signal(signal.SIGTERM, service_shutdown)
+signal.signal(signal.SIGINT, service_shutdown)
 print("Tests started")
-my_class = ThreadTest()
-my_class.register_callback(my_callback)
-my_class.start()
-for i in range(0, 5):
-    text = "This is a long message that will be sent to test how the data is broken up into a number of 32 byte packets."
-    message = str(i) + ": "
-    message += text
-    my_class.send(message)
+try:
+    my_class = ThreadTest()
+    my_class.register_callback(my_callback)
+    my_class.start()
+    for i in range(0, 5):
+        text = "This is a long message that will be sent to test how the data is broken up into a number of 32 byte packets."
+        message = str(i) + ": "
+        message += text
+        my_class.send(message)
+    time.sleep(100)
+except ServiceExit:
+    pass
+
 my_class.stop()
+
 print("Tests finished.")
