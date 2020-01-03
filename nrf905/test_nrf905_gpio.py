@@ -149,7 +149,7 @@ class TestNrf905Gpio(unittest.TestCase):
         # Clear existing callback - should return True.
         result = self._gpio.clear_callback(self._pi, Nrf905Gpio.ADDRESS_MATCHED)
         self.assertTrue(result)
-    
+
 
 if __name__ == '__main__':
     unittest.main()

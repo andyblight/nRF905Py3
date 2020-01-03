@@ -27,38 +27,53 @@ class Nrf905:
 
     def __init__(self):
         # nRF905 properties
-        self._channel = -1
-        self._hfreq_pll = -1
+        self._frequency_mhz = 0.0
         self._rx_address = -1
         self._tx_address = 0
         # Properties to make the class work.
         self._rx_callback = None
-        self._is_open = False
         self._queue = None
         self._thread = None
         self._pi = None
         self._spi = None
         self._gpio = None
-        
-    def set_frequency(self, frequency_mhz):
-        """ Sets the frequency for the device in MHz. """
-        print("set_frequency:", frequency_mhz)
+        self._channel = -1  # Set from frequency.
+        self._hfreq_pll = -1  # Set from frequency.
+        # TODO replace with state machine.
+        self._is_open = False
+
+    @property
+    def frequency(self):
+        return self._frequency_mhz
+
+    @frequency.setter
+    def frequency(self, frequency_mhz, country="GBR"):
+        """ Validates and sets the frequency for the device in MHz. """
+        print("frequency:", frequency_mhz)
         if self._is_open:
             raise StateError("Cannot change frequency when open.")
         else:
-            if Nrf905ConfigRegister.is_valid_uk(frequency_mhz):
+            if Nrf905ConfigRegister.is_valid(frequency_mhz, country):
                 (channel, hfreq_pll) = Nrf905ConfigRegister.frequency_to_channel(frequency_mhz)
                 if channel < 0:
                     raise ValueError("Invalid frequency.")
                 else:
+                    self._frequency_mhz = frequency_mhz
                     self._channel = channel
                     self._hfreq_pll = hfreq_pll
             else:
-                raise ValueError("Frequency not valid in UK.")
+                raise ValueError("Frequency not valid in {}.".format(country))
 
-    def set_rx_address(self, address):
-        """ Sets the receive address. Must less than 4 bytes long. """
-        print("set_rx_address:", address)
+    @property
+    def receive_address(self):
+        return self._rx_address
+
+    @receive_address.setter
+    def receive_address(self, address):
+        """ Sets the receive address. Must be 4 bytes or less.
+        Please read datasheet for adivce on setting addres values.
+        """
+        print("rx_address:", address)
         if self._is_open:
             raise StateError("Cannot change address when open.")
         else:
@@ -66,9 +81,16 @@ class Nrf905:
                 raise ValueError("Address contains more than 32 bits.")
             else:
                 self._rx_address = address
-    
-    def set_tx_address(self, address)
-        """ Sets the transmit address. Must less than 4 bytes long. """
+
+    @property
+    def transmit_address(self):
+        return self._tx_address
+
+    @transmit_address.setter
+    def transmit_address(self, address):
+        """ Sets the transmit address. Must be 4 bytes or less.
+        Please read datasheet for adivce on setting addres values.
+        """
         print("set_tx_address:", address)
         if self._is_open:
             raise StateError("Cannot change address when open.")
@@ -88,7 +110,7 @@ class Nrf905:
             raise StateError("Already open.")
         else:
             # Frequency and RX address must be set before open is called.
-            if self._channel == -1 or self._hfreq_pll == -1 or 
+            if self._channel == -1 or self._hfreq_pll == -1 or
                     self._rx_address == -1:
                 raise ValueError("Frequency and RX address must be set.")
             else:
@@ -100,7 +122,7 @@ class Nrf905:
                 # Set up nRF905
                 # Power down mode
                 self._gpio.set_mode_power_down(self._pi)
-                # Config register.  
+                # Config register.
                 config = Nrf905ConfigRegister()
                 config.board_defaults()
                 config.set_channel_number(self._channel)
@@ -132,11 +154,11 @@ class Nrf905:
         self._spi.close()
         self._pi.stop()
 
-    def send(self, data):
+    def write(self, data):
         """ Posts the data to the transmit queue in 32 byte packets.
         Each packet in the queue will be transmitted until the queue is empty.
         """
-        print("send:", data)
+        print("write:", data)
         if not self._is_open:
             raise StateError("Call Nrf905.open() first.")
         else:
@@ -145,7 +167,7 @@ class Nrf905:
                 self._queue.put(packet)
 
     def _worker(self):
-        """ Wait for a packet. When a packet is available, send the packet and 
+        """ Wait for a packet. When a packet is available, send the packet and
         repeat.
         """
         while True:
@@ -157,8 +179,8 @@ class Nrf905:
 
     def _send(self, data):
             # TODO Change modes.
+            # Write the payload data to the registers.
             self._spi.write_transmit_payload(data)
-
 
 
 class Error(Exception):
@@ -170,6 +192,6 @@ class StateError(Error):
     """ Exception raised when functions are called when in the wrong state.
     Attributes:
         message -- explanation of the error
-    """    
+    """
     def _init_(self, message):
         self.message = message
