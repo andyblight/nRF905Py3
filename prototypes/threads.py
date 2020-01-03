@@ -14,8 +14,7 @@ class ThreadTest:
         self._input_queue = queue.Queue(100)
         self._input_thread = None
         self._callback_fn = None
-        # self._busy_cv = threading.Condition()
-        self._sending = False
+        self._busy_semaphore = threading.Semaphore()  # Count of 1.
 
     def register_callback(self, callback_fn):
         self._callback_fn = callback_fn
@@ -24,9 +23,9 @@ class ThreadTest:
         self._input_thread = threading.Thread(target=self._input_worker,
                                               name="Input")
         self._input_thread.start()
-        # self._busy_thread = threading.Thread(target=self._busy_worker,
-        #                                      name="Busy")
-        # self._busy_thread.start()
+        self._busy_thread = threading.Thread(target=self._busy_worker,
+                                             name="Busy")
+        self._busy_thread.start()
 
     def send(self, message):
         while message:  # Contains something.
@@ -44,29 +43,33 @@ class ThreadTest:
         self._input_thread.join()
 
     def _input_worker(self):
+        # TODO add ctrl+c handling.
         while True:
-            # with self._busy_cv:
-            #     self._busy_cv.wait()
             packet = self._input_queue.get()
-            if packet is None:
-                break
-            self._send(packet)
+            if packet is not None:
+                self._send(packet)
             self._input_queue.task_done()
 
     def _send(self, packet):
         print("Sending packet: '", packet, "'")
+        # Wait for transceiver to be free.
+        self._busy_semaphore.acquire()
+        # Not busy so send
+        print("Sending packet: written.")
         self._sending = True
-        time.sleep(0.2)
 
-    # def _busy_worker(self):
-    #     while True:
-    #         with self._sending_cv:
-    #             self._sending_cv.wait_for(self._sending)
-    #             # Emulate sending
-    #             time.sleep(0.1)
-    #             # Notify waiter.
-    #             with self._busy_cv:
-    #                 self._busy_cv.notify()
+    def _busy_worker(self):
+        # This attempts to fake the DR callback.
+        while True:
+            # Emulate being busy
+            time.sleep(0.2)
+            if self._sending:
+                # Wait for DR callback after send. Fake this by waiting for 0.1
+                time.sleep(0.1)
+                print("_busy_worker: DR callback.")
+                self._sending = False
+                # When callback happens, release semaphore.
+                self._busy_semaphore.release()
 
 def my_callback():
     print("my_callback")
