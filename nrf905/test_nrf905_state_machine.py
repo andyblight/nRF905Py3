@@ -18,9 +18,13 @@ class TestNrf905StateMachine(unittest.TestCase):
 
     # Tear down is not needed.
 
+    def test_graph(self):
+        # This is a bit of a hack so uses the machine directly.
+        # self.nrf905._machine.output_graph()
+        pass
+
     def test_standby(self):
-        print()
-        print("test_standby")
+        logger.debug("\ntest_standby")
         # Put into standby.
         self.assertEqual('power_down', self.nrf905.state)
         self.nrf905.power_up()
@@ -29,9 +33,31 @@ class TestNrf905StateMachine(unittest.TestCase):
         self.nrf905.data_ready_function(False)
         self.assertEqual('standby', self.nrf905.state)
 
+    def test_is_busy(self):
+        """ Verify that is_busy returns False when in standby and
+        power_down states only.
+        """
+        logger.debug("\ntest_is_busy")
+        # Default state is power_down. Expect False
+        self.assertEqual('power_down', self.nrf905.state)
+        self.assertFalse(self.nrf905._machine.is_busy())
+        # Put into standby.
+        self.nrf905.power_up()
+        self.assertEqual('standby', self.nrf905.state)
+        self.assertFalse(self.nrf905._machine.is_busy())
+        # Try other states
+        self.nrf905.transmit("fred")
+        self.assertEqual('transmitting', self.nrf905.state)
+        self.assertTrue(self.nrf905._machine.is_busy())
+        self.nrf905.end_transmit()
+        self.assertEqual('standby', self.nrf905.state)
+        self.assertFalse(self.nrf905._machine.is_busy())
+        self.nrf905.receiver_enabled = True
+        self.assertEqual('listening', self.nrf905.state)
+        self.assertTrue(self.nrf905._machine.is_busy())
+
     def test_transmit(self):
-        print()
-        print("test_transmit")
+        logger.debug("\ntest_transmit")
         self.nrf905.power_up()
         self.assertEqual('standby', self.nrf905.state)
         self.nrf905.transmit("fred")
@@ -40,8 +66,7 @@ class TestNrf905StateMachine(unittest.TestCase):
         self.assertEqual('standby', self.nrf905.state)
 
     def test_retransmit(self):
-        print()
-        print("test_retransmit")
+        logger.debug("\ntest_retransmit")
         self.nrf905.power_up()
         self.assertEqual('standby', self.nrf905.state)
         self.nrf905.retransmit("bert", 3)
@@ -56,6 +81,7 @@ class TestNrf905StateMachine(unittest.TestCase):
         self.assertEqual('standby', self.nrf905.state)
 
     def test_receiver_enable(self):
+        logger.debug("\ntest_receiver_enable")
         self.nrf905.power_up()
         self.assertEqual('standby', self.nrf905.state)
         self.nrf905.receiver_enabled = True
@@ -66,8 +92,7 @@ class TestNrf905StateMachine(unittest.TestCase):
         self.assertFalse(self.nrf905.receiver_enabled)
 
     def test_receive(self):
-        print()
-        print("test_receive")
+        logger.debug("\ntest_receive")
         self.nrf905.power_up()
         self.assertEqual('standby', self.nrf905.state)
         self.nrf905.receiver_enabled = True
@@ -84,8 +109,7 @@ class TestNrf905StateMachine(unittest.TestCase):
         self.assertEqual('listening', self.nrf905.state)
 
     def test_receive_to_standby(self):
-        print()
-        print("test_receive_to_standby")
+        logger.debug("\ntest_receive_to_standby")
         self.nrf905.power_up()
         self.assertEqual('standby', self.nrf905.state)
         self.nrf905.receiver_enabled = True
@@ -101,11 +125,6 @@ class TestNrf905StateMachine(unittest.TestCase):
         self.nrf905.address_matched_function(False)
         self.nrf905.data_ready_function(False)
         self.assertEqual('standby', self.nrf905.state)
-
-    def test_graph(self):
-        # This is a bit of a hack so uses the machine directly.
-        # self.nrf905._machine.output_graph()
-        pass
 
 
 class Nrf905Mock:
@@ -201,6 +220,19 @@ class Nrf905Mock:
         # Post to transmit queue first.
         self._machine.retransmit()
 
+    def end_transmit(self):
+        """ Fake function for testing.  In reality, the transmit would finish
+        after a time, and the data ready callback would then change the state
+        to standby.
+        """
+        self._machine.data_ready_tx()
+
+    def end_retransmit(self):
+        """ Fake function for testing.  In reality, the transmit would finish
+        after a time, and the data ready callback would then change the state
+        to standby.
+        """
+        self._machine.data_ready_tx_re()
 
 if __name__ == '__main__':
     unittest.main()

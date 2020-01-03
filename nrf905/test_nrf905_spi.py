@@ -8,12 +8,6 @@ from nrf905.nrf905_spi import Nrf905Spi
 from nrf905.nrf905_config import Nrf905ConfigRegister
 
 
-def callback(data):
-    """ Prints out the contents of the data received. """
-    print("callback", data)
-    print()
-
-
 class TestNrf905Spi(unittest.TestCase):
 
     def setUp(self):

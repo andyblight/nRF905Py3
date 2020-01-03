@@ -1,12 +1,15 @@
 #!/usr/bin/env python3
 
+import pigpio
 import queue
 import threading
 
 from nrf905.nrf905_spi import Nrf905Spi
 from nrf905.nrf905_gpio import Nrf905Gpio
+from nrf905.nrf905_state_machine import Nrf905StateMachine
 
 
+# TODO Sort out callbacks.
 def data_ready_callback(data):
     print("drc:", data)
 
@@ -30,17 +33,17 @@ class Nrf905:
         self._frequency_mhz = 0.0
         self._rx_address = -1
         self._tx_address = 0
-        # Properties to make the class work.
-        self._rx_callback = None
-        self._queue = None
-        self._thread = None
+        # Objects to make the class work.
+        self._state_machine = Nrf905StateMachine()
         self._pi = None
         self._spi = None
         self._gpio = None
+        self._rx_callback = None
+        self._queue = None
+        self._thread = None
+        # Internal properties.
         self._channel = -1  # Set from frequency.
         self._hfreq_pll = -1  # Set from frequency.
-        # TODO replace with state machine.
-        self._is_open = False
 
     @property
     def frequency(self):
@@ -50,19 +53,17 @@ class Nrf905:
     def frequency(self, frequency_mhz, country="GBR"):
         """ Validates and sets the frequency for the device in MHz. """
         print("frequency:", frequency_mhz)
-        if self._is_open:
-            raise StateError("Cannot change frequency when open.")
-        else:
-            if Nrf905ConfigRegister.is_valid(frequency_mhz, country):
-                (channel, hfreq_pll) = Nrf905ConfigRegister.frequency_to_channel(frequency_mhz)
-                if channel < 0:
-                    raise ValueError("Invalid frequency.")
-                else:
-                    self._frequency_mhz = frequency_mhz
-                    self._channel = channel
-                    self._hfreq_pll = hfreq_pll
+        if Nrf905ConfigRegister.is_valid(frequency_mhz, country):
+            (channel, hfreq_pll) = Nrf905ConfigRegister.frequency_to_channel(frequency_mhz)
+            if channel < 0:
+                raise ValueError("Invalid frequency.")
             else:
-                raise ValueError("Frequency not valid in {}.".format(country))
+                self._frequency_mhz = frequency_mhz
+                self._channel = channel
+                self._hfreq_pll = hfreq_pll
+        else:
+            raise ValueError("Frequency {} not valid in {}.".format(
+                frequency_mhz, country))
 
     @property
     def receive_address(self):
@@ -74,13 +75,10 @@ class Nrf905:
         Please read datasheet for adivce on setting addres values.
         """
         print("rx_address:", address)
-        if self._is_open:
-            raise StateError("Cannot change address when open.")
+        if address.bit_length() > 32:
+            raise ValueError("Address contains more than 32 bits.")
         else:
-            if address.bit_length() > 32:
-                raise ValueError("Address contains more than 32 bits.")
-            else:
-                self._rx_address = address
+            self._rx_address = address
 
     @property
     def transmit_address(self):
@@ -92,13 +90,10 @@ class Nrf905:
         Please read datasheet for adivce on setting addres values.
         """
         print("set_tx_address:", address)
-        if self._is_open:
-            raise StateError("Cannot change address when open.")
+        if address.bit_length() > 32:
+            raise ValueError("Address contains more than 32 bits.")
         else:
-            if address.bit_length() > 32:
-                raise ValueError("Address contains more than 32 bits.")
-            else:
-                self._tx_address = address
+            self._tx_address = address
 
     def open(self, callback):
         """ Creates the instances of Nrf905Spi and Nrf905Gpio.
@@ -106,7 +101,7 @@ class Nrf905:
         Prepares callback for use.
         """
         print("open")
-        if self._is_open:
+        if self._state_machine.is_open():
             raise StateError("Already open.")
         else:
             # Frequency and RX address must be set before open is called.
@@ -122,6 +117,7 @@ class Nrf905:
                 # Set up nRF905
                 # Power down mode
                 self._gpio.set_mode_power_down(self._pi)
+                self._state_machine.power_down()
                 # Config register.
                 config = Nrf905ConfigRegister()
                 config.board_defaults()

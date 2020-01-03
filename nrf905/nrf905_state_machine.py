@@ -18,7 +18,9 @@ logger = logging.getLogger('Nrf905StateMachine')
 
 
 class Nrf905StateMachine:
-    """ A sub-class of Nrf905 that manages states and transitions. """
+    """ A sub-class of Nrf905 that manages states and transitions.
+    The state names were taken from the nRF905 datasheet.
+    """
     states = ['power_down', 'standby', 'transmitting', 'retransmitting',
               'listening', 'carrier_busy', 'receiving_data', 'received']
 
@@ -43,6 +45,18 @@ class Nrf905StateMachine:
         self._machine.add_transition('received2standby', 'received', 'standby')
         self._machine.add_transition('received2listening', 'received', 'listening')
 
+    def output_graph(self):
+        """ Outputs a graph of the state machine showing all states and transitions. """
+        self._machine.get_graph().draw('nrf905-state-machine.png', prog='dot')
+
+    def is_busy(self):
+        busy = True
+        state = self.state
+        logger.debug("is_busy: " + state)
+        if state == 'power_down' or state == 'standby':
+            busy = False
+        return busy
+
     def write_payload(self):
         logger.debug("wp")
         # TODO
@@ -50,6 +64,3 @@ class Nrf905StateMachine:
     def read_payload(self):
         logger.debug("rp")
         # TODO
-
-    def output_graph(self):
-        self._machine.get_graph().draw('nrf905-state-machine.png', prog='dot')
