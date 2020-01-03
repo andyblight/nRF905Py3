@@ -57,6 +57,14 @@ class Nrf905StateMachine:
             busy = False
         return busy
 
+    def is_receiving(self):
+        receiving = True
+        state = self.state
+        logger.debug("is_receiving: " + state)
+        if state == 'power_down' or state == 'standby':
+            receiving = False
+        return receiving
+
     def write_payload(self):
         logger.debug("wp")
         # TODO

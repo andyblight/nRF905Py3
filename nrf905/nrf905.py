@@ -101,8 +101,8 @@ class Nrf905:
         Prepares callback for use.
         """
         print("open")
-        if self._state_machine.is_open():
-            raise StateError("Already open.")
+        if self._thread():
+            raise StateError("Already open.  Call close() before retrying.")
         else:
             # Frequency and RX address must be set before open is called.
             if self._channel == -1 or self._hfreq_pll == -1 or
@@ -155,7 +155,7 @@ class Nrf905:
         Each packet in the queue will be transmitted until the queue is empty.
         """
         print("write:", data)
-        if not self._is_open:
+        if not self._thread:
             raise StateError("Call Nrf905.open() first.")
         else:
             while data:  # Contains something.
@@ -167,16 +167,28 @@ class Nrf905:
         repeat.
         """
         while True:
+            # Wait until transceiver is free before sending.
+            with cv_busy:
+                while self._state_machine.is_busy():
+                    cv_busy.wait()
             data = self._queue.get()
             if data is None:
                 break
             self._send(data)
             self._queue.task_done()
 
+    def _wait_until_free(self):
+        """ Blocks until the transciever is not busy. """
+        with cv_busy:
+            while
+
     def _send(self, data):
+        """ Sends a packet of data.
+        """
             # TODO Change modes.
             # Write the payload data to the registers.
             self._spi.write_transmit_payload(data)
+
 
 
 class Error(Exception):
