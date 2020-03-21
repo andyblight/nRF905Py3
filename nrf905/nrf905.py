@@ -13,8 +13,10 @@ from nrf905.nrf905_state_machine import Nrf905StateMachine
 def data_ready_callback(data):
     print("drc:", data)
 
+
 def carrier_detect_callback(data):
     print("cdc:", data)
+
 
 def address_matched_callback(data):
     print("amc:", data)
@@ -105,7 +107,7 @@ class Nrf905:
             raise StateError("Already open.  Call close() before retrying.")
         else:
             # Frequency and RX address must be set before open is called.
-            if self._channel == -1 or self._hfreq_pll == -1 or
+            if self._channel == -1 or self._hfreq_pll == -1 or \
                     self._rx_address == -1:
                 raise ValueError("Frequency and RX address must be set.")
             else:
@@ -129,9 +131,14 @@ class Nrf905:
                 if self._tx_address != 0:
                     self.spi.write_transmit_address(write_address)
                 # Callbacks
-                self._gpio.set_callback(self._pi, Nrf905Gpio.DATA_READY, data_ready_callback)
-                self._gpio.set_callback(self._pi, Nrf905Gpio.CARRIER_DETECT, carrier_detect_callback)
-                self._gpio.set_callback(self._pi, Nrf905Gpio.ADDRESS_MATCHED, address_matched_callback)
+                self._gpio.set_callback(
+                    self._pi, Nrf905Gpio.DATA_READY, data_ready_callback)
+                self._gpio.set_callback(
+                    self._pi, Nrf905Gpio.CARRIER_DETECT,
+                    carrier_detect_callback)
+                self._gpio.set_callback(
+                    self._pi, Nrf905Gpio.ADDRESS_MATCHED,
+                    address_matched_callback)
                 # Start thread
                 self._queue = queue.Queue()
                 self._thread = threading.Thread(target=_worker)
@@ -179,16 +186,17 @@ class Nrf905:
 
     def _wait_until_free(self):
         """ Blocks until the transciever is not busy. """
-        with cv_busy:
-            while
+        # TODO
+        # with cv_busy:
+        #    while
+        pass
 
     def _send(self, data):
         """ Sends a packet of data.
         """
-            # TODO Change modes.
-            # Write the payload data to the registers.
-            self._spi.write_transmit_payload(data)
-
+        # TODO Change modes.
+        # Write the payload data to the registers.
+        self._spi.write_transmit_payload(data)
 
 
 class Error(Exception):

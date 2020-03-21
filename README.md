@@ -135,8 +135,6 @@ The code is arranged in a number of modules.
 
 ```
 
-TODO EXPLAIN HOW nfrf905.py IS DESIGNED.
-
 ### nrf905.py
 
 Implements the class Nrf905.

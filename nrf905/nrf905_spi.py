@@ -4,6 +4,7 @@ import pigpio
 
 from nrf905.nrf905_config import Nrf905ConfigRegister
 
+
 class Nrf905Spi:
     """ Handles access to SPI bus and the nRF905 registers.
     Extracts from the data sheet.
@@ -17,7 +18,7 @@ class Nrf905Spi:
     _CRYSTAL_FREQUENCY_HZ = 16 * 1000 * 1000  # 16MHz is on the board I'm using.
 
     # SPI pins are defaults for pigpio bus 0 (RPi 1 A&B only have SPI bus 0).
-    _SPI_BUS_0_FLAGS = 0 
+    _SPI_BUS_0_FLAGS = 0
     _SPI_BUS_1_FLAGS = 0
     _SPI_SCK_HZ = 10 * 1000 * 1000  # Set to 10MHz.  10MHz max. (data sheet)
 
@@ -116,7 +117,7 @@ class Nrf905Spi:
         if len(payload) == self._transmit_payload_width:
             command = bytearray()
             command.append(self._INSTRUCTION_W_TX_PAYLOAD)
-            for i in range (0, self._transmit_payload_width):
+            for i in range(0, self._transmit_payload_width):
                 command.append(payload[i])
             # print("wtp:", payload, command)
             self.send_command(command)
@@ -183,4 +184,3 @@ class Nrf905Spi:
             raise ValueError("Out of range: 0 <= channel_number < 0x200")
         # print("channel_config", command.hex())
         self.send_command(command)
-
