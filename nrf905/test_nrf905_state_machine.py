@@ -20,8 +20,8 @@ class TestNrf905StateMachine(unittest.TestCase):
 
     def test_graph(self):
         # This is a bit of a hack so uses the machine directly.
-        # self.nrf905._machine.output_graph()
-        pass
+        self.nrf905._machine.output_graph()
+        # pass
 
     def test_standby(self):
         logger.debug("\ntest_standby")

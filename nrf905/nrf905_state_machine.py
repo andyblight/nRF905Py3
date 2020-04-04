@@ -26,12 +26,11 @@ class Nrf905StateMachine:
 
     def __init__(self):
         self._machine = Machine(model=self, states=self.states, initial='power_down')
-        # Add transitions:         (trigger name, previous state, next state)
-        self._machine.add_transition('power_up', 'power_down', 'standby')
+        # Add transitions:          (trigger name, previous state, next state)
         # Transmit - single shot
-        self._machine.add_transition('transmit', 'standby', 'transmitting', before='write_payload')
+        self._machine.add_transition('transmit', 'standby', 'transmitting')
         self._machine.add_transition('data_ready_tx', 'transmitting', 'standby')
-        self._machine.add_transition('retransmit', 'standby', 'retransmitting', before='write_payload')
+        self._machine.add_transition('retransmit', 'standby', 'retransmitting')
         self._machine.add_transition('data_ready_tx_re', 'retransmitting', 'standby')
         # Receive
         self._machine.add_transition('receiver_enable', 'standby', 'listening')
@@ -40,10 +39,14 @@ class Nrf905StateMachine:
         self._machine.add_transition('no_carrier', 'carrier_busy', 'listening')
         self._machine.add_transition('address_match', 'carrier_busy', 'receiving_data')
         self._machine.add_transition('no_address_match', 'receiving_data', 'listening')
-        self._machine.add_transition('data_ready_rx', 'receiving_data', 'received', before='read_payload')
+        self._machine.add_transition('data_ready_rx', 'receiving_data', 'received')
         # Two possible transitions.
         self._machine.add_transition('received2standby', 'received', 'standby')
         self._machine.add_transition('received2listening', 'received', 'listening')
+        # Power states
+        self._machine.add_transition('power_up', 'power_down', 'standby')
+        # This must be last so that the * works.
+        self._machine.add_transition('power_down', '*', 'power_down')
 
     def output_graph(self):
         """ Outputs a graph of the state machine showing all states and transitions. """
@@ -64,11 +67,3 @@ class Nrf905StateMachine:
         if state == 'power_down' or state == 'standby':
             receiving = False
         return receiving
-
-    def write_payload(self):
-        logger.debug("wp")
-        # TODO
-
-    def read_payload(self):
-        logger.debug("rp")
-        # TODO
