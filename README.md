@@ -6,20 +6,19 @@ The pigpoid does all the tricky interfacing with the GPIO pins and the SPI bus
 and the Nrf905 class handles all the nRF905 specific things like waggling the
 GPIO pins at the right time.
 
-In addition, there are two demo programs that use the nrf05 class.  One is a
-monitor program that prints out whatever is received by the nRF905 device.  The
-other transmits 32 bits (8 hex chars).
-
-Finally, there is a test harness that tests the Nrf905 class.  Execute it by
-running:
-
-```bash
-./run-tests.py
-```
+The program `nrf905-example.py` is a minimal example of how the driver is
+intended to be used.  The main code is explained in the design section and the
+test code is explained in the testing section.  There is also a `docs`
+directory containing the datasheet and the wiring diagram I started with.
+Finally, the prototypes directoy is where I wrote small test programs during
+development.
 
 ## Preparing the RPi
 
-Firstly (and probably most importantly) is to enable the SPI interface.  This actually loads a kernel module that communicates with the SPI bus and without this module, nothing works!
+Firstly (and probably most importantly) is to enable the RPi SPI interface
+using `raspi-config`.  This loads a kernel module that communicates with the
+SPI bus and without this module, nothing works!
+
 Secondly, you need to start the pigpio daemon using
 
 ```bash
@@ -112,11 +111,13 @@ Runs tests that can be run on the host PC (does not use pigpio or the nRF905).
 
 ### run-nc-tests.sh
 
-Runs tests that must be run on the Raspberry Pi (calls pigpio) but does not try to use the nRF905 module.
+Runs tests that must be run on the Raspberry Pi (calls pigpio) but does not try
+to use the nRF905 module.
 
 ### run-c-tests.sh
 
-Runs tests that must be run on the Raspberry Pi (calls pigpio) and has the nRF905 module connected (tries to use registers on the device).
+Runs tests that must be run on the Raspberry Pi (calls pigpio) and has the
+nRF905 module connected (tries to use registers on the device).
 
 ## Design
 
@@ -139,15 +140,22 @@ The code is arranged in a number of modules.
 
 Implements the class Nrf905.
 
-This class forms the interface that most coders will use.  An instance of this class will use one Nrf905Gpio object and one Nrf905Spi object.  These objects are used together to control the nRF905 module.
+This class forms the interface that most coders will use.  An instance of this
+class uses one Nrf905Gpio object and one Nrf905Spi object.  These objects are
+used together to control the nRF905 device.
 
-Depends on Nrf905GPio and Nrf905Spi.
+The nRF905 is surprisingly complex so a state machine is used, mainly to handle
+the numerous transitions when receiving.  The state machine also blocks
+transmit functions until no carrier is detected.
+
+Depends on Nrf905Gpio and Nrf905Spi.
 
 ### nrf905_gpio.py
 
 Implements the class Nrf905Gpio.
 
-Responsible for controlling and responding to the GPIO pins used by the nRF905 module.
+Responsible for controlling and responding to the GPIO pins used by the nRF905
+module.
 
 Depends on pigpio.
 
@@ -155,25 +163,42 @@ Depends on pigpio.
 
 Implements the class Nrf905Spi.
 
-Responsible for reading and writing messages using the SPI bus via the pigpio commands.  Also uses Nrf905ConfigRegister to read and write to the nRF905 config register.
+Responsible for reading and writing messages using the SPI bus via the pigpio
+commands.  Also uses Nrf905ConfigRegister to read and write to the nRF905
+config register.
 
 Depends on Nrf905ConfigRegister and pigpio.
 
 ### nrf905_config.py
 
-Implements the class Nrf905ConfigRegister.  During development, this was split out from the Nrf905Spi class as it became so big.  Splitting it out also made unit testing of this whole class much easier.
+Implements the class Nrf905ConfigRegister.  During development, this was split
+out from the Nrf905Spi class as it became so big.  Splitting it out also made
+unit testing of this whole class much easier.
 
 No dependencies.
 
 ## TO DO List
 
-1. Make nrf905-monitor work.
-    1. Nrf905 is part way through a re-write as handling states was getting difficult.
+1. Make nrf905-example.py work.
+    1. Nrf905 is part way through a re-write as handling states was getting
+        difficult.
         1. Use setters and getters for exposed properties. DONE.
-        1. threads.py can be used as an example of how to use threads, queues and semaphores to do what I need.  Merge in changes.
+        1. API should hide the three GPIO pin callbacks.  It should just have
+            one callback to handle the date being received.
+        1. threads.py can be used as an example of how to use threads,
+            queues and semaphores to do what I need.
+            threads.py should be simplified to be just what is needed by the
+            driver.  Are threads needed?  If so, document reason.
         1. Use state machine in prototypes dir instead of variables.
-1. Add SPI bus 1 functionality.  The Nrf905Spi.\_\_init\_\_() function takes the spi_bus parameter but there is no implemented functionality.  Affects Nrf905SPI and Nrf905Gpio classes.  Needs RPi 2 or later to test.
-1. Deal with multiple users and one device problem.  Only allow single users?  Allow multiple users using queues and callbacks?  Multiple users means using queues, each user need unique handle (in the Nrf905 class).  Need to work out user privileges for each function.
+1. Add SPI bus 1 functionality.  The Nrf905Spi.\_\_init\_\_() function takes
+    the spi_bus parameter but there is no implemented functionality.  Affects
+    Nrf905SPI and Nrf905Gpio classes.  Needs RPi 2 or later to test.
+1. Deal with multiple users and one device problem.  Only allow single users?
+    Allow multiple users using queues and callbacks?  Multiple users means
+    using queues, each user need unique handle (in the Nrf905 class).
+    Need to work out user privileges for each function.
+1. Consider moving all PiGPIO functions into a single class to allow alternative
+    implementations.  Also hides PiGPIO from API functions.
 
 ## References
 

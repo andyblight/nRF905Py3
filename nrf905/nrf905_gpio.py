@@ -2,27 +2,17 @@
 
 import pigpio
 
+
 class Nrf905Gpio:
-    """ Control the GPIO pins when using the nRF905.  Pins used are:
-    
-        RPi                         nRF905
-        Pin No.     Name            Board   Datasheet   Notes
-TODO 17 and 18 are used by SPI1
-        11          GPIO17          PWR     PWR_UP      0 = standby, 1 = working
-        12          GPIO18          DR      DR          1 = Data ready (resistor)
+    """ Control the GPIO pins when using the nRF905.
 
-        15          GPIO22          TxEN    TX_EN       0 = receive, 1 = transmit
-        16          GPIO23          CD      CD          1 = Carrier detetcted (resistor)
-        18          GPIO24          AM      AM          1 = Address matched (resistor)
-        22          GPIO25          CE      TRX_CE      0 = disable, 1 = enable
-    
-        This module does not own the pigpio instance so all functions need the
-        instance passed in. 
+    This module does not own the pigpio instance so all functions need the
+    instance passed in.
 
-        Callbacks can be set up once and left in place.  The nRF905 only changes
-        the state on these pins when in receive mode. 
+    Callbacks can be set up once and left in place.  The nRF905 only changes
+    the state on these pins when in receive mode.
     """
-    
+
     # GPIO pins.  Uses BCM numbers same as pigpio.
     POWER_UP = 17
     TRANSMIT_ENABLE = 22
@@ -61,7 +51,7 @@ TODO 17 and 18 are used by SPI1
 
     def reset_pin(self, pi, pin):
         # print("reset_pin", pin)
-        # Set the given pin to input mode. 
+        # Set the given pin to input mode.
         # GPIO0-8 default to use pull up resistor.
         # GPIO9-27 default to use pull down resistor.
         if pin >= 0 and pin <= 27:

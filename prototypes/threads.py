@@ -1,6 +1,10 @@
 #!/usr/bin/env python3
 
 """ This file was created so that I could test queues, threads and callacks.
+
+TODO
+Re-assemble packets of received data and print.
+
 """
 
 import queue
@@ -33,9 +37,11 @@ class ThreadTest:
 
     def send(self, message):
         while message:  # Contains something.
-            packet = message[0:32]  # Put first 32 bytes into a packet.
+            # Send first 32 bytes in a packet.
+            packet = message[0:32]
             print("Posting packet: '", packet, "'")
             self._input_queue.put(packet)
+            # Take the first 32 bytes off the message.
             message = message[32:]
 
     def stop(self):

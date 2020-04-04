@@ -1,4 +1,6 @@
 #!/usr/bin/env python3
+"""  The API for the nRF905 device.
+"""
 
 import pigpio
 import queue
@@ -10,6 +12,7 @@ from nrf905.nrf905_state_machine import Nrf905StateMachine
 
 
 # TODO Sort out callbacks.
+# These callbacks should be private functions to hide them from the user.
 def data_ready_callback(data):
     print("drc:", data)
 
@@ -100,7 +103,7 @@ class Nrf905:
     def open(self, callback):
         """ Creates the instances of Nrf905Spi and Nrf905Gpio.
         Applies previously set values to nRF905 device.
-        Prepares callback for use.
+        Prepares data received callback for use.
         """
         print("open")
         if self._thread():
