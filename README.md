@@ -8,9 +8,9 @@ GPIO pins at the right time.
 
 The program `nrf905-example.py` is a minimal example of how the driver is
 intended to be used.  The main code is explained in the design section and the
-test code is explained in the testing section.  There is also a `docs`
-directory containing the datasheet and the wiring diagram I started with.
-Finally, the prototypes directoy is where I wrote small test programs during
+test code is explained in the testing section.  There is a `docs` directory
+containing the datasheet and the wiring diagram I started with.  Finally,
+the `prototypes` directory is where I wrote small test programs during
 development.
 
 ## Preparing the RPi
@@ -105,16 +105,16 @@ NOTE: The file 'wiring.txt' shows the colours of the wires I used during develop
 The tests have been written with the aim of getting the code working with the
 nRF905.  There are three sets of tests, each invoked by a different shell script.
 
-### run-pc-tests.sh
+### run-pc-tests&#46;sh
 
 Runs tests that can be run on the host PC (does not use pigpio or the nRF905).
 
-### run-nc-tests.sh
+### run-nc-tests&#46;sh
 
 Runs tests that must be run on the Raspberry Pi (calls pigpio) but does not try
 to use the nRF905 module.
 
-### run-c-tests.sh
+### run-c-tests&#46;sh
 
 Runs tests that must be run on the Raspberry Pi (calls pigpio) and has the
 nRF905 module connected (tries to use registers on the device).
@@ -124,19 +124,19 @@ nRF905 module connected (tries to use registers on the device).
 The code is arranged in a number of modules.
 
 ```Z
-     ____________________________________
-    |             nrf905.py              |
-    |____________________________________|
-     ________________    ________________    __________________
-    | nrf905_gpio.py |  | nrf095_spi.py  |  | nrf905_config.py |
-    |________________|  |________________|  |__________________|
-     ____________________________________
-    |              pigpio                |
-    |____________________________________|
+ ____________________________________________________________________________
+|                             nrf905.py                                      |
+|____________________________________________________________________________|
+ ______________    _____________   ________________   _______________________
+|nrf905_gpio.py|  |nrf095_spi.py| |nrf905_config.py| |nrf905_state_machine.py|
+|______________|  |_____________| |________________| |_______________________|
+ _______________________________
+|             pigpio            |
+|_______________________________|
 
 ```
 
-### nrf905.py
+### nrf905&#46;py
 
 Implements the class Nrf905.
 
@@ -177,20 +177,34 @@ unit testing of this whole class much easier.
 
 No dependencies.
 
+## Limitations
+
+This driver does not implement certain features mentioned in the datasheet.
+
+1. Continuous carrier broadcast mode used for antenna tuning (datasheet p.17).
+This mode is intended for hardware testing so it was decided that this was
+not necessary for general usage.
+1. AUTO_RETRAN mode (datasheet p.18).  The class Nrf905Config can set the
+AUTO_RETRAN bit of the config register if it is needed.  Repeating the data
+more than once is a simple method of ensuring that something gets through but
+it was decided that if reliable communication was required, a higher level
+package could be used to send a packet of data using this driver, wait for an
+acknowledgement packet to be recieved and retry if not received after a timeout.
+
 ## TO DO List
 
-1. Make nrf905-example.py work.
+1. Make `nrf905-example.py` work.
     1. Nrf905 is part way through a re-write as handling states was getting
         difficult.
         1. Use setters and getters for exposed properties. DONE.
         1. API should hide the three GPIO pin callbacks.  It should just have
             one callback to handle the date being received.
-        1. threads.py can be used as an example of how to use threads,
+        1. `threads.py` can be used as an example of how to use threads,
             queues and semaphores to do what I need.
-            threads.py should be simplified to be just what is needed by the
+            `threads.py` should be simplified to be just what is needed by the
             driver.  Are threads needed?  If so, document reason.
         1. Use state machine in prototypes dir instead of variables.
-1. Add SPI bus 1 functionality.  The Nrf905Spi.\_\_init\_\_() function takes
+1. Add SPI bus 1 functionality.  The `Nrf905Spi.__init__()` function takes
     the spi_bus parameter but there is no implemented functionality.  Affects
     Nrf905SPI and Nrf905Gpio classes.  Needs RPi 2 or later to test.
 1. Deal with multiple users and one device problem.  Only allow single users?
