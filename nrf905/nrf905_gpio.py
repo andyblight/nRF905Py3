@@ -11,6 +11,10 @@ class Nrf905Gpio:
 
     Callbacks can be set up once and left in place.  The nRF905 only changes
     the state on these pins when in receive mode.
+
+    The datasheet, section 8.2, shows 5 states.  Standby and read from RX
+    registers are equivalent states, so there are 4 states: power_down,
+    standby, receive, transmit.
     """
 
     # GPIO pins.  Uses BCM numbers same as pigpio.

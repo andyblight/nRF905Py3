@@ -58,6 +58,7 @@ class TestNrf905StateMachine(unittest.TestCase):
 
     def test_transmit(self):
         logger.debug("\ntest_transmit")
+        # Basic transmit.
         self.nrf905.power_up()
         self.assertEqual('standby', self.nrf905.state)
         self.nrf905.transmit("fred")
@@ -70,7 +71,7 @@ class TestNrf905StateMachine(unittest.TestCase):
         self.nrf905.power_up()
         self.assertEqual('standby', self.nrf905.state)
         self.nrf905.retransmit("bert", 3)
-        self.assertEqual('retransmitting', self.nrf905.state)
+        self.assertEqual('transmitting', self.nrf905.state)
         self.nrf905.data_ready_function(True)
         self.assertEqual('retransmitting', self.nrf905.state)
         self.nrf905.data_ready_function(False)
@@ -154,20 +155,14 @@ class Nrf905Mock:
     def data_ready_function(self, value):
         logger.debug("drf:" + str(value) + ", " + str(self._retransmit_count))
         if self._machine.is_transmitting():
-            logger.debug("drf: 0")
-            if value:
-                logger.debug("drf: 0a")
-                self._machine.data_ready_tx()
-        elif self._machine.is_retransmitting():
-            logger.debug("drf: 1")
             if value:
                 self._retransmit_count -= 1
-                logger.debug("drf: 1a")
+                logger.debug("drf: 1")
                 if self._retransmit_count <= 0:
-                    logger.debug("drf: 1b")
-                    self._machine.data_ready_tx_re()
-        elif self._machine.is_receiving_data():
-            logger.debug("drf: 2a")
+                    logger.debug("drf: 1a")
+                    self._machine.data_ready_tx()
+        elif self._machine.is_receiving():
+            logger.debug("drf: 2a)
             if value:
                 logger.debug("drf: 2b")
                 self._machine.data_ready_rx()
@@ -207,18 +202,13 @@ class Nrf905Mock:
             if not value:
                 self._machine.receiver_disable()
 
-    def transmit(self, data):
-        """ Transmit data once. """
-        logger.debug("t:" + str(data))
-        # Post to transmit queue first.
-        self._machine.transmit()
-
-    def retransmit(self, data, count):
-        """ Transmit data count times. """
-        logger.debug("rt: sending '" + str(data) + "', " + str(count) + " times")
+    def transmit(self, data, count=1):
+        """ Transmit data count times. Default is once. """
+        logger.debug("t: sending '" + str(data) + "', " + str(count) + " times")
         self._retransmit_count = count
         # Post to transmit queue first.
-        self._machine.retransmit()
+        # Change to transmit state.
+        self._machine.transmit()
 
     def end_transmit(self):
         """ Fake function for testing.  In reality, the transmit would finish
@@ -226,13 +216,6 @@ class Nrf905Mock:
         to standby.
         """
         self._machine.data_ready_tx()
-
-    def end_retransmit(self):
-        """ Fake function for testing.  In reality, the transmit would finish
-        after a time, and the data ready callback would then change the state
-        to standby.
-        """
-        self._machine.data_ready_tx_re()
 
 if __name__ == '__main__':
     unittest.main()

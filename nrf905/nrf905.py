@@ -30,7 +30,7 @@ class Nrf905:
     parameter and state checking as well as any buffering.
     The actual byte bashing is done in the modules Nrf905Gpio and Nrf905Spi.
 
-    Example usage: see ../nrf905-monitor.py
+    Example usage: see ../nrf905-example.py
     """
 
     def __init__(self):
@@ -38,6 +38,7 @@ class Nrf905:
         self._frequency_mhz = 0.0
         self._rx_address = -1
         self._tx_address = 0
+        self._payload_width = 32
         # Objects to make the class work.
         self._state_machine = Nrf905StateMachine()
         self._pi = None
@@ -49,6 +50,10 @@ class Nrf905:
         # Internal properties.
         self._channel = -1  # Set from frequency.
         self._hfreq_pll = -1  # Set from frequency.
+        self._open = False
+        self._next = False
+        self._open = False
+        self._next_tx_mode_rx = False
 
     @property
     def frequency(self):
@@ -92,7 +97,7 @@ class Nrf905:
     @transmit_address.setter
     def transmit_address(self, address):
         """ Sets the transmit address. Must be 4 bytes or less.
-        Please read datasheet for adivce on setting addres values.
+        Please read datasheet for adivce on setting address values.
         """
         print("set_tx_address:", address)
         if address.bit_length() > 32:
@@ -100,13 +105,40 @@ class Nrf905:
         else:
             self._tx_address = address
 
+    @property
+    def payload_width(self):
+        return self._payload_width
+
+    @payload_width.setter
+    def payload_width(self, width):
+        """ Sets the payload width. Must be 32 or less.
+        Uses the payload width value for transmit and receive payloads.
+        Default value is 32 bytes.
+        """
+        print("set_payload_width:", width)
+        if 1 <= width <= 32:
+            raise ValueError("width must be between 1 and 32 bytes inclusive.")
+        else:
+            self._payload_width = width
+
+    @property
+    def next_tx_mode_rx(self):
+        return self._next_tx_mode_rx
+
+    @next_tx_mode_rx.setter
+    def next_tx_mode_rx(self, next_mode):
+        """ Sets the next tx mode.  True is receive mode, False is standby.
+        """
+        print("next_tx_mode_rx:", next_mode)
+        self._next_tx_mode_rx = next_mode
+
     def open(self, callback):
         """ Creates the instances of Nrf905Spi and Nrf905Gpio.
         Applies previously set values to nRF905 device.
         Prepares data received callback for use.
         """
         print("open")
-        if self._thread():
+        if self._open:
             raise StateError("Already open.  Call close() before retrying.")
         else:
             # Frequency and RX address must be set before open is called.
@@ -129,6 +161,8 @@ class Nrf905:
                 config.set_channel_number(self._channel)
                 config.set_hfreq_pll(self._hfreq_pll)
                 config.set_rx_address(self._rx_address)
+                config.set_rx_pw(self._payload_width)
+                config.set_tx_pw(self._payload_width)
                 self._spi.configuration_register_write(config)
                 # The TX address can be set later.
                 if self._tx_address != 0:
@@ -146,6 +180,7 @@ class Nrf905:
                 self._queue = queue.Queue()
                 self._thread = threading.Thread(target=_worker)
                 self._thread.start()
+                self._open = True
 
     def close(self):
         """ Releases the instances of Nrf905Spi and Nrf905Gpio.
@@ -159,28 +194,35 @@ class Nrf905:
         # Release objects.
         self._spi.close()
         self._pi.stop()
+        self._open = False
 
-    def write(self, data):
-        """ Posts the data to the transmit queue in 32 byte packets.
-        Each packet in the queue will be transmitted until the queue is empty.
+    def send(self, data):
+        """ Sends the data. Maximum of 32 bytes will be sent.
         """
         print("write:", data)
-        if not self._thread:
-            raise StateError("Call Nrf905.open() first.")
+        if len(data) > self._payload_width:
+            raise ValueError("'data' was longer than payload width of:",
+                             self._payload_width)
         else:
-            while data:  # Contains something.
-                packet = data[0:32]  # Split in to 32 byte patckets.
-                self._queue.put(packet)
+            if not self._open:
+                raise StateError("Call Nrf905.open() first.")
+            else:
+                with self._lock:
+                    # Put into standby if not already.
+                    if self.nrf905.state is not 'standby':
+                        self._enter_standy()
+                    self._spi.write_transmit_payload(payload)
+                    self._enter_tx_mode()
+                    if self._next_tx_mode_rx:
+                        self._enter_rx_mode()
+                    else:
+                        self._enter_standy()
 
     def _worker(self):
         """ Wait for a packet. When a packet is available, send the packet and
         repeat.
         """
         while True:
-            # Wait until transceiver is free before sending.
-            with cv_busy:
-                while self._state_machine.is_busy():
-                    cv_busy.wait()
             data = self._queue.get()
             if data is None:
                 break
@@ -188,18 +230,27 @@ class Nrf905:
             self._queue.task_done()
 
     def _wait_until_free(self):
-        """ Blocks until the transciever is not busy. """
-        # TODO
-        # with cv_busy:
-        #    while
-        pass
+        """ Blocks until the transceiver is not busy. """
+        with cv_busy:
+            while self._state_machine.is_busy():
+                cv_busy.wait()
 
-    def _send(self, data):
-        """ Sends a packet of data.
-        """
-        # TODO Change modes.
-        # Write the payload data to the registers.
-        self._spi.write_transmit_payload(data)
+    def _enter_standy(self):
+        time.sleep(0.014)
+        self._gpio.set_mode_standby(self._pi)
+        self._state_machine.power_up()
+
+    def _enter_rx_mode(self):
+        self._gpio.set_mode_receive(self._pi)
+        self._state_machine.power_up()
+
+    def _enter_tx_mode(self):
+        self._gpio.set_mode_transmit(self._pi)
+        self._state_machine.power_up()
+
+    def _enter_power_down(self):
+        self._gpio.set_mode_power_down(self._pi)
+        self._state_machine.power_down()
 
 
 class Error(Exception):

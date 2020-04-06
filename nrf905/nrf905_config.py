@@ -3,7 +3,7 @@
 class Nrf905ConfigRegister:
     """ The config register class has many functions so made sense to move them
     out of the Nrf905Spi class.
-    As the datasheet and most uses of this class revolve around the byte 
+    As the datasheet and most uses of this class revolve around the byte
     values, use the bytearray internally.
     Function names for getters and setters match the datasheet names for the
     registers.
@@ -46,8 +46,8 @@ class Nrf905ConfigRegister:
         print("HFREQ_PLL:", self.get_hfreq_pll())
         print("TX_AFW:", self.get_tx_afw())
         print("RX_AFW", self.get_rx_afw())
-        print("RX_PWR:", self.get_rx_pw())
-        print("TX_PWR:", self.get_tx_pw())
+        print("RX_PW:", self.get_rx_pw())
+        print("TX_PW:", self.get_tx_pw())
         print("RX_ADDRESS:", hex(self.get_rx_address()))
         print("CRC_MODE:", self.get_crc_mode())
         print("CRC_EN:", self.get_crc_en())
@@ -97,7 +97,7 @@ class Nrf905ConfigRegister:
         self._registers[0] = ch_num[0]
         self._registers[1] = self.set_byte((ch_num[1] & 0x01), 0x01, self._registers[1])
         # print("scn: ", self._registers[0], self._registers[1])
-        
+
     def get_auto_retran(self):
         result = 0
         if self._registers[1] & 0x20:

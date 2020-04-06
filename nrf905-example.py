@@ -30,7 +30,12 @@ def main():
         if data == "q" or data == "Q":
             quit = True
         else:
-            transceiver.send(data)
+            while data:
+                # Send first 32 bytes as the payload.
+                payload = data[0:32]
+                transceiver.send(payload)
+                # Take the first 32 bytes off the data.
+                data = data[32:]
     # Close.
     transceiver.close()
 

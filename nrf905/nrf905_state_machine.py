@@ -2,6 +2,8 @@
 
 """ Implements the state machine that mimics the behaviour of the nRF905
 device.
+
+Useful info from here: https://devhub.io/repos/tyarkoni-transitions
 """
 
 import logging
@@ -21,32 +23,31 @@ class Nrf905StateMachine:
     """ A sub-class of Nrf905 that manages states and transitions.
     The state names were taken from the nRF905 datasheet.
     """
-    states = ['power_down', 'standby', 'transmitting', 'retransmitting',
-              'listening', 'carrier_busy', 'receiving_data', 'received']
+    states = ['power_down', 'standby', 'transmitting', {
+              'name': 'receiving', 'initial': 'listening', 'children': [
+                  'listening', 'carrier_busy', 'receiving_data', 'received'] } ]
 
     def __init__(self):
         self._machine = Machine(model=self, states=self.states, initial='power_down')
         # Add transitions:          (trigger name, previous state, next state)
-        # Transmit - single shot
+        # Transmitting
         self._machine.add_transition('transmit', 'standby', 'transmitting')
         self._machine.add_transition('data_ready_tx', 'transmitting', 'standby')
-        self._machine.add_transition('retransmit', 'standby', 'retransmitting')
-        self._machine.add_transition('data_ready_tx_re', 'retransmitting', 'standby')
-        # Receive
-        self._machine.add_transition('receiver_enable', 'standby', 'listening')
-        self._machine.add_transition('receiver_disable', 'listening', 'standby')
-        self._machine.add_transition('carrier', 'listening', 'carrier_busy')
-        self._machine.add_transition('no_carrier', 'carrier_busy', 'listening')
-        self._machine.add_transition('address_match', 'carrier_busy', 'receiving_data')
-        self._machine.add_transition('no_address_match', 'receiving_data', 'listening')
-        self._machine.add_transition('data_ready_rx', 'receiving_data', 'received')
-        # Two possible transitions.
-        self._machine.add_transition('received2standby', 'received', 'standby')
-        self._machine.add_transition('received2listening', 'received', 'listening')
+        # Receiving states
+        self._machine.add_transition('carrier', 'receiving_listening', 'receiving_carrier_busy')
+        self._machine.add_transition('no_carrier', 'receiving_carrier_busy', 'receiving_listening')
+        self._machine.add_transition('address_match', 'receiving_carrier_busy', 'receiving_receiving_data')
+        self._machine.add_transition('bad_crc', 'receiving_receiving_data', 'receiving_carrier_busy')
+        self._machine.add_transition('data_ready_rx', 'receiving_receiving_data', 'receiving_received')
+        self._machine.add_transition('received2listening', 'receiving_received', 'receiving_listening')
+        self._machine.add_transition('received2standby', 'receiving_received', 'standby')
+        # Enter/leave receiving
+        self._machine.add_transition('receiver_enable', 'standby', 'receiving_listening')
+        self._machine.add_transition('receiver_disable', 'receiving', 'standby')
         # Power states
         self._machine.add_transition('power_up', 'power_down', 'standby')
         # This must be last so that the * works.
-        self._machine.add_transition('power_down', '*', 'power_down')
+        self._machine.add_transition('power_down', ['standy', 'transmitting', 'receiving'], 'power_down')
 
     def output_graph(self):
         """ Outputs a graph of the state machine showing all states and transitions. """
