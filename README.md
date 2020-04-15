@@ -31,7 +31,7 @@ sudo pigpiod
 
 Looking at the top (the side with the antenna sticking up) the nRF905 pin out is:
 
-```Z
+```text
  __________________________________________________
 | VCC         TxEN                                 |
 | CE          PWR                                  |
@@ -48,7 +48,7 @@ Looking at the top (the side with the antenna sticking up) the nRF905 pin out is
 The RPi can support two nRF905 devices.  The following table shows how to wire
 up each module.
 
-```Z
+```text
 RPi           pigpio      nRF905
 Pin  Name     SPI pins    No. Board   Datasheet   Notes
 01   3V3                  1   VCC
@@ -123,7 +123,7 @@ nRF905 module connected (tries to use registers on the device).
 
 The code is arranged in a number of modules.
 
-```Z
+```text
  ____________________________________________________________________________
 |                             nrf905.py                                      |
 |____________________________________________________________________________|
@@ -188,8 +188,14 @@ not necessary for general usage.
 AUTO_RETRAN bit of the config register if it is needed.  Repeating the data
 more than once is a simple method of ensuring that something gets through but
 it was decided that if reliable communication was required, a higher level
-package could be used to send a packet of data using this driver, wait for an
-acknowledgement packet to be recieved and retry if not received after a timeout.
+package could be used to ensure safe delivery.
+
+The following design limitations have been imposed to keep the driver simple.
+
+1. Only one process on the computer can instantiate this driver and connect to
+one nRF905 device.
+1. Only one nRF905 device is supported per computer.  This may change as the
+RPi can support two SPI devices but the work has not been done.
 
 ## TO DO List
 
@@ -198,12 +204,14 @@ acknowledgement packet to be recieved and retry if not received after a timeout.
         difficult.
         1. Use setters and getters for exposed properties. DONE.
         1. API should hide the three GPIO pin callbacks.  It should just have
-            one callback to handle the date being received.
+        one callback to handle the date being received.
         1. `threads.py` can be used as an example of how to use threads,
-            queues and semaphores to do what I need.
-            `threads.py` should be simplified to be just what is needed by the
-            driver.  Are threads needed?  If so, document reason.
+        queues and semaphores to do what I need.
+        `threads.py` should be simplified to be just what is needed by the
+        driver.  Are threads needed?  If so, document reason.
         1. Use state machine in prototypes dir instead of variables.
+        1. Test with second RPi to make sure that communications actually work.
+        RPi2 to have new image, then install and test (verifies installation).
 1. Add SPI bus 1 functionality.  The `Nrf905Spi.__init__()` function takes
     the spi_bus parameter but there is no implemented functionality.  Affects
     Nrf905SPI and Nrf905Gpio classes.  Needs RPi 2 or later to test.

@@ -9,20 +9,7 @@ import threading
 from nrf905.nrf905_spi import Nrf905Spi
 from nrf905.nrf905_gpio import Nrf905Gpio
 from nrf905.nrf905_state_machine import Nrf905StateMachine
-
-
-# TODO Sort out callbacks.
-# These callbacks should be private functions to hide them from the user.
-def data_ready_callback(data):
-    print("drc:", data)
-
-
-def carrier_detect_callback(data):
-    print("cdc:", data)
-
-
-def address_matched_callback(data):
-    print("amc:", data)
+from nrf905.nrf905_config import Nrf905ConfigRegister
 
 
 class Nrf905:
@@ -52,7 +39,6 @@ class Nrf905:
         self._hfreq_pll = -1  # Set from frequency.
         self._open = False
         self._next = False
-        self._open = False
         self._next_tx_mode_rx = False
 
     @property
@@ -167,15 +153,15 @@ class Nrf905:
                 # The TX address can be set later.
                 if self._tx_address != 0:
                     self.spi.write_transmit_address(write_address)
-                # Callbacks
+                # Setup internal callbacks for state changes.
                 self._gpio.set_callback(
-                    self._pi, Nrf905Gpio.DATA_READY, data_ready_callback)
+                    self._pi, Nrf905Gpio.DATA_READY, self._data_ready_callback)
                 self._gpio.set_callback(
                     self._pi, Nrf905Gpio.CARRIER_DETECT,
-                    carrier_detect_callback)
+                    self._carrier_detect_callback)
                 self._gpio.set_callback(
                     self._pi, Nrf905Gpio.ADDRESS_MATCHED,
-                    address_matched_callback)
+                    self._address_matched_callback)
                 # Start thread
                 self._queue = queue.Queue()
                 self._thread = threading.Thread(target=_worker)
@@ -207,27 +193,16 @@ class Nrf905:
             if not self._open:
                 raise StateError("Call Nrf905.open() first.")
             else:
-                with self._lock:
-                    # Put into standby if not already.
-                    if self.nrf905.state is not 'standby':
-                        self._enter_standy()
-                    self._spi.write_transmit_payload(payload)
-                    self._enter_tx_mode()
-                    if self._next_tx_mode_rx:
-                        self._enter_rx_mode()
-                    else:
-                        self._enter_standy()
-
-    def _worker(self):
-        """ Wait for a packet. When a packet is available, send the packet and
-        repeat.
-        """
-        while True:
-            data = self._queue.get()
-            if data is None:
-                break
-            self._send(data)
-            self._queue.task_done()
+                self._wait_until_free()
+                # Put into standby if not already.
+                if self.nrf905.state is not 'standby':
+                    self._enter_standy()
+                # Load the data.
+                self._spi.write_transmit_payload(payload)
+                # Send the data.
+                self._enter_tx_mode()
+                # The next state changes are driven by the state machine
+                # so exit this function.
 
     def _wait_until_free(self):
         """ Blocks until the transceiver is not busy. """
@@ -236,6 +211,7 @@ class Nrf905:
                 cv_busy.wait()
 
     def _enter_standy(self):
+        # Delay from Arduino code.
         time.sleep(0.014)
         self._gpio.set_mode_standby(self._pi)
         self._state_machine.power_up()
@@ -252,13 +228,20 @@ class Nrf905:
         self._gpio.set_mode_power_down(self._pi)
         self._state_machine.power_down()
 
+    def _carrier_detect_callback(data):
+        print("cdc:", data)
+        # TODO Change state
 
-class Error(Exception):
-    """Base class for exceptions in this module."""
-    pass
+    def _address_matched_callback(data):
+        print("amc:", data)
+        # TODO Change state
+
+    def _data_ready_callback(data):
+        print("drc:", data)
+        # TODO Change state
 
 
-class StateError(Error):
+class StateError(Exception):
     """ Exception raised when functions are called when in the wrong state.
     Attributes:
         message -- explanation of the error

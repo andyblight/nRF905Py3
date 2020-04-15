@@ -278,7 +278,7 @@ class Nrf905ConfigRegister:
         """ Convert the given frequency in MHz to a channel and hfreq_pll value.
         If the given frequency is out of range, channel will = -1.
         If the given frequency is in range but not an exact match, the channel
-        nearest to the given frequency will be returned.
+        below the given frequency will be returned.
         Output frequency = (422.4 + ( CH_NO / 10)) * ( 1 + HFREQ_PLL) MHz
         where CH_NO in range 0 to 511 and HFREQ_PLL is 1 or 0.
         Frequency ranges are 422.4 to 473.5MHz and 844.8 to 947MHz.
@@ -297,15 +297,29 @@ class Nrf905ConfigRegister:
         return (channel, hfreq_pll)
 
     @staticmethod
-    def is_valid_uk(frequency_mhz):
+    def is_valid(frequency_mhz, country):
+        """ Validate the given frequency for the given country.
+        Note: channels are spaced on 100kHz for 433MHz and 200kHz for
+        868/915MHz.
+        """
+        result = True
+        if country == "GBR":
+            result = Nrf905ConfigRegister._is_valid_gbr(frequency_mhz)
+        else:
+            print("Validation is not implemented for:", country,
+                  "Assuming valid frequency.")
+        return result
+
+    @staticmethod
+    def _is_valid_gbr(frequency_mhz):
         """ Returns True if the given frequency is legal in the UK. """
         result = False
-        # 433MHz band.  Full range is 433.00 to 434.775MHz.
-        # Radio hams use some of the channels for repeaters.
-        # Exclude channels 1 to 11 and 62 to 69.
-        if 433.4 <= frequency_mhz <= 434.5:
+        # Frequency ranges taken from:
+        # https://www.ofcom.org.uk/__data/assets/pdf_file/0028/84970/ir-2030.pdf
+        # 433MHz band.  Legal range is 433.05 to 434.79MHz.
+        if 433.05 <= frequency_mhz <= 434.79:
             result = True
         # 866MHz band
-        if 863.0 <= frequency_mhz <= 870.0:
+        elif 863.0 <= frequency_mhz <= 868.0:
             result = True
         return result

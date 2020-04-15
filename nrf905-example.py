@@ -17,10 +17,10 @@ def main():
     """
     transceiver = Nrf905()
     # Must be set before open is called.
-    transceiver.set_frequency(434.25)
-    transceiver.set_rx_address(0x43454749)
+    transceiver.frequency = 434.5
+    transceiver.receive_address = 0x43454749
     # Can also be called after open is called.
-    transceiver.set_tx_address(0x4345474a)
+    transceiver.transmit_address = 0x4345474a
     # Open the transceiver.
     transceiver.open(callback)
     # Send whatever data the user enters until quit.
