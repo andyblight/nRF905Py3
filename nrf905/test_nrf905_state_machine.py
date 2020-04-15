@@ -6,7 +6,8 @@ import unittest
 from nrf905.nrf905_state_machine import Nrf905StateMachine
 
 # Set up logging.
-logging.basicConfig(level=logging.ERROR)
+#logging.basicConfig(level=logging.ERROR)
+logging.basicConfig(level=logging.DEBUG)
 # Logger for use in this module.
 logger = logging.getLogger('TestNrf905StateMachine')
 
@@ -47,13 +48,13 @@ class TestNrf905StateMachine(unittest.TestCase):
         self.assertFalse(self.nrf905._machine.is_busy())
         # Try other states
         self.nrf905.transmit("fred")
-        self.assertEqual('transmitting', self.nrf905.state)
+        self.assertEqual('transmitting_sending', self.nrf905.state)
         self.assertTrue(self.nrf905._machine.is_busy())
         self.nrf905.end_transmit()
         self.assertEqual('standby', self.nrf905.state)
         self.assertFalse(self.nrf905._machine.is_busy())
         self.nrf905.receiver_enabled = True
-        self.assertEqual('listening', self.nrf905.state)
+        self.assertEqual('receiving', self.nrf905.state)
         self.assertTrue(self.nrf905._machine.is_busy())
 
     def test_transmit(self):
@@ -61,8 +62,14 @@ class TestNrf905StateMachine(unittest.TestCase):
         # Basic transmit.
         self.nrf905.power_up()
         self.assertEqual('standby', self.nrf905.state)
+        # Test waiting
         self.nrf905.transmit("fred")
-        self.assertEqual('transmitting', self.nrf905.state)
+        self.nrf905.carrier_detect_function(False)
+        self.assertEqual('transmitting_waiting', self.nrf905.state)
+        # Difficult to simulate changes on different "thread" so send again.
+        self.nrf905.transmit("fred")
+        self.nrf905.carrier_detect_function(True)
+        self.assertEqual('transmitting_sending', self.nrf905.state)
         self.nrf905.data_ready_function(True)
         self.assertEqual('standby', self.nrf905.state)
 
@@ -70,13 +77,15 @@ class TestNrf905StateMachine(unittest.TestCase):
         logger.debug("\ntest_retransmit")
         self.nrf905.power_up()
         self.assertEqual('standby', self.nrf905.state)
-        self.nrf905.retransmit("bert", 3)
-        self.assertEqual('transmitting', self.nrf905.state)
+        self.nrf905.transmit("bert", 3)
+        # No waiting for this.
+        self.nrf905.carrier_detect_function(True)
+        self.assertEqual('transmitting_sending', self.nrf905.state)
         self.nrf905.data_ready_function(True)
-        self.assertEqual('retransmitting', self.nrf905.state)
+        self.assertEqual('transmitting_sending', self.nrf905.state)
         self.nrf905.data_ready_function(False)
         self.nrf905.data_ready_function(True)
-        self.assertEqual('retransmitting', self.nrf905.state)
+        self.assertEqual('transmitting_sending', self.nrf905.state)
         self.nrf905.data_ready_function(False)
         self.nrf905.data_ready_function(True)
         self.assertEqual('standby', self.nrf905.state)
@@ -134,15 +143,13 @@ class Nrf905Mock:
         self._machine = Nrf905StateMachine()
         self._is_rx_enabled = False
         self._retransmit_count = 0
+        self._carrier_busy = False
 
     # These functions simulate those called by the callbacks from pigpio when
     # the GPIO pins changes state.
     def carrier_detect_function(self, value):
         logger.debug("cdf:" + str(value))
-        if value:
-            self._machine.carrier()
-        else:
-            self._machine.no_carrier()
+        self._carrier_busy = value
 
     def address_matched_function(self, value):
         logger.debug("afm:" + str(value))
@@ -162,11 +169,11 @@ class Nrf905Mock:
                     logger.debug("drf: 1a")
                     self._machine.data_ready_tx()
         elif self._machine.is_receiving():
-            logger.debug("drf: 2a)
+            logger.debug("drf: 2a")
             if value:
                 logger.debug("drf: 2b")
                 self._machine.data_ready_rx()
-        elif self._machine.is_received():
+        elif self._machine.is_receiving_received():
             # Receive complete
             # DR is HI->LO
             logger.debug("drf: 3a")
@@ -198,7 +205,7 @@ class Nrf905Mock:
         if self._machine.is_standby():
             if value:
                 self._machine.receiver_enable()
-        elif self._machine.is_listening():
+        elif self._machine.is_receving_listening():
             if not value:
                 self._machine.receiver_disable()
 
@@ -206,9 +213,13 @@ class Nrf905Mock:
         """ Transmit data count times. Default is once. """
         logger.debug("t: sending '" + str(data) + "', " + str(count) + " times")
         self._retransmit_count = count
+        # Start transmitting.
+        self._machine.transmit()
+        # In real program, wait for carrier to be free.
+        if not self._carrier_busy:
+            self._machine.no_carrier()
         # Post to transmit queue first.
         # Change to transmit state.
-        self._machine.transmit()
 
     def end_transmit(self):
         """ Fake function for testing.  In reality, the transmit would finish

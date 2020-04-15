@@ -1,9 +1,11 @@
 #!/usr/bin/env python3
 
-""" Implements the state machine that mimics the behaviour of the nRF905
-device.
+""" Implements the state machine that mimics the external behaviour of the
+nRF905 device.  This state machine is driven by a combination of interrupts
+from the device, knowledge about configuration register values and user
+requests.
 
-Useful info from here: https://devhub.io/repos/tyarkoni-transitions
+Useful info about sub-states here: https://devhub.io/repos/tyarkoni-transitions
 """
 
 import logging
@@ -23,19 +25,22 @@ class Nrf905StateMachine:
     """ A sub-class of Nrf905 that manages states and transitions.
     The state names were taken from the nRF905 datasheet.
     """
-    states = ['power_down', 'standby', 'transmitting', {
-              'name': 'receiving', 'initial': 'listening', 'children': [
-                  'listening', 'carrier_busy', 'receiving_data', 'received'] } ]
+    states = ['power_down', 'standby', {
+              'name': 'transmitting', 'initial': 'waiting',
+              'children': ['waiting', 'sending']
+              }, {
+              'name': 'receiving', 'initial': 'listening',
+              'children': ['listening' 'receiving_data', 'received']
+              } ]
 
     def __init__(self):
         self._machine = Machine(model=self, states=self.states, initial='power_down')
         # Add transitions:          (trigger name, previous state, next state)
         # Transmitting
         self._machine.add_transition('transmit', 'standby', 'transmitting')
+        self._machine.add_transition('no_carrier', 'transmitting_waiting', 'transmitting_sending')
         self._machine.add_transition('data_ready_tx', 'transmitting', 'standby')
         # Receiving states
-        self._machine.add_transition('carrier', 'receiving_listening', 'receiving_carrier_busy')
-        self._machine.add_transition('no_carrier', 'receiving_carrier_busy', 'receiving_listening')
         self._machine.add_transition('address_match', 'receiving_carrier_busy', 'receiving_receiving_data')
         self._machine.add_transition('bad_crc', 'receiving_receiving_data', 'receiving_carrier_busy')
         self._machine.add_transition('data_ready_rx', 'receiving_receiving_data', 'receiving_received')
