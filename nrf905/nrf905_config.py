@@ -1,5 +1,6 @@
 #!/usr/bin/env python3
 
+
 class Nrf905ConfigRegister:
     """ The config register class has many functions so made sense to move them
     out of the Nrf905Spi class.
@@ -95,7 +96,8 @@ class Nrf905ConfigRegister:
         ch_num = channel_number.to_bytes(2, 'little')
         # print("scn: ", channel_number, ch_num)
         self._registers[0] = ch_num[0]
-        self._registers[1] = self.set_byte((ch_num[1] & 0x01), 0x01, self._registers[1])
+        self._registers[1] = self.set_byte((ch_num[1] & 0x01), 0x01,
+                                           self._registers[1])
         # print("scn: ", self._registers[0], self._registers[1])
 
     def get_auto_retran(self):
@@ -105,7 +107,8 @@ class Nrf905ConfigRegister:
         return result
 
     def set_auto_retran(self, auto_retran):
-        self._registers[1] = self.set_byte((auto_retran & 0x01), 0x20, self._registers[1])
+        self._registers[1] = self.set_byte((auto_retran & 0x01), 0x20,
+                                           self._registers[1])
 
     def get_rx_red_pwr(self):
         result = 0
@@ -114,7 +117,8 @@ class Nrf905ConfigRegister:
         return result
 
     def set_rx_red_pwr(self, rx_red_pwr):
-        self._registers[1] = self.set_byte((rx_red_pwr & 0x01), 0x08, self._registers[1])
+        self._registers[1] = self.set_byte((rx_red_pwr & 0x01), 0x08,
+                                           self._registers[1])
 
     def get_pa_pwr(self):
         result = self._registers[1] & 0x0c
@@ -122,7 +126,8 @@ class Nrf905ConfigRegister:
         return result
 
     def set_pa_pwr(self, pa_pwr):
-        self._registers[1] = self.set_byte((pa_pwr & 0x03), 0x0C, self._registers[1])
+        self._registers[1] = self.set_byte((pa_pwr & 0x03), 0x0C,
+                                           self._registers[1])
 
     def get_hfreq_pll(self):
         result = 0
@@ -131,7 +136,8 @@ class Nrf905ConfigRegister:
         return result
 
     def set_hfreq_pll(self, hfreq_pll):
-        self._registers[1] = self.set_byte((hfreq_pll & 0x01), 0x02, self._registers[1])
+        self._registers[1] = self.set_byte((hfreq_pll & 0x01), 0x02,
+                                           self._registers[1])
 
     def get_tx_afw(self):
         result = self._registers[2] & 0x70
@@ -139,8 +145,9 @@ class Nrf905ConfigRegister:
         return result
 
     def set_tx_afw(self, tx_afw):
-        if tx_afw == 1 or tx_afw == 2 or tx_afw ==4:
-            self._registers[2] = self.set_byte((tx_afw & 0x07), 0x70, self._registers[2])
+        if tx_afw == 1 or tx_afw == 2 or tx_afw == 4:
+            self._registers[2] = self.set_byte((tx_afw & 0x07), 0x70,
+                                               self._registers[2])
         else:
             raise ValueError("tx_afw must be one of 1, 2 or 4")
 
@@ -149,8 +156,9 @@ class Nrf905ConfigRegister:
         return result
 
     def set_rx_afw(self, rx_afw):
-        if rx_afw == 1 or rx_afw == 2 or rx_afw ==4:
-            self._registers[2] = self.set_byte((rx_afw & 0x07), 0x07, self._registers[2])
+        if rx_afw == 1 or rx_afw == 2 or rx_afw == 4:
+            self._registers[2] = self.set_byte((rx_afw & 0x07), 0x07,
+                                               self._registers[2])
         else:
             raise ValueError("rx_afw must be one of 1, 2 or 4")
 
@@ -160,7 +168,8 @@ class Nrf905ConfigRegister:
 
     def set_rx_pw(self, rx_pw):
         if 1 <= rx_pw <= 32:
-            self._registers[3] = self.set_byte((rx_pw & 0x3F), 0x3F, self._registers[3])
+            self._registers[3] = self.set_byte((rx_pw & 0x3F), 0x3F,
+                                               self._registers[3])
         else:
             raise ValueError("rx_pw must be in range 1 to 32")
 
@@ -170,7 +179,8 @@ class Nrf905ConfigRegister:
 
     def set_tx_pw(self, tx_pw):
         if 1 <= tx_pw <= 32:
-            self._registers[4] = self.set_byte((tx_pw & 0x3F), 0x3F, self._registers[4])
+            self._registers[4] = self.set_byte((tx_pw & 0x3F), 0x3F,
+                                               self._registers[4])
         else:
             raise ValueError("tx_pw must be in range 1 to 32")
 
@@ -183,8 +193,8 @@ class Nrf905ConfigRegister:
         return address
 
     def set_rx_address(self, address):
-        # TODO This should only accept the number of bytes that are specified in
-        # the width.
+        # TODO This should only accept the number of bytes that are specified
+        # in the width.
         # Reg 5 = byte 0, reg 6 = byte 1, reg 7 = byte 2, reg 8 = byte 3
         # print("sra", hex(address))
         regs = address.to_bytes(4, 'little')
@@ -200,7 +210,8 @@ class Nrf905ConfigRegister:
         return result
 
     def set_crc_mode(self, crc_mode):
-        self._registers[9] = self.set_byte((crc_mode & 0x01), 0x80, self._registers[9])
+        self._registers[9] = self.set_byte((crc_mode & 0x01), 0x80,
+                                           self._registers[9])
 
     def get_crc_en(self):
         result = 0
@@ -209,7 +220,8 @@ class Nrf905ConfigRegister:
         return result
 
     def set_crc_en(self, crc_en):
-        self._registers[9] = self.set_byte((crc_en & 0x01), 0x40, self._registers[9])
+        self._registers[9] = self.set_byte((crc_en & 0x01), 0x40,
+                                           self._registers[9])
 
     def get_xof_mhz(self):
         """ Returns value in whole MHz """
@@ -219,10 +231,12 @@ class Nrf905ConfigRegister:
         return result_mhz
 
     def set_xof_mhz(self, xof_mhz):
-        if xof_mhz == 4 or xof_mhz == 8 or xof_mhz == 12 or xof_mhz == 16 or xof_mhz ==20:
+        if (xof_mhz == 4 or xof_mhz == 8 or xof_mhz == 12 or xof_mhz == 16
+                or xof_mhz == 20):
             xof = bytearray(1)
             xof[0] = int((xof_mhz - 4) / 4)
-            self._registers[9] = self.set_byte(xof[0], 0x38, self._registers[9])
+            self._registers[9] = self.set_byte(xof[0], 0x38,
+                                               self._registers[9])
         else:
             raise ValueError("xof_mhz must be one of 4, 8, 12, 16 or 20")
 
@@ -233,7 +247,8 @@ class Nrf905ConfigRegister:
         return result
 
     def set_up_clk_en(self, up_clk_en):
-        self._registers[9] = self.set_byte((up_clk_en & 0x01), 0x04, self._registers[9])
+        self._registers[9] = self.set_byte((up_clk_en & 0x01), 0x04,
+                                           self._registers[9])
 
     def get_up_clk_freq_mhz(self):
         """ Returns value in whole MHz """
@@ -260,12 +275,13 @@ class Nrf905ConfigRegister:
             up_clk_freq[0] = 0
         else:
             raise ValueError("up_clk_freq_mhz must be one of 0.5, 1, 2, 4")
-        self._registers[9] = self.set_byte(up_clk_freq[0], 0x03, self._registers[9])
+        self._registers[9] = self.set_byte(up_clk_freq[0], 0x03,
+                                           self._registers[9])
 
     def board_defaults(self):
-        """ Set the contents of the registers to values that work for the device
-        being used.  This can vary from supplier to supplier so may need to be
-        changed.
+        """ Set the contents of the registers to values that work for the
+        device being used.  This can vary from supplier to supplier so may
+        need to be changed.
         """
         self.reset()
         # 16 Mhz crystal
@@ -275,7 +291,8 @@ class Nrf905ConfigRegister:
 
     @staticmethod
     def frequency_to_channel(frequency_mhz):
-        """ Convert the given frequency in MHz to a channel and hfreq_pll value.
+        """ Convert the given frequency in MHz to a channel and hfreq_pll
+        value.
         If the given frequency is out of range, channel will = -1.
         If the given frequency is in range but not an exact match, the channel
         below the given frequency will be returned.

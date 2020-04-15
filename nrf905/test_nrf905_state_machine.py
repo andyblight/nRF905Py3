@@ -6,7 +6,7 @@ import unittest
 from nrf905.nrf905_state_machine import Nrf905StateMachine
 
 # Set up logging.
-#logging.basicConfig(level=logging.ERROR)
+# logging.basicConfig(level=logging.ERROR)
 logging.basicConfig(level=logging.DEBUG)
 # Logger for use in this module.
 logger = logging.getLogger('TestNrf905StateMachine')
@@ -138,7 +138,9 @@ class TestNrf905StateMachine(unittest.TestCase):
 
 
 class Nrf905Mock:
-    """ Cut down version of the Nrf905 class used for testing the state machine. """
+    """ Cut down version of the Nrf905 class used for testing the state
+    machine.
+    """
     def __init__(self):
         self._machine = Nrf905StateMachine()
         self._is_rx_enabled = False
@@ -211,7 +213,8 @@ class Nrf905Mock:
 
     def transmit(self, data, count=1):
         """ Transmit data count times. Default is once. """
-        logger.debug("t: sending '" + str(data) + "', " + str(count) + " times")
+        logger.debug("t: sending '" + str(data) + "', " + str(count) +
+                     " times")
         self._retransmit_count = count
         # Start transmitting.
         self._machine.transmit()
@@ -227,6 +230,7 @@ class Nrf905Mock:
         to standby.
         """
         self._machine.data_ready_tx()
+
 
 if __name__ == '__main__':
     unittest.main()

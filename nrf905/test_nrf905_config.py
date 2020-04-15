@@ -8,10 +8,10 @@ from nrf905.nrf905_config import Nrf905ConfigRegister
 class TestNrf905Config(unittest.TestCase):
 
     def test_init_get(self):
-        """ Test the methods: __init__(), get().  """ 
+        """ Test the methods: __init__(), get().  """
         # Create the object.
         register = Nrf905ConfigRegister()
-        # Verify default values are set. 
+        # Verify default values are set.
         register_bytes = register.get_all()
         self.assertEqual(register_bytes[0], 0x6C)
         self.assertEqual(register_bytes[1], 0x00)
@@ -32,7 +32,7 @@ class TestNrf905Config(unittest.TestCase):
         self.assertTrue(register1 == register2)
 
     def test_set_reset(self):
-        """ Test the methods: set(), reset().  """ 
+        """ Test the methods: set(), reset().  """
         register = Nrf905ConfigRegister()
         register_bytes = register.get_all()
         register_bytes[0] = 0x00
@@ -297,53 +297,65 @@ class TestNrf905Config(unittest.TestCase):
         # Valid frequencies are 422.4 to 473.5MHz and 844.8 to 947MHz.
         # Some valid values from the data sheet.
         frequency_mhz = 430.0
-        channel, hfreq_pll = Nrf905ConfigRegister.frequency_to_channel(frequency_mhz)
+        channel, hfreq_pll = Nrf905ConfigRegister.frequency_to_channel(
+            frequency_mhz)
         self.assertEqual(channel, 0b001001100)
         self.assertEqual(hfreq_pll, 0)
         frequency_mhz = 434.7
-        channel, hfreq_pll = Nrf905ConfigRegister.frequency_to_channel(frequency_mhz)
+        channel, hfreq_pll = Nrf905ConfigRegister.frequency_to_channel(
+            frequency_mhz)
         self.assertEqual(channel, 0b001111011)
         self.assertEqual(hfreq_pll, 0)
         frequency_mhz = 862.0
-        channel, hfreq_pll = Nrf905ConfigRegister.frequency_to_channel(frequency_mhz)
+        channel, hfreq_pll = Nrf905ConfigRegister.frequency_to_channel(
+            frequency_mhz)
         self.assertEqual(channel, 0b001010110)
         self.assertEqual(hfreq_pll, 1)
         frequency_mhz = 927.8
-        channel, hfreq_pll = Nrf905ConfigRegister.frequency_to_channel(frequency_mhz)
+        channel, hfreq_pll = Nrf905ConfigRegister.frequency_to_channel(
+            frequency_mhz)
         self.assertEqual(channel, 0b110011111)
         self.assertEqual(hfreq_pll, 1)
         # Extreme valid values.
         frequency_mhz = 422.4
-        channel, hfreq_pll = Nrf905ConfigRegister.frequency_to_channel(frequency_mhz)
+        channel, hfreq_pll = Nrf905ConfigRegister.frequency_to_channel(
+            frequency_mhz)
         self.assertEqual(channel, 0b000000000)
         self.assertEqual(hfreq_pll, 0)
         frequency_mhz = 473.5
-        channel, hfreq_pll = Nrf905ConfigRegister.frequency_to_channel(frequency_mhz)
+        channel, hfreq_pll = Nrf905ConfigRegister.frequency_to_channel(
+            frequency_mhz)
         self.assertEqual(channel, 0b111111111)
         self.assertEqual(hfreq_pll, 0)
         frequency_mhz = 844.8
-        channel, hfreq_pll = Nrf905ConfigRegister.frequency_to_channel(frequency_mhz)
+        channel, hfreq_pll = Nrf905ConfigRegister.frequency_to_channel(
+            frequency_mhz)
         self.assertEqual(channel, 0b000000000)
         self.assertEqual(hfreq_pll, 1)
         frequency_mhz = 947.0
-        channel, hfreq_pll = Nrf905ConfigRegister.frequency_to_channel(frequency_mhz)
+        channel, hfreq_pll = Nrf905ConfigRegister.frequency_to_channel(
+            frequency_mhz)
         self.assertEqual(channel, 0b111111111)
         self.assertEqual(hfreq_pll, 1)
         # Some invalid values
         frequency_mhz = 422.35
-        channel, hfreq_pll = Nrf905ConfigRegister.frequency_to_channel(frequency_mhz)
+        channel, hfreq_pll = Nrf905ConfigRegister.frequency_to_channel(
+            frequency_mhz)
         self.assertEqual(channel, -1)
         self.assertEqual(hfreq_pll, 0)
         frequency_mhz = 473.6
-        channel, hfreq_pll = Nrf905ConfigRegister.frequency_to_channel(frequency_mhz)
+        channel, hfreq_pll = Nrf905ConfigRegister.frequency_to_channel(
+            frequency_mhz)
         self.assertEqual(channel, -1)
         self.assertEqual(hfreq_pll, 0)
         frequency_mhz = 844.7
-        channel, hfreq_pll = Nrf905ConfigRegister.frequency_to_channel(frequency_mhz)
+        channel, hfreq_pll = Nrf905ConfigRegister.frequency_to_channel(
+            frequency_mhz)
         self.assertEqual(channel, -1)
         self.assertEqual(hfreq_pll, 0)
         frequency_mhz = 947.1
-        channel, hfreq_pll = Nrf905ConfigRegister.frequency_to_channel(frequency_mhz)
+        channel, hfreq_pll = Nrf905ConfigRegister.frequency_to_channel(
+            frequency_mhz)
         self.assertEqual(channel, -1)
         self.assertEqual(hfreq_pll, 0)
 

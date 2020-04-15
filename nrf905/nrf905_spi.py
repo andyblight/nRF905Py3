@@ -1,7 +1,5 @@
 #!/usr/bin/env python3
 
-import pigpio
-
 from nrf905.nrf905_config import Nrf905ConfigRegister
 
 
@@ -10,12 +8,13 @@ class Nrf905Spi:
     Extracts from the data sheet.
         The device must be in a low power mode to access the SPI registers.
         Whenever CSN is set low the interface expects an instruction.
-        Every new instruction must be started by a high to low transition on CSN.
-        The content of the status register (S[7:0]) is always read to
+        Every new instruction must be started by a high to low transition on
+        CSN. The content of the status register (S[7:0]) is always read to
         MISO after a high to low transition on CSN.
     """
 
-    _CRYSTAL_FREQUENCY_HZ = 16 * 1000 * 1000  # 16MHz is on the board I'm using.
+    # 16MHz crystal is fitted on the board I'm using.
+    _CRYSTAL_FREQUENCY_HZ = 16 * 1000 * 1000
 
     # SPI pins are defaults for pigpio bus 0 (RPi 1 A&B only have SPI bus 0).
     _SPI_BUS_0_FLAGS = 0
@@ -46,7 +45,8 @@ class Nrf905Spi:
         # print("open:", pi)
         self._pi = pi
         # print("open self._pi:", self._pi)
-        self._spi_h = self._pi.spi_open(0, self._SPI_SCK_HZ, self._SPI_BUS_0_FLAGS)
+        self._spi_h = self._pi.spi_open(0, self._SPI_SCK_HZ,
+                                        self._SPI_BUS_0_FLAGS)
         # print("open self._spi_h:", self._spi_h)
 
     def close(self):

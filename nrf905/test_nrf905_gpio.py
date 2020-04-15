@@ -2,15 +2,15 @@
 
 import pigpio
 import queue
-import sys
-import time
 import unittest
 
 from nrf905.nrf905_gpio import Nrf905Gpio
 
-# Queue instance for the callback to post to.  10 slots should be plenty for testing.
-# The queue is important as it allows the callback to communicate with the test thread.
+# Queue instance for the callback to post to.  10 slots should be plenty for
+# testing. The queue is important as it allows the callback to communicate
+# with the test thread.
 callback_queue = queue.Queue(10)
+
 
 # The callback function must have this template to work.
 def callback_function(num, level, tick):
@@ -40,17 +40,20 @@ class TestNrf905Gpio(unittest.TestCase):
 
     def check_output_pins(self, expected):
         """ The state of each output pin is tested against 'expected'.
-        'expected' is a list that contains the expected state of the output pins
-        in this order:
+        'expected' is a list that contains the expected state of the output
+        pins in this order:
             POWER_UP
             TRANSMIT_RECEIVE_CHIP_ENABLE
             TRANSMIT_ENABLE
-        This is done outside a loop so that the pin that fails can be identified
-        in the text output.
+        This is done outside a loop so that the pin that fails can be
+        identified in the text output.
         """
-        self.assertEqual(self._pi.read(Nrf905Gpio.POWER_UP), expected[0])
-        self.assertEqual(self._pi.read(Nrf905Gpio.TRANSMIT_RECEIVE_CHIP_ENABLE), expected[1])
-        self.assertEqual(self._pi.read(Nrf905Gpio.TRANSMIT_ENABLE), expected[2])
+        self.assertEqual(self._pi.read(
+            Nrf905Gpio.POWER_UP), expected[0])
+        self.assertEqual(self._pi.read(
+            Nrf905Gpio.TRANSMIT_RECEIVE_CHIP_ENABLE), expected[1])
+        self.assertEqual(self._pi.read(
+            Nrf905Gpio.TRANSMIT_ENABLE), expected[2])
 
     def check_callback_pins(self):
         """ The state of each callback pin is tested.
@@ -58,8 +61,8 @@ class TestNrf905Gpio(unittest.TestCase):
             DATA_READY
             CARRIER_DETECT
             ADDRESS_MATCHED
-        This is done outside a loop so that the pin that fails can be identified
-        in the text output.
+        This is done outside a loop so that the pin that fails can be
+        identified in the text output.
         """
         pin = Nrf905Gpio.DATA_READY
         mode = self._pi.get_mode(pin)
@@ -90,9 +93,12 @@ class TestNrf905Gpio(unittest.TestCase):
         TODO The GPIOs are only for the RPi 1A/B.  Fix so that the tests are
         extended for RPi 1B+ and later.
         """
-        pins_to_reset = [2, 3, 4, 7, 8, 9, 10, 11, 14, 15, 17, 18, 22, 23, 24, 25, 27]
-        # This is the full list of pins on the RPi B+ but this causes a failure on the 1B.
-        # pins_to_reset = [2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20, 21, 22, 23, 24, 25, 26, 27]
+        pins_to_reset = [2, 3, 4, 7, 8, 9, 10, 11, 14, 15,
+                         17, 18, 22, 23, 24, 25, 27]
+        # This is the full list of pins on the RPi B+ but this causes a
+        # failure on the 1B.
+        # pins_to_reset = [2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15,
+        #                  16, 17, 18, 19, 20, 21, 22, 23, 24, 25, 26, 27]
         for pin in pins_to_reset:
             self._gpio.reset_pin(self._pi, pin)
             mode = self._pi.get_mode(pin)
@@ -106,7 +112,7 @@ class TestNrf905Gpio(unittest.TestCase):
     def test_output_pins(self):
         """ Verify that all output pins are set correctly. """
         self.check_output_pins([0, 0, 0])
-        # Check standby 
+        # Check standby
         self._gpio.set_mode_standby(self._pi)
         self.check_output_pins([1, 0, 0])
         # Check power down
@@ -124,7 +130,8 @@ class TestNrf905Gpio(unittest.TestCase):
         called when an edge is detected.
         """
         # Setup callback
-        self._gpio.set_callback(self._pi, Nrf905Gpio.DATA_READY, callback_function)
+        self._gpio.set_callback(self._pi, Nrf905Gpio.DATA_READY,
+                                callback_function)
         # Force DR low then high to trigger callbacks.
         self._pi.set_pull_up_down(Nrf905Gpio.DATA_READY, pigpio.PUD_DOWN)
         self._pi.set_pull_up_down(Nrf905Gpio.DATA_READY, pigpio.PUD_UP)
@@ -142,12 +149,14 @@ class TestNrf905Gpio(unittest.TestCase):
 
     def test_clear_callback(self):
         # Setup callback
-        self._gpio.set_callback(self._pi, Nrf905Gpio.ADDRESS_MATCHED, callback_function)
+        self._gpio.set_callback(self._pi, Nrf905Gpio.ADDRESS_MATCHED,
+                                callback_function)
         # Clear non-existent callback - should return False.
         result = self._gpio.clear_callback(self._pi, Nrf905Gpio.CARRIER_DETECT)
         self.assertFalse(result)
         # Clear existing callback - should return True.
-        result = self._gpio.clear_callback(self._pi, Nrf905Gpio.ADDRESS_MATCHED)
+        result = self._gpio.clear_callback(self._pi,
+                                           Nrf905Gpio.ADDRESS_MATCHED)
         self.assertTrue(result)
 
 

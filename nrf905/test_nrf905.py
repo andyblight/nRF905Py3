@@ -1,7 +1,6 @@
 #!/usr/bin/env python3
 
 import unittest
-import sys
 
 from nrf905.nrf905 import Nrf905, StateError
 
@@ -35,15 +34,15 @@ class TestNrf905(unittest.TestCase):
         self.transceiver.open(callback)
         self.transceiver.write(data_bytes)
 
-
-# THE FOLLOWING TESTS ARE BROKEN
+    # THE FOLLOWING TESTS ARE BROKEN
     def test_set_address(self):
         # Verify it works before open for unsigned 32 bit integers.
         address = 0
         self.transceiver.set_address(address)
         address = 0xffffffff
         self.transceiver.set_address(address)
-        # Verify values that are not unsigned 32 bit integers generate exceptions.
+        # Verify values that are not unsigned 32 bit integers generate
+        # exceptions.
         address = -1
         with self.assertRaises(ValueError):
             self.transceiver.set_address(address)
@@ -83,7 +82,8 @@ class TestNrf905(unittest.TestCase):
 
     def test_read_success(self):
         self.transceiver.open(434, callback)
-        # TODO This test needs to invoke the callback and verify what is returned.
+        # TODO This test needs to invoke the callback and verify what is
+        # returned.
         self.transceiver.close()
 
     def test_set_crc_mode(self):
@@ -122,6 +122,7 @@ class TestNrf905(unittest.TestCase):
         with self.assertRaises(StateError):
             self.transceiver.set_crc_mode(crc_mode)
         self.transceiver.close()
+
 
 if __name__ == '__main__':
     unittest.main()

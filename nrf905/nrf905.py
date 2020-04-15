@@ -3,8 +3,7 @@
 """
 
 import pigpio
-import queue
-import threading
+import time
 
 from nrf905.nrf905_spi import Nrf905Spi
 from nrf905.nrf905_gpio import Nrf905Gpio
@@ -32,8 +31,6 @@ class Nrf905:
         self._spi = None
         self._gpio = None
         self._rx_callback = None
-        self._queue = None
-        self._thread = None
         # Internal properties.
         self._channel = -1  # Set from frequency.
         self._hfreq_pll = -1  # Set from frequency.
@@ -50,7 +47,8 @@ class Nrf905:
         """ Validates and sets the frequency for the device in MHz. """
         print("frequency:", frequency_mhz)
         if Nrf905ConfigRegister.is_valid(frequency_mhz, country):
-            (channel, hfreq_pll) = Nrf905ConfigRegister.frequency_to_channel(frequency_mhz)
+            (channel, hfreq_pll) = Nrf905ConfigRegister.frequency_to_channel(
+                frequency_mhz)
             if channel < 0:
                 raise ValueError("Invalid frequency.")
             else:
@@ -152,7 +150,7 @@ class Nrf905:
                 self._spi.configuration_register_write(config)
                 # The TX address can be set later.
                 if self._tx_address != 0:
-                    self.spi.write_transmit_address(write_address)
+                    self.spi.write_transmit_address(self._tx_address)
                 # Setup internal callbacks for state changes.
                 self._gpio.set_callback(
                     self._pi, Nrf905Gpio.DATA_READY, self._data_ready_callback)
@@ -162,10 +160,6 @@ class Nrf905:
                 self._gpio.set_callback(
                     self._pi, Nrf905Gpio.ADDRESS_MATCHED,
                     self._address_matched_callback)
-                # Start thread
-                self._queue = queue.Queue()
-                self._thread = threading.Thread(target=_worker)
-                self._thread.start()
                 self._open = True
 
     def close(self):
@@ -182,12 +176,12 @@ class Nrf905:
         self._pi.stop()
         self._open = False
 
-    def send(self, data):
-        """ Sends the data. Maximum of 32 bytes will be sent.
+    def send(self, payload):
+        """ Sends the payload. Maximum of 32 bytes will be sent.
         """
-        print("write:", data)
-        if len(data) > self._payload_width:
-            raise ValueError("'data' was longer than payload width of:",
+        print("write:", payload)
+        if len(payload) > self._payload_width:
+            raise ValueError("'payload' was longer than payload width of:",
                              self._payload_width)
         else:
             if not self._open:
@@ -195,7 +189,7 @@ class Nrf905:
             else:
                 self._wait_until_free()
                 # Put into standby if not already.
-                if self.nrf905.state is not 'standby':
+                if self.nrf905.state != 'standby':
                     self._enter_standy()
                 # Load the data.
                 self._spi.write_transmit_payload(payload)
@@ -205,26 +199,30 @@ class Nrf905:
                 # so exit this function.
 
     def _wait_until_free(self):
-        """ Blocks until the transceiver is not busy. """
-        with cv_busy:
-            while self._state_machine.is_busy():
-                cv_busy.wait()
+        """ Blocks until the transceiver is not busy.
+        """
+        while self._state_machine.is_busy():
+            time.sleep(0.001)
 
     def _enter_standy(self):
+        """ Set the mode and state. """
         # Delay from Arduino code.
         time.sleep(0.014)
         self._gpio.set_mode_standby(self._pi)
         self._state_machine.power_up()
 
     def _enter_rx_mode(self):
+        """ Set the mode and state. """
         self._gpio.set_mode_receive(self._pi)
-        self._state_machine.power_up()
+        self._state_machine.receiver_enable()
 
     def _enter_tx_mode(self):
+        """ Set the mode and state. """
         self._gpio.set_mode_transmit(self._pi)
-        self._state_machine.power_up()
+        self._state_machine.transmit()
 
     def _enter_power_down(self):
+        """ Set the mode and state. """
         self._gpio.set_mode_power_down(self._pi)
         self._state_machine.power_down()
 

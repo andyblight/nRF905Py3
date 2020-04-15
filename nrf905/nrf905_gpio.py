@@ -60,7 +60,7 @@ class Nrf905Gpio:
         # GPIO9-27 default to use pull down resistor.
         if pin >= 0 and pin <= 27:
             pi.set_mode(pin, pigpio.INPUT)
-            if pin <=8:
+            if pin <= 8:
                 pi.set_pull_up_down(pin, pigpio.PUD_UP)
             else:
                 pi.set_pull_up_down(pin, pigpio.PUD_DOWN)
