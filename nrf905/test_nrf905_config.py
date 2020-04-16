@@ -359,18 +359,18 @@ class TestNrf905Config(unittest.TestCase):
         self.assertEqual(channel, -1)
         self.assertEqual(hfreq_pll, 0)
 
-    def test_is_valid_uk(self):
-        # True results first.
-        self.assertTrue(Nrf905ConfigRegister.is_valid_uk(433.4))
-        self.assertTrue(Nrf905ConfigRegister.is_valid_uk(434.0))
-        self.assertTrue(Nrf905ConfigRegister.is_valid_uk(434.5))
-        self.assertTrue(Nrf905ConfigRegister.is_valid_uk(863.0))
-        self.assertTrue(Nrf905ConfigRegister.is_valid_uk(870.0))
+    def test_is_valid(self):
+        # Legal ranges are is 433.05 to 434.79MHz, 863.0 to 868.0MHz
+        self.assertTrue(Nrf905ConfigRegister.is_valid(433.1, "GBR"))
+        self.assertTrue(Nrf905ConfigRegister.is_valid(434.0, "GBR"))
+        self.assertTrue(Nrf905ConfigRegister.is_valid(434.7, "GBR"))
+        self.assertTrue(Nrf905ConfigRegister.is_valid(863.0, "GBR"))
+        self.assertTrue(Nrf905ConfigRegister.is_valid(868.0, "GBR"))
         # False results
-        self.assertFalse(Nrf905ConfigRegister.is_valid_uk(433.3))
-        self.assertFalse(Nrf905ConfigRegister.is_valid_uk(435.6))
-        self.assertFalse(Nrf905ConfigRegister.is_valid_uk(862.9))
-        self.assertFalse(Nrf905ConfigRegister.is_valid_uk(870.1))
+        self.assertFalse(Nrf905ConfigRegister.is_valid(433.0, "GBR"))
+        self.assertFalse(Nrf905ConfigRegister.is_valid(434.8, "GBR"))
+        self.assertFalse(Nrf905ConfigRegister.is_valid(862.9, "GBR"))
+        self.assertFalse(Nrf905ConfigRegister.is_valid(868.1, "GBR"))
 
 
 if __name__ == '__main__':
