@@ -54,8 +54,6 @@ class Nrf905StateMachine:
             'data_ready_rx', 'receiving_receiving_data', 'receiving_received')
         self._machine.add_transition(
             'received2listening', 'receiving_received', 'receiving_listening')
-        self._machine.add_transition(
-            'received2standby', 'receiving_received', 'standby')
         # Enter/leave receiving
         self._machine.add_transition(
             'receiver_enable', 'standby', 'receiving')
