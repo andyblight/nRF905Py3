@@ -25,7 +25,7 @@ class Nrf905StateMachine:
     """ A sub-class of Nrf905 that manages states and transitions.
     The state names were taken from the nRF905 datasheet.
     """
-    states = ['power_down', 'standby', {
+    states = ['power_save', 'standby', {
               'name': 'transmitting', 'initial': 'waiting',
               'children': ['waiting', 'sending']
               }, {
@@ -34,7 +34,7 @@ class Nrf905StateMachine:
               } ]
 
     def __init__(self):
-        self._machine = Machine(model=self, states=self.states, initial='power_down')
+        self._machine = Machine(model=self, states=self.states, initial='power_save')
         # Add transitions:          (trigger name, previous state, next state)
         # Transmitting
         self._machine.add_transition('transmit', 'standby', 'transmitting')
@@ -50,9 +50,9 @@ class Nrf905StateMachine:
         self._machine.add_transition('receiver_enable', 'standby', 'receiving_listening')
         self._machine.add_transition('receiver_disable', 'receiving', 'standby')
         # Power states
-        self._machine.add_transition('power_up', 'power_down', 'standby')
+        self._machine.add_transition('power_up', 'power_save', 'standby')
         # This must be last so that the * works.
-        self._machine.add_transition('power_down', ['standy', 'transmitting', 'receiving'], 'power_down')
+        self._machine.add_transition('power_down', ['standy', 'transmitting', 'receiving'], 'power_save')
 
     def output_graph(self):
         """ Outputs a graph of the state machine showing all states and transitions. """
@@ -62,7 +62,7 @@ class Nrf905StateMachine:
         busy = True
         state = self.state
         logger.debug("is_busy: " + state)
-        if state == 'power_down' or state == 'standby':
+        if state == 'power_save' or state == 'standby':
             busy = False
         return busy
 
