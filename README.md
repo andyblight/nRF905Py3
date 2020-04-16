@@ -19,14 +19,14 @@ Firstly (and probably most importantly) is to enable the RPi SPI interface
 using `raspi-config`.  This loads a kernel module that communicates with the
 SPI bus and without this module, nothing works!
 
-Next install packages that are used by nrf905py3:
+Then install the dependent Python packages:
 
 ```bash
-sudo apt install pigpio
 pip3 install transitions
 ```
 
-Finally, you need to start the pigpio daemon using
+Finally, you need to start the pigpio daemon (pre-installed in Raspian 
+buster) using:
 
 ```bash
 sudo pigpiod
