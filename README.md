@@ -19,10 +19,10 @@ Firstly (and probably most importantly) is to enable the RPi SPI interface
 using `raspi-config`.  This loads a kernel module that communicates with the
 SPI bus and without this module, nothing works!
 
-Then install the dependent Python packages:
+Then install the dependent packages:
 
 ```bash
-pip3 install transitions
+sudo apt install -y graphviz python3-graphviz python3-transitions
 ```
 
 Finally, you need to start the pigpio daemon (pre-installed in Raspian 
