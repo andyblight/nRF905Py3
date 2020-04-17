@@ -37,6 +37,7 @@ class Nrf905:
         self._open = False
         self._next = False
         self._next_tx_mode_rx = False
+        self._carrier_busy = False
 
     @property
     def frequency(self):
@@ -123,7 +124,7 @@ class Nrf905:
         Applies previously set values to nRF905 device.
         Prepares data received callback for use.
         """
-        print("open")
+        # print("open")
         if self._open:
             raise StateError("Already open.  Call close() before retrying.")
         else:
@@ -141,9 +142,9 @@ class Nrf905:
                 self._spi = Nrf905Spi()
                 self._spi.open(self._pi)
                 # Set up nRF905
-                # Power down mode
+                # Ensure in power down mode. State machine starts in sleep
+                # (power_down) so just set GPIOs.
                 self._gpio.set_mode_power_down(self._pi)
-                self._state_machine.power_down()
                 # Config register.
                 config = Nrf905ConfigRegister()
                 config.board_defaults()
@@ -155,7 +156,7 @@ class Nrf905:
                 self._spi.configuration_register_write(config)
                 # The TX address can be set later.
                 if self._tx_address != 0:
-                    self.spi.write_transmit_address(self._tx_address)
+                    self._spi.write_transmit_address(self._tx_address)
                 # Setup internal callbacks for state changes.
                 self._gpio.set_callback(
                     self._pi, Nrf905Gpio.DATA_READY, self._data_ready_callback
@@ -176,39 +177,28 @@ class Nrf905:
         """ Releases the instances of Nrf905Spi and Nrf905Gpio.
         The nRF905 device is left in the state last used.
         """
-        print("close")
-        # Close down thread nicely.
-        self._queue.join()
-        self._queue.put(None)
-        self._thread.join()
+        # print("close")
         # Release objects.
         self._spi.close()
         self._pi.stop()
         self._open = False
 
     def send(self, payload):
-        """ Sends the payload. Maximum of 32 bytes will be sent.
+        """ Sends the payload. Maximum of 32 bytes will be sent (checked by
+        Nrf905Spi.write_transmit_payload()).
         """
-        print("write:", payload)
-        if len(payload) > self._payload_width:
-            raise ValueError(
-                "'payload' was longer than payload width of:",
-                self._payload_width,
-            )
+        print("send:", payload)
+        if not self._open:
+            raise StateError("Call Nrf905.open() first.")
         else:
-            if not self._open:
-                raise StateError("Call Nrf905.open() first.")
-            else:
-                self._wait_until_free()
-                # Put into standby if not already.
-                if self.nrf905.state != "standby":
-                    self._enter_standy()
-                # Load the data.
-                self._spi.write_transmit_payload(payload)
-                # Send the data.
-                self._enter_tx_mode()
-                # The next state changes are driven by the state machine
-                # so exit this function.
+            self._wait_until_free()
+            # Put into standby if not already.
+            if self._state_machine.state != "standby":
+                self._enter_standy()
+            # Load the data.
+            self._spi.write_transmit_payload(payload)
+            # Tell the device to send the data.
+            self._enter_tx_mode()
 
     def _wait_until_free(self):
         """ Blocks until the transceiver is not busy.
@@ -232,23 +222,64 @@ class Nrf905:
         """ Set the mode and state. """
         self._gpio.set_mode_transmit(self._pi)
         self._state_machine.transmit()
+        # If carrier not present, start transmitting.
+        if not self._carrier_busy:
+            self._state_machine.no_carrier()
 
     def _enter_power_down(self):
         """ Set the mode and state. """
         self._gpio.set_mode_power_down(self._pi)
         self._state_machine.power_down()
 
-    def _carrier_detect_callback(data):
-        print("cdc:", data)
-        # TODO Change state
+    def _carrier_detect_callback(gpio, level, tick):
+        """ Only used for transmitting. """
+        print("cdc:", gpio, level, tick)
+        if level == 0:
+            # High to low
+            self._carrier_busy = False
+            # If waiting to start transmitting, start transmitting.
+            if self._state_machine.is_transmitting_waiting():
+                self._state_machine.no_carrier()
+        elif level == 1:
+            # Low to high.
+            self._carrier_busy = True
+        else:
+            print("Watchdog!")
 
-    def _address_matched_callback(data):
-        print("amc:", data)
-        # TODO Change state
+    def _address_matched_callback(gpio, level, tick):
+        """ Update state machine directly. """
+        print("amc:", gpio, level, tick)
+        if level == 0:
+            # High to low
+            # CRC failed so go back to listening.
+            if self._state_machine.is_receiving_receiving_data():
+                self._state_machine.bad_crc()
+        elif level == 1:
+            # Address matches so move to next state.
+            if self._state_machine.is_receiving_listening():
+                self._state_machine.address_match()
+        else:
+            print("Watchdog!")
 
-    def _data_ready_callback(data):
-        print("drc:", data)
-        # TODO Change state
+    def _data_ready_callback(gpio, level, tick):
+        """ Update state machine directly. """
+        print("drc:", gpio, level, tick)
+        if level == 0:
+            # High to low
+            if self._state_machine.is_receiving_received():
+                # This happens when the data has been read from the
+                # payload registers.
+                self._state_machine.received2listening()
+        elif level == 1:
+            if self._state_machine.is_transmitting_sending():
+                # Transmit has completed.
+                # We don't do retransmits so always go to standby.
+                self._state_machine.data_ready_tx()
+            elif self._state_machine.is_receiving_receiving_data():
+                # Successful receive with good CRC (if enabled).
+                self._state_machine.data_ready_rx()
+        else:
+            print("Watchdog!")
 
 
 class StateError(Exception):
