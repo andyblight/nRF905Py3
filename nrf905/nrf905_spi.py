@@ -45,8 +45,9 @@ class Nrf905Spi:
         # print("open:", pi)
         self._pi = pi
         # print("open self._pi:", self._pi)
-        self._spi_h = self._pi.spi_open(0, self._SPI_SCK_HZ,
-                                        self._SPI_BUS_0_FLAGS)
+        self._spi_h = self._pi.spi_open(
+            0, self._SPI_SCK_HZ, self._SPI_BUS_0_FLAGS
+        )
         # print("open self._spi_h:", self._spi_h)
 
     def close(self):
@@ -103,7 +104,7 @@ class Nrf905Spi:
             command = bytearray(11)
             command[0] = self._INSTRUCTION_W_CONFIG
             # Copy the rest of the data into the command.
-            command[1:1 + len(register_bytes)] = register_bytes
+            command[1 : 1 + len(register_bytes)] = register_bytes
             # print("crw:", command)
             # Write the command to the config register.
             self.send_command(command)
@@ -138,7 +139,7 @@ class Nrf905Spi:
         """ Writes the value of address to the transmit address register. """
         command = bytearray()
         command.append(self._INSTRUCTION_W_TX_ADDRESS)
-        command += address.to_bytes(self._transmit_address_width, 'little')
+        command += address.to_bytes(self._transmit_address_width, "little")
         # print("wta:", address, command)
         self.send_command(command)
 
@@ -149,7 +150,7 @@ class Nrf905Spi:
         command = bytearray(self._transmit_address_width + 1)
         command[0] = self._INSTRUCTION_R_TX_ADDRESS
         data = self.send_command(command)
-        address = int.from_bytes(data, 'little')
+        address = int.from_bytes(data, "little")
         return address
 
     def read_receive_payload(self):
@@ -171,13 +172,13 @@ class Nrf905Spi:
         command = bytearray(2)
         command[0] = self._INSTRUCTION_CHANNEL_CONFIG
         if 0 <= pa_pwr < 4:
-            command[0] |= ((pa_pwr & 0x03) << 2)
+            command[0] |= (pa_pwr & 0x03) << 2
         else:
             raise ValueError("Out of range: 0 <= pa_pwr < 4")
         if hfreq_pll:
             command[0] |= 0x02
         if 0 <= channel_number < 0x200:
-            command[1] = (channel_number & 0xFF)
+            command[1] = channel_number & 0xFF
             if channel_number & 0x100:
                 command[0] |= 1
         else:

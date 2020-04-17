@@ -8,7 +8,6 @@ from nrf905.nrf905_config import Nrf905ConfigRegister
 
 
 class TestNrf905Spi(unittest.TestCase):
-
     def setUp(self):
         self.pi = pigpio.pi()
         # print("setUp: self.pi:", self.pi)
@@ -101,7 +100,7 @@ class TestNrf905Spi(unittest.TestCase):
 
     def test_transmit_address_read_write(self):
         """ Verify the TX_ADDRESS register functions. """
-        write_address = 0xe7e7e7e7
+        write_address = 0xE7E7E7E7
         self.spi.write_transmit_address(write_address)
         read_address = self.spi.read_transmit_address()
         self.assertEqual(write_address, read_address)
@@ -150,8 +149,10 @@ class TestNrf905Spi(unittest.TestCase):
         self.assertTrue(config_register == check_register)
         # Tests that should work
         passing_tests = [
-            (0,     False, 0), (0x1FF, False, 1),
-            (0xFF,  True,  2), (15,    True,  3)
+            (0, False, 0),
+            (0x1FF, False, 1),
+            (0xFF, True, 2),
+            (15, True, 3),
         ]
         for test in passing_tests:
             # Write to device
@@ -167,8 +168,10 @@ class TestNrf905Spi(unittest.TestCase):
             self.assertTrue(config_register == check_register)
         # Tests that should fail
         value_errors = [
-            (-1,    False, 0), (0,     False, -1),
-            (0x200, False, 1), (0x200, False, -12)
+            (-1, False, 0),
+            (0, False, -1),
+            (0x200, False, 1),
+            (0x200, False, -12),
         ]
         for test in value_errors:
             # Attempt writing to device.
@@ -176,5 +179,5 @@ class TestNrf905Spi(unittest.TestCase):
                 self.spi.channel_config(test[0], test[1], test[2])
 
 
-if __name__ == '__main__':
+if __name__ == "__main__":
     unittest.main()

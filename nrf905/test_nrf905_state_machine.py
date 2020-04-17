@@ -1,7 +1,7 @@
 #!/usr/bin/env python3
 """ Test harness.
-Could do with some improvements so that it is easier to match to the 
-flow charts in the datasheet, in particular adding mock functions 
+Could do with some improvements so that it is easier to match to the
+flow charts in the datasheet, in particular adding mock functions
 to set the pin states, TRX_CE etc.
 """
 
@@ -14,11 +14,10 @@ from nrf905.nrf905_state_machine import Nrf905StateMachine
 # logging.basicConfig(level=logging.ERROR)
 logging.basicConfig(level=logging.DEBUG)
 # Logger for use in this module.
-logger = logging.getLogger('TestNrf905StateMachine')
+logger = logging.getLogger("TestNrf905StateMachine")
 
 
 class TestNrf905StateMachine(unittest.TestCase):
-
     def setUp(self):
         self.nrf905 = Nrf905Mock()
 
@@ -32,12 +31,12 @@ class TestNrf905StateMachine(unittest.TestCase):
     def test_standby(self):
         logger.debug("\ntest_standby")
         # Put into standby.
-        self.assertEqual('sleep', self.nrf905.state)
+        self.assertEqual("sleep", self.nrf905.state)
         self.nrf905.power_up()
-        self.assertEqual('standby', self.nrf905.state)
+        self.assertEqual("standby", self.nrf905.state)
         # This call should have no effect.
         self.nrf905.data_ready_function(False)
-        self.assertEqual('standby', self.nrf905.state)
+        self.assertEqual("standby", self.nrf905.state)
 
     def test_is_busy(self):
         """ Verify that is_busy returns False when in standby and
@@ -45,96 +44,97 @@ class TestNrf905StateMachine(unittest.TestCase):
         """
         logger.debug("\ntest_is_busy")
         # Default state is sleep. Expect False
-        self.assertEqual('sleep', self.nrf905.state)
+        self.assertEqual("sleep", self.nrf905.state)
         self.assertFalse(self.nrf905._machine.is_busy())
         # Put into standby.
         self.nrf905.power_up()
-        self.assertEqual('standby', self.nrf905.state)
+        self.assertEqual("standby", self.nrf905.state)
         self.assertFalse(self.nrf905._machine.is_busy())
         # Try other states
         self.nrf905.transmit("fred")
-        self.assertEqual('transmitting_sending', self.nrf905.state)
+        self.assertEqual("transmitting_sending", self.nrf905.state)
         self.assertTrue(self.nrf905._machine.is_busy())
         self.nrf905.end_transmit()
-        self.assertEqual('standby', self.nrf905.state)
+        self.assertEqual("standby", self.nrf905.state)
         self.assertFalse(self.nrf905._machine.is_busy())
         self.nrf905.receiver_enabled = True
-        self.assertEqual('receiving_listening', self.nrf905.state)
+        self.assertEqual("receiving_listening", self.nrf905.state)
         self.assertFalse(self.nrf905._machine.is_busy())
 
     def test_transmit_waiting(self):
         logger.debug("\ntest_transmit_waiting")
         self.nrf905.power_up()
-        self.assertEqual('standby', self.nrf905.state)
+        self.assertEqual("standby", self.nrf905.state)
         # Test waiting send.
         self.nrf905.carrier_detect_function(True)
         self.nrf905.transmit("fred")
-        self.assertEqual('transmitting_waiting', self.nrf905.state)
+        self.assertEqual("transmitting_waiting", self.nrf905.state)
         self.nrf905.carrier_detect_function(False)
-        self.assertEqual('transmitting_sending', self.nrf905.state)
+        self.assertEqual("transmitting_sending", self.nrf905.state)
         self.nrf905.data_ready_function(True)
-        self.assertEqual('standby', self.nrf905.state)
+        self.assertEqual("standby", self.nrf905.state)
 
     def test_transmit_no_wait(self):
         logger.debug("\ntest_transmit_no_wait")
         self.nrf905.power_up()
-        self.assertEqual('standby', self.nrf905.state)
+        self.assertEqual("standby", self.nrf905.state)
         # Test immediate send (carrier not busy).
         self.nrf905.carrier_detect_function(False)
         self.nrf905.transmit("bert")
-        self.assertEqual('transmitting_sending', self.nrf905.state)
+        self.assertEqual("transmitting_sending", self.nrf905.state)
         self.nrf905.data_ready_function(True)
-        self.assertEqual('standby', self.nrf905.state)
+        self.assertEqual("standby", self.nrf905.state)
 
     def test_receiver_enable(self):
         logger.debug("\ntest_receiver_enable")
         self.nrf905.power_up()
-        self.assertEqual('standby', self.nrf905.state)
+        self.assertEqual("standby", self.nrf905.state)
         self.nrf905.receiver_enabled = True
-        self.assertEqual('receiving_listening', self.nrf905.state)
+        self.assertEqual("receiving_listening", self.nrf905.state)
         self.assertTrue(self.nrf905.receiver_enabled)
         self.nrf905.receiver_enabled = False
-        self.assertEqual('standby', self.nrf905.state)
+        self.assertEqual("standby", self.nrf905.state)
         self.assertFalse(self.nrf905.receiver_enabled)
 
     def test_receive(self):
         logger.debug("\ntest_receive")
         self.nrf905.power_up()
-        self.assertEqual('standby', self.nrf905.state)
+        self.assertEqual("standby", self.nrf905.state)
         self.nrf905.receiver_enabled = True
-        self.assertEqual('receiving_listening', self.nrf905.state)
+        self.assertEqual("receiving_listening", self.nrf905.state)
         self.nrf905.carrier_detect_function(True)
         self.nrf905.address_matched_function(True)
-        self.assertEqual('receiving_receiving_data', self.nrf905.state)
+        self.assertEqual("receiving_receiving_data", self.nrf905.state)
         self.nrf905.data_ready_function(True)
-        self.assertEqual('receiving_received', self.nrf905.state)
+        self.assertEqual("receiving_received", self.nrf905.state)
         # Packet read from SPI registers.
         self.nrf905.address_matched_function(False)
         self.nrf905.data_ready_function(False)
-        self.assertEqual('receiving_listening', self.nrf905.state)
+        self.assertEqual("receiving_listening", self.nrf905.state)
 
     def test_receive_to_standby(self):
         logger.debug("\ntest_receive_to_standby")
         self.nrf905.power_up()
-        self.assertEqual('standby', self.nrf905.state)
+        self.assertEqual("standby", self.nrf905.state)
         self.nrf905.receiver_enabled = True
-        self.assertEqual('receiving_listening', self.nrf905.state)
+        self.assertEqual("receiving_listening", self.nrf905.state)
         self.nrf905.carrier_detect_function(True)
         self.nrf905.address_matched_function(True)
-        self.assertEqual('receiving_receiving_data', self.nrf905.state)
+        self.assertEqual("receiving_receiving_data", self.nrf905.state)
         self.nrf905.data_ready_function(True)
-        self.assertEqual('receiving_received', self.nrf905.state)
+        self.assertEqual("receiving_received", self.nrf905.state)
         self.nrf905.receiver_enabled = False
         # Packet read from SPI registers.
         self.nrf905.address_matched_function(False)
         self.nrf905.data_ready_function(False)
-        self.assertEqual('standby', self.nrf905.state)
+        self.assertEqual("standby", self.nrf905.state)
 
 
 class Nrf905Mock:
     """ Cut down version of the Nrf905 class used for testing the state
     machine.
     """
+
     def __init__(self):
         self._machine = Nrf905StateMachine()
         self._is_rx_enabled = False
@@ -163,7 +163,7 @@ class Nrf905Mock:
         logger.debug("drf:" + str(high))
         if high:
             if self._machine.is_transmitting_sending():
-                # Transmit has completed. 
+                # Transmit has completed.
                 # We don't do retransmits so always go to standby.
                 logger.debug("drf: tx")
                 self._machine.data_ready_tx()
@@ -174,7 +174,7 @@ class Nrf905Mock:
         else:
             # Hi to lo
             if self._machine.is_receiving_received():
-                # This happens when the data has been read from the 
+                # This happens when the data has been read from the
                 # payload registers.
                 self._machine.received2listening()
 
@@ -220,5 +220,5 @@ class Nrf905Mock:
         self._machine.data_ready_tx()
 
 
-if __name__ == '__main__':
+if __name__ == "__main__":
     unittest.main()

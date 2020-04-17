@@ -15,6 +15,8 @@ development.
 
 ## Preparing the RPi
 
+Install Raspbian Buster from here:
+
 Firstly (and probably most importantly) is to enable the RPi SPI interface
 using `raspi-config`.  This loads a kernel module that communicates with the
 SPI bus and without this module, nothing works!
@@ -25,12 +27,23 @@ Then install the dependent packages:
 sudo apt install -y graphviz python3-graphviz python3-transitions
 ```
 
-Finally, you need to start the pigpio daemon (pre-installed in Raspian 
+Finally, you need to start the pigpio daemon (pre-installed in Raspian
 buster) using:
 
 ```bash
 sudo pigpiod
 ```
+
+NOTE: If you are going to work on the code, I use flake8 and black to
+check and format the code.  Install using:
+
+```bash
+sudo apt install -y black flake8
+```
+
+I run `black -l 79` to format the code and then run `flake8` to see if
+there is anything that needs manual intervention.  There is a script
+ that does this for you, `format.sh`.
 
 ## Wiring
 

@@ -48,7 +48,8 @@ class Nrf905:
         print("frequency:", frequency_mhz)
         if Nrf905ConfigRegister.is_valid(frequency_mhz, country):
             (channel, hfreq_pll) = Nrf905ConfigRegister.frequency_to_channel(
-                frequency_mhz)
+                frequency_mhz
+            )
             if channel < 0:
                 raise ValueError("Invalid frequency.")
             else:
@@ -56,8 +57,9 @@ class Nrf905:
                 self._channel = channel
                 self._hfreq_pll = hfreq_pll
         else:
-            raise ValueError("Frequency {} not valid in {}.".format(
-                frequency_mhz, country))
+            raise ValueError(
+                "Frequency {} not valid in {}.".format(frequency_mhz, country)
+            )
 
     @property
     def receive_address(self):
@@ -126,8 +128,11 @@ class Nrf905:
             raise StateError("Already open.  Call close() before retrying.")
         else:
             # Frequency and RX address must be set before open is called.
-            if self._channel == -1 or self._hfreq_pll == -1 or \
-                    self._rx_address == -1:
+            if (
+                self._channel == -1
+                or self._hfreq_pll == -1
+                or self._rx_address == -1
+            ):
                 raise ValueError("Frequency and RX address must be set.")
             else:
                 # Create SPI and GPIO objects.
@@ -153,13 +158,18 @@ class Nrf905:
                     self.spi.write_transmit_address(self._tx_address)
                 # Setup internal callbacks for state changes.
                 self._gpio.set_callback(
-                    self._pi, Nrf905Gpio.DATA_READY, self._data_ready_callback)
+                    self._pi, Nrf905Gpio.DATA_READY, self._data_ready_callback
+                )
                 self._gpio.set_callback(
-                    self._pi, Nrf905Gpio.CARRIER_DETECT,
-                    self._carrier_detect_callback)
+                    self._pi,
+                    Nrf905Gpio.CARRIER_DETECT,
+                    self._carrier_detect_callback,
+                )
                 self._gpio.set_callback(
-                    self._pi, Nrf905Gpio.ADDRESS_MATCHED,
-                    self._address_matched_callback)
+                    self._pi,
+                    Nrf905Gpio.ADDRESS_MATCHED,
+                    self._address_matched_callback,
+                )
                 self._open = True
 
     def close(self):
@@ -181,15 +191,17 @@ class Nrf905:
         """
         print("write:", payload)
         if len(payload) > self._payload_width:
-            raise ValueError("'payload' was longer than payload width of:",
-                             self._payload_width)
+            raise ValueError(
+                "'payload' was longer than payload width of:",
+                self._payload_width,
+            )
         else:
             if not self._open:
                 raise StateError("Call Nrf905.open() first.")
             else:
                 self._wait_until_free()
                 # Put into standby if not already.
-                if self.nrf905.state != 'standby':
+                if self.nrf905.state != "standby":
                     self._enter_standy()
                 # Load the data.
                 self._spi.write_transmit_payload(payload)
@@ -244,5 +256,6 @@ class StateError(Exception):
     Attributes:
         message -- explanation of the error
     """
+
     def _init_(self, message):
         self.message = message

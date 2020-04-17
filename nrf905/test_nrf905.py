@@ -12,7 +12,6 @@ def callback(data):
 
 
 class TestNrf905(unittest.TestCase):
-
     def setUp(self):
         self.self.transceiver = Nrf905()
 
@@ -39,7 +38,7 @@ class TestNrf905(unittest.TestCase):
         # Verify it works before open for unsigned 32 bit integers.
         address = 0
         self.transceiver.set_address(address)
-        address = 0xffffffff
+        address = 0xFFFFFFFF
         self.transceiver.set_address(address)
         # Verify values that are not unsigned 32 bit integers generate
         # exceptions.
@@ -124,5 +123,5 @@ class TestNrf905(unittest.TestCase):
         self.transceiver.close()
 
 
-if __name__ == '__main__':
+if __name__ == "__main__":
     unittest.main()

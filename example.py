@@ -20,7 +20,7 @@ def main():
     transceiver.frequency = 434.5
     transceiver.receive_address = 0x43454749
     # Can also be called after open is called.
-    transceiver.transmit_address = 0x4345474a
+    transceiver.transmit_address = 0x4345474A
     # Open the transceiver.
     transceiver.open(callback)
     # Send whatever data the user enters until quit.

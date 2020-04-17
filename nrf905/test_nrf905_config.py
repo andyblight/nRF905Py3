@@ -6,7 +6,6 @@ from nrf905.nrf905_config import Nrf905ConfigRegister
 
 
 class TestNrf905Config(unittest.TestCase):
-
     def test_init_get(self):
         """ Test the methods: __init__(), get().  """
         # Create the object.
@@ -204,7 +203,7 @@ class TestNrf905Config(unittest.TestCase):
     def test_rx_address(self):
         register = Nrf905ConfigRegister()
         rx_address = register.get_rx_address()
-        self.assertEqual(rx_address, 0xe7e7e7e7)
+        self.assertEqual(rx_address, 0xE7E7E7E7)
         new_address = 0x012345678
         register.set_rx_address(new_address)
         rx_address = register.get_rx_address()
@@ -298,64 +297,76 @@ class TestNrf905Config(unittest.TestCase):
         # Some valid values from the data sheet.
         frequency_mhz = 430.0
         channel, hfreq_pll = Nrf905ConfigRegister.frequency_to_channel(
-            frequency_mhz)
+            frequency_mhz
+        )
         self.assertEqual(channel, 0b001001100)
         self.assertEqual(hfreq_pll, 0)
         frequency_mhz = 434.7
         channel, hfreq_pll = Nrf905ConfigRegister.frequency_to_channel(
-            frequency_mhz)
+            frequency_mhz
+        )
         self.assertEqual(channel, 0b001111011)
         self.assertEqual(hfreq_pll, 0)
         frequency_mhz = 862.0
         channel, hfreq_pll = Nrf905ConfigRegister.frequency_to_channel(
-            frequency_mhz)
+            frequency_mhz
+        )
         self.assertEqual(channel, 0b001010110)
         self.assertEqual(hfreq_pll, 1)
         frequency_mhz = 927.8
         channel, hfreq_pll = Nrf905ConfigRegister.frequency_to_channel(
-            frequency_mhz)
+            frequency_mhz
+        )
         self.assertEqual(channel, 0b110011111)
         self.assertEqual(hfreq_pll, 1)
         # Extreme valid values.
         frequency_mhz = 422.4
         channel, hfreq_pll = Nrf905ConfigRegister.frequency_to_channel(
-            frequency_mhz)
+            frequency_mhz
+        )
         self.assertEqual(channel, 0b000000000)
         self.assertEqual(hfreq_pll, 0)
         frequency_mhz = 473.5
         channel, hfreq_pll = Nrf905ConfigRegister.frequency_to_channel(
-            frequency_mhz)
+            frequency_mhz
+        )
         self.assertEqual(channel, 0b111111111)
         self.assertEqual(hfreq_pll, 0)
         frequency_mhz = 844.8
         channel, hfreq_pll = Nrf905ConfigRegister.frequency_to_channel(
-            frequency_mhz)
+            frequency_mhz
+        )
         self.assertEqual(channel, 0b000000000)
         self.assertEqual(hfreq_pll, 1)
         frequency_mhz = 947.0
         channel, hfreq_pll = Nrf905ConfigRegister.frequency_to_channel(
-            frequency_mhz)
+            frequency_mhz
+        )
         self.assertEqual(channel, 0b111111111)
         self.assertEqual(hfreq_pll, 1)
         # Some invalid values
         frequency_mhz = 422.35
         channel, hfreq_pll = Nrf905ConfigRegister.frequency_to_channel(
-            frequency_mhz)
+            frequency_mhz
+        )
         self.assertEqual(channel, -1)
         self.assertEqual(hfreq_pll, 0)
         frequency_mhz = 473.6
         channel, hfreq_pll = Nrf905ConfigRegister.frequency_to_channel(
-            frequency_mhz)
+            frequency_mhz
+        )
         self.assertEqual(channel, -1)
         self.assertEqual(hfreq_pll, 0)
         frequency_mhz = 844.7
         channel, hfreq_pll = Nrf905ConfigRegister.frequency_to_channel(
-            frequency_mhz)
+            frequency_mhz
+        )
         self.assertEqual(channel, -1)
         self.assertEqual(hfreq_pll, 0)
         frequency_mhz = 947.1
         channel, hfreq_pll = Nrf905ConfigRegister.frequency_to_channel(
-            frequency_mhz)
+            frequency_mhz
+        )
         self.assertEqual(channel, -1)
         self.assertEqual(hfreq_pll, 0)
 
@@ -373,5 +384,5 @@ class TestNrf905Config(unittest.TestCase):
         self.assertFalse(Nrf905ConfigRegister.is_valid(868.1, "GBR"))
 
 
-if __name__ == '__main__':
+if __name__ == "__main__":
     unittest.main()
