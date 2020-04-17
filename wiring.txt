@@ -1,33 +1,47 @@
-This is how I wired up the nRF905 to my RPi 1.
+Wiring diagram
+==============
 
-Most wires go direct from nRF905 to RPi.  The 3 wires that need 1k resistors
-go via a breadboard using a separate group of wires.
+This shows a couple of different wiring layouts.
 
+RPi1B
+-----
+
+nRF905     Wire                        BCM GPIO         RPi pin
+------     ----                        --------         -------
+VCC        Brown                        --               1
+TxEN       Red                          15              10
+CE         Orange                       27              13
+PWR        Yellow                       22              15
+UCK        -                            --              --
+CD         Purple to breadboard         23              16
+AM         White to breadboard          24              18
+DR         Grey to breadboard           25              22
+MISO       Blue                          9              21
+MOSI       Purple                       10              19
+SCK        Grey                         11              23
+CSN        White                         8              24
+GND        Black                        --              25
+GND        -                            --              --
+
+
+RPi4B with fan shim
+-------------------
+The fan shim interferes with the pins normally used, so this is an alternative
+layout. The fan shim uses these pins: BCM GPIO pins 3,14,15,17,18,
+RPi pins 1-12
+Ref: http://pinout.xyz/pinout/fan_shim
+
+The only pin that is used by the shim is RPi pin 10, so I used RPi pin 3,
+BCM GPIO 2
+
+Minimal connections for SPI testing
+-----------------------------------
 nRF905     Wire                        RPi pin
 ------     ----                        -------
 VCC        Brown                        1
-TxEN       Red                         10
-CE         Orange                      13
-PWR        Yellow                      15
-UCK    NC
-CD         Purple to breadboard        16
-AM         White to breadboard         18
-DR         Grey to breadboard          22
 MISO       Blue                        21
 MOSI       Purple                      19
 SCK        Grey                        23
 CSN        White                       24
 GND        Black                       25
-GND    NC
-
-Minimal connections for SPI testing.
-
-nRF905     Wire                        RPi pin
-------     ----                        -------
-VCC        Brown                        1
-MISO       Blue                        21
-MOSI       Purple                      19
-SCK        Grey                        23
-CSN        White                       24
-GND        Black                       25
-GND    NC
+GND        --                          --

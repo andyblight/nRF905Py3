@@ -231,7 +231,7 @@ class Nrf905:
         self._gpio.set_mode_power_down(self._pi)
         self._state_machine.power_down()
 
-    def _carrier_detect_callback(gpio, level, tick):
+    def _carrier_detect_callback(self, gpio, level, tick):
         """ Only used for transmitting. """
         print("cdc:", gpio, level, tick)
         if level == 0:
@@ -246,7 +246,7 @@ class Nrf905:
         else:
             print("Watchdog!")
 
-    def _address_matched_callback(gpio, level, tick):
+    def _address_matched_callback(self, gpio, level, tick):
         """ Update state machine directly. """
         print("amc:", gpio, level, tick)
         if level == 0:
@@ -261,7 +261,7 @@ class Nrf905:
         else:
             print("Watchdog!")
 
-    def _data_ready_callback(gpio, level, tick):
+    def _data_ready_callback(self, gpio, level, tick):
         """ Update state machine directly. """
         print("drc:", gpio, level, tick)
         if level == 0:

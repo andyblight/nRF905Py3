@@ -18,14 +18,16 @@ class Nrf905Gpio:
     """
 
     # GPIO pins.  Uses BCM numbers same as pigpio.
-    POWER_UP = 17
-    TRANSMIT_ENABLE = 22
-    TRANSMIT_RECEIVE_CHIP_ENABLE = 25
+    # POWER_UP = 22
+    # RPi 4
+    POWER_UP = 2
+    TRANSMIT_ENABLE = 15
+    TRANSMIT_RECEIVE_CHIP_ENABLE = 27
     output_pins = [POWER_UP, TRANSMIT_ENABLE, TRANSMIT_RECEIVE_CHIP_ENABLE]
 
-    DATA_READY = 18
     CARRIER_DETECT = 23
     ADDRESS_MATCHED = 24
+    DATA_READY = 25
     callback_pins = [DATA_READY, CARRIER_DETECT, ADDRESS_MATCHED]
 
     # Modes, see nRF905 datasheet, table 11.
