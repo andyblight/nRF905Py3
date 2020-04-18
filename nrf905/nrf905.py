@@ -4,6 +4,7 @@
 
 import pigpio
 import time
+import threading
 
 from nrf905.nrf905_spi import Nrf905Spi
 from nrf905.nrf905_gpio import Nrf905Gpio
@@ -19,6 +20,11 @@ class Nrf905:
     Example usage: see ../nrf905-example.py
     """
 
+    _READ_SLEEP_S = 0.01  # 10ms
+    _SEND_SLEEP_S = 0.001  # 1ms Want this to be quick.
+    _NEXT_MODE_SLEEP_S = 0.0007  # 700us from datasheet.
+    _POWER_UP_SLEEP_S =  0.003  # 3ms Powering up takes longer.
+
     def __init__(self):
         # nRF905 properties
         self._frequency_mhz = 0.0
@@ -30,7 +36,8 @@ class Nrf905:
         self._pi = None
         self._spi = None
         self._gpio = None
-        self._rx_callback = None
+        self._read_thread = None
+        self._receive_callback = None
         # Internal properties.
         self._channel = -1  # Set from frequency.
         self._hfreq_pll = -1  # Set from frequency.
@@ -123,7 +130,9 @@ class Nrf905:
 
     def enable_receive(self, callback):
         """ Prepares data received callback for use.
-        Enabled automatic tranistion to receive mode after every transmission.
+        Enables automatic transition to receive mode after every send.
+        The callback function should return nothing and take one string
+        (the payload). Callback is on a separate thread.
         """
         if self._open:
             raise StateError(
@@ -131,8 +140,10 @@ class Nrf905:
             )
         else:
             self._auto_receive = True
-            print("TODO callback")
-            # Callback processed on separate thread?
+            self._receive_callback = callback
+            # Start receive thread.
+            self._read_thread = threading.Thread(target=self._read_payload)
+            self._read_thread.start()
 
     def open(self):
         """ Creates the instances of Nrf905Spi and Nrf905Gpio.
@@ -204,11 +215,13 @@ class Nrf905:
         The nRF905 device is left in the state last used.
         """
         # print("close")
+        self._open = False
         self._enter_power_down()
+        if self._auto_receive:
+            self._read_thread.join()
         # Release objects.
         self._spi.close()
         self._pi.stop()
-        self._open = False
 
     def send(self, payload):
         """ Sends the payload. Maximum of 32 bytes will be sent (checked by
@@ -220,7 +233,7 @@ class Nrf905:
         else:
             # Block until the transceiver is not busy.
             while self._state_machine.is_busy():
-                time.sleep(0.001)
+                time.sleep(self._SEND_SLEEP_S)
             # Put into standby.
             self._enter_standby()
             # Load the data.
@@ -229,7 +242,7 @@ class Nrf905:
             self._data_sent = False
             self._enter_tx_mode()
             while not self._data_sent:
-                time.sleep(0.001)
+                time.sleep(self._SEND_SLEEP_S)
             # Put into next mode.
             self._enter_standby()
             if self._auto_receive:
@@ -248,11 +261,26 @@ class Nrf905:
             print("Transmit only.")
         print("-------------------")
 
+    def _read_payload(self):
+        print("rp")
+        # Loop until driver closed.
+        while self._open:
+            # Wait for data to be received.
+            while self._state_machine.state != "receiving_received":
+                if not self._open:
+                    break
+                time.sleep(self._READ_SLEEP_S)
+            # When the payload has been read, the DR pin will go low
+            # causing a state change.
+            payload = self._spi.read_receive_payload()
+            # Call the callback
+            self._receive_callback(payload)
+
     def _enter_power_down(self):
         """ Set the mode and state. """
         print("epd")
         self._gpio.set_mode_power_down(self._pi)
-        time.sleep(0.001)
+        time.sleep(self._NEXT_MODE_SLEEP_S)
         self._state_machine.power_down()
 
     def _enter_standby(self):
@@ -260,8 +288,7 @@ class Nrf905:
         print("es")
         if self._state_machine.state != "standby":
             self._gpio.set_mode_standby(self._pi)
-            # Delay from Arduino code.
-            time.sleep(0.014)
+            time.sleep(self._NEXT_MODE_SLEEP_S)
             if self._state_machine.state == "sleep":
                 self._state_machine.power_up()
             elif self._state_machine.state == "receiving_listening":
@@ -271,14 +298,14 @@ class Nrf905:
         """ Set the mode and state. """
         print("erm")
         self._gpio.set_mode_receive(self._pi)
-        time.sleep(0.001)
+        time.sleep(self._NEXT_MODE_SLEEP_S)
         self._state_machine.receiver_enable()
 
     def _enter_tx_mode(self):
         """ Set the mode and state. """
         print("etm: carrier:", self._carrier_busy)
         self._gpio.set_mode_transmit(self._pi)
-        time.sleep(0.001)
+        time.sleep(self._NEXT_MODE_SLEEP_S)
         self._state_machine.transmit()
         # If carrier not present, start transmitting.
         if not self._carrier_busy:
