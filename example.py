@@ -20,7 +20,7 @@ def main():
     test_mode = True
     transceiver = Nrf905()
     # Must be set before open is called.
-    transceiver.frequency = 434.5
+    transceiver.frequency_mhz = 434.5
     # Setup to listen for any replies.
     # Callback will be fired if anything is received.
     transceiver.receive_address = 0x43454749

@@ -31,6 +31,9 @@ class Nrf905:
         self._rx_address = -1
         self._tx_address = 0
         self._payload_width = 32
+        self._channel = -1  # Set from frequency.
+        self._hfreq_pll = -1  # Set from frequency.
+        self._tx_power = 0b00
         # Objects to make the class work.
         self._state_machine = Nrf905StateMachine()
         self._pi = None
@@ -38,9 +41,7 @@ class Nrf905:
         self._gpio = None
         self._read_thread = None
         self._receive_callback = None
-        # Internal properties.
-        self._channel = -1  # Set from frequency.
-        self._hfreq_pll = -1  # Set from frequency.
+        # Internal variables.
         self._open = False
         self._next = False
         self._next_tx_mode_rx = False
@@ -49,10 +50,10 @@ class Nrf905:
         self._data_sent = False
 
     @property
-    def frequency(self):
+    def frequency_mhz(self):
         return self._frequency_mhz
 
-    @frequency.setter
+    @frequency_mhz.setter
     def frequency(self, frequency_mhz, country="GBR"):
         """ Validates and sets the frequency for the device in MHz. """
         print("frequency:", frequency_mhz)
@@ -100,6 +101,25 @@ class Nrf905:
             raise ValueError("Address contains more than 32 bits.")
         else:
             self._tx_address = address
+
+    @property
+    def transmit_power_db(self):
+        return self._tx_power
+
+    @transmit_power_db.setter
+    def transmit_power(self, power):
+        """ Sets the transmit power in dB.
+        Values will be rounded down to one of these values: -10, -2, +6, +10.
+        """
+        print("transmit_power_db:", power)
+        if power <= -10:
+            self._tx_power = 0b00
+        elif power <= -2:
+            self._tx_power = 0b01
+        elif power <= 6:
+            self._tx_power = 0b10
+        else:
+            self._tx_power = 0b11
 
     @property
     def payload_width(self):
@@ -172,6 +192,8 @@ class Nrf905:
                 # Config register.
                 config = Nrf905ConfigRegister()
                 config.board_defaults()
+                # Set tx power
+                config.set_pa_pwr(self._tx_power)
                 # Set frequency
                 config.set_channel_number(self._channel)
                 config.set_hfreq_pll(self._hfreq_pll)
