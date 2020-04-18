@@ -21,16 +21,19 @@ def main():
     transceiver = Nrf905()
     # Must be set before open is called.
     transceiver.frequency = 434.5
+    # Setup to listen for any replies.
+    # Callback will be fired if anything is received.
     transceiver.receive_address = 0x43454749
+    transceiver.enable_receive(callback)
     # Can also be called after open is called.
     transceiver.transmit_address = 0x4345474A
-    # Open the transceiver.
-    transceiver.open(callback)
-    time.sleep(0.01)
+    # Open the transceiver.  Transmit only is default.
+    transceiver.open()
+    time.sleep(0.02)
     # Send whatever data the user enters until quit.
     if test_mode:
         transceiver.send("Test data 12345")
-        time.sleep(0.01)
+        time.sleep(1)
     else:
         quit = False
         while not quit:

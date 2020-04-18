@@ -38,6 +38,8 @@ class Nrf905:
         self._next = False
         self._next_tx_mode_rx = False
         self._carrier_busy = False
+        self._auto_receive = False
+        self._data_sent = False
 
     @property
     def frequency(self):
@@ -119,10 +121,22 @@ class Nrf905:
         print("next_tx_mode_rx:", next_mode)
         self._next_tx_mode_rx = next_mode
 
-    def open(self, callback):
+    def enable_receive(self, callback):
+        """ Prepares data received callback for use.
+        Enabled automatic tranistion to receive mode after every transmission.
+        """
+        if self._open:
+            raise StateError(
+                "Cannot change when open.  Call close() before retrying."
+            )
+        else:
+            self._auto_receive = True
+            print("TODO callback")
+            # Callback processed on separate thread?
+
+    def open(self):
         """ Creates the instances of Nrf905Spi and Nrf905Gpio.
         Applies previously set values to nRF905 device.
-        Prepares data received callback for use.
         """
         # print("open")
         if self._open:
@@ -181,9 +195,9 @@ class Nrf905:
                     self._address_matched_callback,
                 )
                 self._open = True
-                # DEBUG Read a register to prove SPI bus is working.
-                tx_address = self._spi.read_transmit_address()
-                print("tx_address", hex(tx_address))
+                self._print_startup_info()
+                if self._auto_receive:
+                    self._enter_rx_mode()
 
     def close(self):
         """ Releases the instances of Nrf905Spi and Nrf905Gpio.
@@ -207,13 +221,32 @@ class Nrf905:
             # Block until the transceiver is not busy.
             while self._state_machine.is_busy():
                 time.sleep(0.001)
-            # Put into standby if not already.
-            if self._state_machine.state != "standby":
-                self._enter_standby()
+            # Put into standby.
+            self._enter_standby()
             # Load the data.
             self._spi.write_transmit_payload(payload)
-            # Tell the device to send the data.
+            # Tell the device to send the data and block until done.
+            self._data_sent = False
             self._enter_tx_mode()
+            while not self._data_sent:
+                time.sleep(0.001)
+            # Put into next mode.
+            self._enter_standby()
+            if self._auto_receive:
+                self._enter_rx_mode()
+
+    def _print_startup_info(self):
+        """ Print out frequency and address. """
+        # Read tx address (proves SPI is working correctly).
+        tx_address = self._spi.read_transmit_address()
+        print("----- Started -----")
+        print("Frequency", self._frequency_mhz, "MHz")
+        print("Transmit address", hex(tx_address))
+        if self._auto_receive:
+            print("Receive address", hex(self._rx_address))
+        else:
+            print("Transmit only.")
+        print("-------------------")
 
     def _enter_power_down(self):
         """ Set the mode and state. """
@@ -225,10 +258,14 @@ class Nrf905:
     def _enter_standby(self):
         """ Set the mode and state. """
         print("es")
-        self._gpio.set_mode_standby(self._pi)
-        # Delay from Arduino code.
-        time.sleep(0.014)
-        self._state_machine.power_up()
+        if self._state_machine.state != "standby":
+            self._gpio.set_mode_standby(self._pi)
+            # Delay from Arduino code.
+            time.sleep(0.014)
+            if self._state_machine.state == "sleep":
+                self._state_machine.power_up()
+            elif self._state_machine.state == "receiving_listening":
+                self._state_machine.receiver_disable()
 
     def _enter_rx_mode(self):
         """ Set the mode and state. """
@@ -289,8 +326,8 @@ class Nrf905:
         elif level == 1:
             if self._state_machine.is_transmitting_sending():
                 # Transmit has completed.
-                # We don't do retransmits so always go to standby.
                 self._state_machine.data_ready_tx()
+                self._data_sent = True
             elif self._state_machine.is_receiving_receiving_data():
                 # Successful receive with good CRC (if enabled).
                 self._state_machine.data_ready_rx()
