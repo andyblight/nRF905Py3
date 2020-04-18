@@ -14,7 +14,7 @@ import logging
 from transitions.extensions import LockedHierarchicalGraphMachine as Machine
 
 # Set up logging; The basic log level will be DEBUG
-logging.basicConfig(level=logging.DEBUG)
+logging.basicConfig(level=logging.INFO)
 # Set transitions' log level to INFO; DEBUG messages will be omitted
 logging.getLogger("transitions").setLevel(logging.INFO)
 # Logger for use in this module.
@@ -45,7 +45,7 @@ class Nrf905StateMachine:
         self._machine = Machine(
             model=self, states=self.states, initial="sleep"
         )
-        # Add transitions:          (trigger name, previous state, next state)
+        # Add transitions:          (trigger name, current state, next state)
         # Transmitting
         self._machine.add_transition("transmit", "standby", "transmitting")
         self._machine.add_transition(

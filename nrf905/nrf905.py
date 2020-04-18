@@ -71,7 +71,7 @@ class Nrf905:
         """ Sets the receive address. Must be 4 bytes or less.
         Please read datasheet for adivce on setting addres values.
         """
-        print("rx_address:", address)
+        print("rx_address:", hex(address))
         if address.bit_length() > 32:
             raise ValueError("Address contains more than 32 bits.")
         else:
@@ -86,7 +86,7 @@ class Nrf905:
         """ Sets the transmit address. Must be 4 bytes or less.
         Please read datasheet for adivce on setting address values.
         """
-        print("set_tx_address:", address)
+        print("set_tx_address:", hex(address))
         if address.bit_length() > 32:
             raise ValueError("Address contains more than 32 bits.")
         else:
@@ -142,17 +142,26 @@ class Nrf905:
                 self._spi = Nrf905Spi()
                 self._spi.open(self._pi)
                 # Set up nRF905
-                # Ensure in power down mode. State machine starts in sleep
-                # (power_down) so just set GPIOs.
-                self._gpio.set_mode_power_down(self._pi)
+                # Start off in standby mode.
+                self._enter_standby()
                 # Config register.
                 config = Nrf905ConfigRegister()
                 config.board_defaults()
+                # Set frequency
                 config.set_channel_number(self._channel)
                 config.set_hfreq_pll(self._hfreq_pll)
+                # Receive address
                 config.set_rx_address(self._rx_address)
+                # Payload widths
                 config.set_rx_pw(self._payload_width)
                 config.set_tx_pw(self._payload_width)
+                # 16 bit CRC enabled
+                config.set_crc_mode(1)
+                config.set_crc_en(1)
+                # 16MHz clock speed
+                config.set_xof_mhz(16)
+                # Disable output clock.
+                config.set_up_clk_en(0)
                 self._spi.configuration_register_write(config)
                 # The TX address can be set later.
                 if self._tx_address != 0:
@@ -172,12 +181,16 @@ class Nrf905:
                     self._address_matched_callback,
                 )
                 self._open = True
+                # DEBUG Read a register to prove SPI bus is working.
+                tx_address = self._spi.read_transmit_address()
+                print("tx_address", hex(tx_address))
 
     def close(self):
         """ Releases the instances of Nrf905Spi and Nrf905Gpio.
         The nRF905 device is left in the state last used.
         """
         # print("close")
+        self._enter_power_down()
         # Release objects.
         self._spi.close()
         self._pi.stop()
@@ -191,45 +204,48 @@ class Nrf905:
         if not self._open:
             raise StateError("Call Nrf905.open() first.")
         else:
-            self._wait_until_free()
+            # Block until the transceiver is not busy.
+            while self._state_machine.is_busy():
+                time.sleep(0.001)
             # Put into standby if not already.
             if self._state_machine.state != "standby":
-                self._enter_standy()
+                self._enter_standby()
             # Load the data.
             self._spi.write_transmit_payload(payload)
             # Tell the device to send the data.
             self._enter_tx_mode()
 
-    def _wait_until_free(self):
-        """ Blocks until the transceiver is not busy.
-        """
-        while self._state_machine.is_busy():
-            time.sleep(0.001)
-
-    def _enter_standy(self):
+    def _enter_power_down(self):
         """ Set the mode and state. """
+        print("epd")
+        self._gpio.set_mode_power_down(self._pi)
+        time.sleep(0.001)
+        self._state_machine.power_down()
+
+    def _enter_standby(self):
+        """ Set the mode and state. """
+        print("es")
+        self._gpio.set_mode_standby(self._pi)
         # Delay from Arduino code.
         time.sleep(0.014)
-        self._gpio.set_mode_standby(self._pi)
         self._state_machine.power_up()
 
     def _enter_rx_mode(self):
         """ Set the mode and state. """
+        print("erm")
         self._gpio.set_mode_receive(self._pi)
+        time.sleep(0.001)
         self._state_machine.receiver_enable()
 
     def _enter_tx_mode(self):
         """ Set the mode and state. """
+        print("etm: carrier:", self._carrier_busy)
         self._gpio.set_mode_transmit(self._pi)
+        time.sleep(0.001)
         self._state_machine.transmit()
         # If carrier not present, start transmitting.
         if not self._carrier_busy:
             self._state_machine.no_carrier()
-
-    def _enter_power_down(self):
-        """ Set the mode and state. """
-        self._gpio.set_mode_power_down(self._pi)
-        self._state_machine.power_down()
 
     def _carrier_detect_callback(self, gpio, level, tick):
         """ Only used for transmitting. """

@@ -9,7 +9,7 @@ RPi1B
 nRF905     Wire                        BCM GPIO         RPi pin
 ------     ----                        --------         -------
 VCC        Brown                        --               1
-TxEN       Red                          15              10
+TxEN       Red                          15 (2 shim)     10 (3 shim)
 CE         Orange                       27              13
 PWR        Yellow                       22              15
 UCK        -                            --              --

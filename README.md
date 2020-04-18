@@ -241,6 +241,9 @@ RPi can support two SPI devices but the work has not been done.
     Need to work out user privileges for each function.
 1. Consider moving all PiGPIO functions into a single class to allow alternative
     implementations.  Also hides PiGPIO from API functions.
+1. Band scan to identify busy/free frequencies.  Change frequency through list,
+    listen for period of time, log busy time, repeat for several minutes,
+    print report as table.
 
 ## References
 

@@ -19,7 +19,8 @@ class Nrf905Spi:
     # SPI pins are defaults for pigpio bus 0 (RPi 1 A&B only have SPI bus 0).
     _SPI_BUS_0_FLAGS = 0
     _SPI_BUS_1_FLAGS = 0
-    _SPI_SCK_HZ = 10 * 1000 * 1000  # Set to 10MHz.  10MHz max. (data sheet)
+    # _SPI_SCK_HZ = 10 * 1000 * 1000  # Set to 10MHz.  10MHz max. (data sheet)
+    _SPI_SCK_HZ = 32 * 1000
 
     # nRF905 SPI instructions (table 13)
     _INSTRUCTION_W_CONFIG = 0b00000000
