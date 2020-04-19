@@ -8,9 +8,12 @@ import time
 from nrf905.nrf905 import Nrf905
 
 
-def callback(data):
-    """ Print out the contents of the data received. """
-    print("Received:", data)
+def callback(payload):
+    """ Print out the contents of the payload.
+    The payload is a bytearray so convert to a string for printing.
+    """
+    string = str(payload)
+    print("Received:", string)
 
 
 def main():
@@ -43,7 +46,9 @@ def main():
             else:
                 while data:
                     # Send first 32 bytes as the payload.
-                    payload = data[0:32]
+                    packet = data[0:32]
+                    payload = bytearray()
+                    payload.extend(packet.encode())
                     transceiver.send(payload)
                     # Take the first 32 bytes off the data.
                     data = data[32:]

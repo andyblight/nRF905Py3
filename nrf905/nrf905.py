@@ -245,11 +245,11 @@ class Nrf905:
         self._spi.close()
         self._pi.stop()
 
-    def send(self, payload):
-        """ Sends the payload. Maximum of 32 bytes will be sent (checked by
+    def send(self, data):
+        """ Sends the data. Maximum of 32 bytes will be sent (checked by
         Nrf905Spi.write_transmit_payload()).
         """
-        print("send:", payload)
+        print("send:", data)
         if not self._open:
             raise StateError("Call Nrf905.open() first.")
         else:
@@ -259,6 +259,8 @@ class Nrf905:
             # Put into standby.
             self._enter_standby()
             # Load the data.
+            payload = bytearray()
+            payload.extend(map(ord, data))
             self._spi.write_transmit_payload(payload)
             # Tell the device to send the data and block until done.
             self._data_sent = False
@@ -295,7 +297,7 @@ class Nrf905:
             # When the payload has been read, the DR pin will go low
             # causing a state change.
             payload = self._spi.read_receive_payload()
-            # Call the callback
+            # Call the callback. payload is a bytearray.
             self._receive_callback(payload)
 
     def _enter_power_down(self):

@@ -115,12 +115,13 @@ class Nrf905Spi:
     def write_transmit_payload(self, payload):
         """ Writes the first self._transmit_payload_width bytes of the payload
         to the transmit payload registers.
+        payload must be a bytearray.
         """
         if len(payload) <= self._transmit_payload_width:
             command = bytearray()
             command.append(self._INSTRUCTION_W_TX_PAYLOAD)
-            command.extend(payload.encode('ascii'))
-            print("wtp:", payload, command)
+            command.extend(payload)
+            # print("wtp:", payload, command)
             self.send_command(command)
         else:
             raise ValueError("payload too big for payload width setting")
@@ -128,6 +129,7 @@ class Nrf905Spi:
     def read_transmit_payload(self):
         """ Reads self._transmit_payload_width bytes from the transmit payload
         registers.
+        Returns bytearray.
         """
         command = bytearray(self._transmit_payload_width + 1)
         command[0] = self._INSTRUCTION_R_TX_PAYLOAD
