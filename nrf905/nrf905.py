@@ -54,7 +54,7 @@ class Nrf905:
         return self._frequency_mhz
 
     @frequency_mhz.setter
-    def frequency(self, frequency_mhz, country="GBR"):
+    def frequency_mhz(self, frequency_mhz, country="GBR"):
         """ Validates and sets the frequency for the device in MHz. """
         print("frequency:", frequency_mhz)
         if Nrf905ConfigRegister.is_valid(frequency_mhz, country):
