@@ -1,27 +1,25 @@
 Wiring diagram
 ==============
 
-This shows a couple of different wiring layouts.
-
-RPi1B
------
+This layout is different to the one shown in the README file but works with all
+Raspberry Pis.  Th colours were chosen to be tidy when using ribbon cable. 
 
 nRF905     Wire                        BCM GPIO         RPi pin
 ------     ----                        --------         -------
 VCC        Brown                        --               1
-TxEN       Red                          15 (2 shim)     10 (3 shim)
+TxEN       Red                           2               3
 CE         Orange                       27              13
 PWR        Yellow                       22              15
-UCK        -                            --              --
-CD         Purple to breadboard         23              16
-AM         White to breadboard          24              18
-DR         Grey to breadboard           25              22
-MISO       Blue                          9              21
-MOSI       Purple                       10              19
-SCK        Grey                         11              23
-CSN        White                         8              24
-GND        Black                        --              25
-GND        -                            --              --
+UCK        --                           --              --
+CD         Green                        23              16
+AM         Blue                         24              18
+DR         Purple                       25              22
+MISO       Grey                          9              21
+MOSI       White                        10              19
+SCK        Black                        11              23
+CSN        Brown                         8              24
+GND        Red                          --              25
+GND        --                           --              --
 
 
 RPi4B with fan shim
@@ -32,7 +30,7 @@ RPi pins 1-12
 Ref: http://pinout.xyz/pinout/fan_shim
 
 The only pin that is used by the shim is RPi pin 10, so I used RPi pin 3,
-BCM GPIO 2
+BCM GPIO 2.
 
 Minimal connections for SPI testing
 -----------------------------------
