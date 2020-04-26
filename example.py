@@ -13,8 +13,11 @@ def callback(payload):
     """ Print out the contents of the payload.
     The payload is a bytearray so convert to a string for printing.
     """
-    string = str(payload)
-    print("Received:", string)
+    packet_number = int(payload[0])
+    packet_length = int(payload[1])
+    packet_string = str(payload[2:])
+    print("Received: {}, {}, '{}'".format(
+        packet_number, packet_length, packet_string)
 
 
 def main():
@@ -50,15 +53,19 @@ def main():
             if data == "q" or data == "Q":
                 quit = True
             else:
+                data_packets_sent = 0
                 while data:
-                    # Send first 32 bytes as the payload.
-                    packet = data[0:32]
+                    # Send first 30 bytes as the payload.
+                    packet = data[0:30]
                     payload = bytearray()
+                    payload.extend(data_packets_sent)
+                    payload.extend(len(packet))
                     payload.extend(packet.encode())
                     print("Sending packet", payload)
                     transceiver.send(payload)
-                    # Take the first 32 bytes off the data.
-                    data = data[32:]
+                    # Take the first 30 bytes off the data.
+                    data = data[30:]
+                    data_packets_sent += 1
     # Close.
     transceiver.close()
 

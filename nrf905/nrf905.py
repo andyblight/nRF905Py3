@@ -243,9 +243,9 @@ class Nrf905:
         logger.info("close")
         self._open = False
         if self._auto_receive:
-            logger.info("joining")
+            logger.debug("joining")
             self._read_thread.join()
-        logger.info("joined")
+        logger.debug("joined")
         self._enter_power_down()
         # Release objects.
         self._spi.close()
