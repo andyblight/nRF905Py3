@@ -15,7 +15,9 @@ def callback(payload):
     """
     packet_number = int(payload[0])
     packet_length = int(payload[1])
-    packet_string = str(payload[2:])
+    # Using ASCII as it is fixed length.
+    packet_string = str(payload[2:packet_length + 2], "ascii")
+    print()
     print("Received: {}, {}, '{}'".format(packet_number, packet_length, packet_string))
 
 
@@ -59,8 +61,9 @@ def main():
                     payload = bytearray(2)
                     payload[0] = data_packets_sent
                     payload[1] = len(packet)
-                    payload.extend(packet.encode())
-                    print("Sending packet", payload)
+                    # Using ASCII as it is fixed length.
+                    payload.extend(packet.encode("ascii"))
+                    print("Sending packet: {}, {}, '{}'".format(data_packets_sent, len(packet), packet))
                     transceiver.send(payload)
                     # Take the first 30 bytes off the data.
                     data = data[30:]
