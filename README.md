@@ -144,12 +144,12 @@ nRF905 module connected (tries to use registers on the device).
 The code is arranged in a number of modules.
 
 ```text
- ____________________________________________________________________________
-|                             nrf905.py                                      |
-|____________________________________________________________________________|
- ______________    _____________   ________________   _______________________
-|nrf905_gpio.py|  |nrf095_spi.py| |nrf905_config.py| |nrf905_state_machine.py|
-|______________|  |_____________| |________________| |_______________________|
+ __________________________________________________
+|                    nrf905.py                     |
+|__________________________________________________|
+ ______________    _____________   ________________
+|nrf905_gpio.py|  |nrf095_spi.py| |nrf905_config.py|
+|______________|  |_____________| |________________|
  _______________________________
 |             pigpio            |
 |_______________________________|
@@ -163,10 +163,6 @@ Implements the class Nrf905.
 This class forms the interface that most coders will use.  An instance of this
 class uses one Nrf905Gpio object and one Nrf905Spi object.  These objects are
 used together to control the nRF905 device.
-
-The nRF905 is surprisingly complex so a state machine is used, mainly to handle
-the numerous transitions when receiving.  The state machine also blocks
-transmit functions until no carrier is detected.
 
 Depends on Nrf905Gpio and Nrf905Spi.
 
@@ -209,6 +205,8 @@ AUTO_RETRAN bit of the config register if it is needed.  Repeating the data
 more than once is a simple method of ensuring that something gets through but
 it was decided that if reliable communication was required, a higher level
 package could be used to ensure safe delivery.
+1. The address matched pin is not used.  The changes in state of this pin
+require no action by the driver so can be ignored.
 
 The following design limitations have been imposed to keep the driver simple.
 
@@ -216,20 +214,25 @@ The following design limitations have been imposed to keep the driver simple.
 one nRF905 device.
 1. Only one nRF905 device is supported per computer.  This may change as the
 RPi can support two SPI devices but the work has not been done.
+1. A state machine was implemented to keep track of the numerous states the
+datasheet mentions.  It took a while to understand how to use the state
+machine library, transitions.extensions HierarchicalGraphMachine, and once I
+finally had a working stte machine, I found out that it was of little use in
+a driver as it was too slow and interrupts were being missed.  Eventually,
+I reverted to an enum for the major states and a few flags for the rest.  This
+worked and was much simpler.  The final state machine diagram in included in
+the docs directory for reference.
 
 ## TO DO List
 
-1. Make `nrf905-example.py` work.
-    1. Nrf905 is part way through a re-write as handling states was getting
-        difficult.
+1. Make `example.py` work.
+    1. Nrf905 is part way through a re-write.
         1. Use setters and getters for exposed properties. DONE.
         1. API should hide the three GPIO pin callbacks.  It should just have
-        one callback to handle the date being received.
+        one callback to handle the date being received.  DONE.
         1. `threads.py` can be used as an example of how to use threads,
-        queues and semaphores to do what I need.
-        `threads.py` should be simplified to be just what is needed by the
-        driver.  Are threads needed?  If so, document reason.
-        1. Use state machine in prototypes dir instead of variables.
+        queues and semaphores to do what I need.  DONE. Implemented read
+        thread.
         1. Test with second RPi to make sure that communications actually work.
         RPi2 to have new image, then install and test (verifies installation).
 1. Add SPI bus 1 functionality.  The `Nrf905Spi.__init__()` function takes
