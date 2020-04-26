@@ -16,8 +16,7 @@ def callback(payload):
     packet_number = int(payload[0])
     packet_length = int(payload[1])
     packet_string = str(payload[2:])
-    print("Received: {}, {}, '{}'".format(
-        packet_number, packet_length, packet_string)
+    print("Received: {}, {}, '{}'".format(packet_number, packet_length, packet_string))
 
 
 def main():
@@ -30,12 +29,12 @@ def main():
     transceiver.frequency_mhz = 434.2
     # Setup to listen for any replies.
     # Callback will be fired if anything is received.
-    # transceiver.receive_address = 0x43454749
-    transceiver.receive_address = 0x4345474A
+    transceiver.receive_address = 0x43454749
+    # transceiver.receive_address = 0x4345474A
     transceiver.enable_receive(callback)
     # Can also be called after open is called.
-    # transceiver.transmit_address = 0x4345474A
-    transceiver.transmit_address = 0x43454749
+    transceiver.transmit_address = 0x4345474A
+    # transceiver.transmit_address = 0x43454749
     # Open the transceiver.  Transmit only is default.
     transceiver.open()
     time.sleep(0.02)
@@ -57,9 +56,9 @@ def main():
                 while data:
                     # Send first 30 bytes as the payload.
                     packet = data[0:30]
-                    payload = bytearray()
-                    payload.extend(data_packets_sent)
-                    payload.extend(len(packet))
+                    payload = bytearray(2)
+                    payload[0] = data_packets_sent
+                    payload[1] = len(packet)
                     payload.extend(packet.encode())
                     print("Sending packet", payload)
                     transceiver.send(payload)

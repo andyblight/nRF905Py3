@@ -13,7 +13,7 @@ from nrf905.nrf905_gpio import Nrf905Gpio
 from nrf905.nrf905_config import Nrf905ConfigRegister
 
 # Set up logging.
-logging.basicConfig(level=logging.DEBUG)
+# logging.basicConfig(level=logging.DEBUG)
 logger = logging.getLogger("Nrf905")
 
 
