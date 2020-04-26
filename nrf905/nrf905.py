@@ -2,6 +2,7 @@
 """  The API for the nRF905 device.
 """
 
+import logging
 import pigpio
 import time
 import threading
@@ -10,6 +11,10 @@ from nrf905.nrf905_spi import Nrf905Spi
 from nrf905.nrf905_gpio import Nrf905Gpio
 from nrf905.nrf905_state_machine import Nrf905StateMachine
 from nrf905.nrf905_config import Nrf905ConfigRegister
+
+# Set up logging.
+logger = logging.getLogger("Nrf905")
+logger.setLevel(logging.DEBUG)
 
 
 class Nrf905:
@@ -48,6 +53,13 @@ class Nrf905:
         self._carrier_busy = False
         self._auto_receive = False
         self._data_sent = False
+        self._data_received = False
+        # Logging test
+        logger.critical("critical")
+        logger.error("error")
+        logger.warning("warning")
+        logger.info("info")
+        logger.debug("debug")
 
     @property
     def frequency_mhz(self):
@@ -56,7 +68,7 @@ class Nrf905:
     @frequency_mhz.setter
     def frequency_mhz(self, frequency_mhz, country="GBR"):
         """ Validates and sets the frequency for the device in MHz. """
-        # print("frequency:", frequency_mhz)
+        logger.debug("frequency: {}".format(frequency_mhz))
         if Nrf905ConfigRegister.is_valid(frequency_mhz, country):
             (channel, hfreq_pll) = Nrf905ConfigRegister.frequency_to_channel(
                 frequency_mhz
@@ -81,7 +93,7 @@ class Nrf905:
         """ Sets the receive address. Must be 4 bytes or less.
         Please read datasheet for adivce on setting addres values.
         """
-        # print("rx_address:", hex(address))
+        logger.debug("rx_address: {}".format(hex(address)))
         if address.bit_length() > 32:
             raise ValueError("Address contains more than 32 bits.")
         else:
@@ -96,7 +108,7 @@ class Nrf905:
         """ Sets the transmit address. Must be 4 bytes or less.
         Please read datasheet for adivce on setting address values.
         """
-        # print("set_tx_address:", hex(address))
+        logger.debug("set_tx_address: {}".format(hex(address)))
         if address.bit_length() > 32:
             raise ValueError("Address contains more than 32 bits.")
         else:
@@ -111,7 +123,7 @@ class Nrf905:
         """ Sets the transmit power in dB.
         Values will be rounded down to one of these values: -10, -2, +6, +10.
         """
-        # print("transmit_power_db:", power)
+        logger.debug("transmit_power_db: {}".format(power))
         if power <= -10:
             self._tx_power = 0b00
         elif power <= -2:
@@ -131,7 +143,7 @@ class Nrf905:
         Uses the payload width value for transmit and receive payloads.
         Default value is 32 bytes.
         """
-        # print("set_payload_width:", width)
+        logger.debug("set_payload_width: {}".format(width))
         if 1 <= width <= 32:
             raise ValueError("width must be between 1 and 32 bytes inclusive.")
         else:
@@ -145,7 +157,7 @@ class Nrf905:
     def next_tx_mode_rx(self, next_mode):
         """ Sets the next tx mode.  True is receive mode, False is standby.
         """
-        # print("next_tx_mode_rx:", next_mode)
+        logger.debug("next_tx_mode_rx:", next_mode)
         self._next_tx_mode_rx = next_mode
 
     def enable_receive(self, callback):
@@ -169,7 +181,7 @@ class Nrf905:
         """ Creates the instances of Nrf905Spi and Nrf905Gpio.
         Applies previously set values to nRF905 device.
         """
-        # print("open")
+        logger.debug("open")
         if self._open:
             raise StateError("Already open.  Call close() before retrying.")
         else:
@@ -236,7 +248,7 @@ class Nrf905:
         """ Releases the instances of Nrf905Spi and Nrf905Gpio.
         The nRF905 device is left in the state last used.
         """
-        # print("close")
+        logger.debug("close")
         self._open = False
         self._enter_power_down()
         if self._auto_receive:
@@ -250,7 +262,7 @@ class Nrf905:
         Nrf905Spi.write_transmit_payload()).
         NOTE: data must be a bytearray.
         """
-        # print("send:", data)
+        logger.debug("send:", data)
         if not self._open:
             raise StateError("Call Nrf905.open() first.")
         else:
@@ -287,39 +299,38 @@ class Nrf905:
         print("-------------------")
 
     def _read_payload(self):
-        print("rp")
+        """ This function is run on a thread. """
+        logger.debug("rp")
+        self._data_received = False
         # Wait until open.
         while not self._open:
             time.sleep(self._READ_SLEEP_S)
         # Loop until driver closed.
         while self._open:
-            print("/nrp: waiting...")
+            logger.debug("rp: waiting...")
             # Wait for data to be received.
-            loop_count = 0
-            while self._state_machine.state != "receiving_received":
+            while not self._data_received:
                 if not self._open:
                     break
                 time.sleep(self._READ_SLEEP_S)
-                loop_count += 1
-                if loop_count % 5000 == 0:
-                    print(".", end='')
-            print("/nrp: received")
+            logger.debug("/nrp: received")
             # When the payload has been read, the DR pin will go low
             # causing a state change.
             payload = self._spi.read_receive_payload()
             # Call the callback. payload is a bytearray.
             self._receive_callback(payload)
+            self._data_received = False
 
     def _enter_power_down(self):
         """ Set the mode and state. """
-        # print("epd")
+        logger.debug("epd")
         self._gpio.set_mode_power_down(self._pi)
         time.sleep(self._NEXT_MODE_SLEEP_S)
         self._state_machine.power_down()
 
     def _enter_standby(self):
         """ Set the mode and state. """
-        # print("es")
+        logger.debug("es")
         if self._state_machine.state != "standby":
             self._gpio.set_mode_standby(self._pi)
             time.sleep(self._NEXT_MODE_SLEEP_S)
@@ -330,14 +341,14 @@ class Nrf905:
 
     def _enter_rx_mode(self):
         """ Set the mode and state. """
-        # print("erm")
+        logger.debug("erm")
         self._gpio.set_mode_receive(self._pi)
         time.sleep(self._NEXT_MODE_SLEEP_S)
         self._state_machine.receiver_enable()
 
     def _enter_tx_mode(self):
         """ Set the mode and state. """
-        # print("etm: carrier:", self._carrier_busy)
+        logger.debug("etm: {}".format(self._carrier_busy))
         self._gpio.set_mode_transmit(self._pi)
         time.sleep(self._NEXT_MODE_SLEEP_S)
         # If carrier not present, start transmitting now else wait.
@@ -348,7 +359,7 @@ class Nrf905:
 
     def _carrier_detect_callback(self, gpio, level, tick):
         """ Only used for transmitting. """
-        # print("cdc:", gpio, level, tick)
+        logger.debug("cdc: {}, {}, {}".format(gpio, level, tick))
         if level == 0:
             # High to low
             self._carrier_busy = False
@@ -359,11 +370,11 @@ class Nrf905:
             # Low to high.
             self._carrier_busy = True
         else:
-            print("Watchdog!")
+            logger.error("Watchdog!")
 
     def _address_matched_callback(self, gpio, level, tick):
         """ Update state machine directly. """
-        # print("amc:", gpio, level, tick)
+        logger.debug("amc: {}, {}, {}".format(gpio, level, tick))
         if level == 0:
             # High to low
             # CRC failed so go back to listening.
@@ -374,11 +385,11 @@ class Nrf905:
             if self._state_machine.is_receiving_listening():
                 self._state_machine.address_match()
         else:
-            print("Watchdog!")
+            logger.error("Watchdog!")
 
     def _data_ready_callback(self, gpio, level, tick):
         """ Update state machine directly. """
-        print("drc:", gpio, level, tick)
+        logger.debug("drc: {}, {}, {}".format(gpio, level, tick))
         if level == 0:
             # High to low
             if self._state_machine.is_receiving_received():
@@ -393,8 +404,9 @@ class Nrf905:
             elif self._state_machine.is_receiving_receiving_data():
                 # Successful receive with good CRC (if enabled).
                 self._state_machine.data_ready_rx()
+                self._data_received = True
         else:
-            print("Watchdog!")
+            logger.error("Watchdog!")
 
 
 class StateError(Exception):
