@@ -287,14 +287,23 @@ class Nrf905:
         print("-------------------")
 
     def _read_payload(self):
-        # print("rp")
+        print("rp")
+        # Wait until open.
+        while not self._open:
+            time.sleep(self._READ_SLEEP_S)
         # Loop until driver closed.
         while self._open:
+            print("/nrp: waiting...")
             # Wait for data to be received.
+            loop_count = 0
             while self._state_machine.state != "receiving_received":
                 if not self._open:
                     break
                 time.sleep(self._READ_SLEEP_S)
+                loop_count += 1
+                if loop_count % 5000 == 0:
+                    print(".", end='')
+            print("/nrp: received")
             # When the payload has been read, the DR pin will go low
             # causing a state change.
             payload = self._spi.read_receive_payload()

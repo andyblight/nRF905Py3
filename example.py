@@ -1,11 +1,12 @@
 #!/usr/bin/env python3
 """ Example program that uses the Nrf905 class to implement a simple text chat
-system between two devices. 32 chars max per line!
+system between two devices.
 """
 
 import time
 
 from nrf905.nrf905 import Nrf905
+
 
 
 def callback(payload):
@@ -20,16 +21,18 @@ def main():
     """ Create a transceiver instance and set it up to print any data received.
     Give the user a prompt and send any data they enter.
     """
-    test_mode = True
+    test_mode = False
     transceiver = Nrf905()
     # Must be set before open is called.
     transceiver.frequency_mhz = 434.5
     # Setup to listen for any replies.
     # Callback will be fired if anything is received.
-    transceiver.receive_address = 0x43454749
+    # transceiver.receive_address = 0x43454749
+    transceiver.receive_address = 0x4345474A
     transceiver.enable_receive(callback)
     # Can also be called after open is called.
-    transceiver.transmit_address = 0x4345474A
+    # transceiver.transmit_address = 0x4345474A
+    transceiver.transmit_address = 0x43454749
     # Open the transceiver.  Transmit only is default.
     transceiver.open()
     time.sleep(0.02)
