@@ -10,8 +10,8 @@ Useful info about sub-states here: https://devhub.io/repos/tyarkoni-transitions
 
 import logging
 
-# from transitions.extensions import LockedHierarchicalMachine as Machine
-from transitions.extensions import LockedHierarchicalGraphMachine as Machine
+# from transitions.extensions import HierarchicalMachine as Machine
+from transitions.extensions import HierarchicalGraphMachine as Machine
 
 # Set up logging; The basic log level will be DEBUG
 logging.basicConfig(level=logging.INFO)
@@ -47,28 +47,50 @@ class Nrf905StateMachine:
         )
         # Add transitions:          (trigger name, current state, next state)
         # Transmitting
-        self._machine.add_transition("transmit", "standby", "transmitting")
+        self._machine.add_transition(
+            "transmit_wait", "standby", "transmitting_waiting"
+        )
+        # Two threads, the main thread and the interrupt thread were tring to
+        # control the no_carrier transition and caused the program to break.
+        # This transition allows the main thread to start sending directly
+        # so the no_carrier transition is only changed by the
+        # carrier detect handler.
+        self._machine.add_transition(
+            "transmit_now", "standby", "transmitting_sending"
+        )
+        # Driven by carrier detect handler.
         self._machine.add_transition(
             "no_carrier", "transmitting_waiting", "transmitting_sending"
         )
+        # Driven by data ready handler.
         self._machine.add_transition(
             "data_ready_tx", "transmitting_sending", "standby"
         )
         # Receiving states
+        # Driven by address match handler.
         self._machine.add_transition(
             "address_match", "receiving_listening", "receiving_receiving_data"
         )
+        # Driven by address match handler.
         self._machine.add_transition(
             "bad_crc", "receiving_receiving_data", "receiving_listening"
         )
+        # Driven by data ready handler.
         self._machine.add_transition(
             "data_ready_rx", "receiving_receiving_data", "receiving_received"
         )
+        # Driven by data ready handler.
+        self._machine.add_transition(
+            "data_ready_rx_direct", "receiving_listening", "receiving_received"
+        )
+        # Driven by main program.
         self._machine.add_transition(
             "received2listening", "receiving_received", "receiving_listening"
         )
         # Enter/leave receiving
-        self._machine.add_transition("receiver_enable", "standby", "receiving")
+        self._machine.add_transition(
+            "receiver_enable", "standby", "receiving"
+        )
         self._machine.add_transition(
             "receiver_disable", "receiving", "standby"
         )

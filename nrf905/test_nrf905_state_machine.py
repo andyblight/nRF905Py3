@@ -206,11 +206,12 @@ class Nrf905Mock:
         logger.debug("t: sending '" + str(data))
         # Write payload (data) to device.
         # Start transmitting (TRX_CE goes hi).
-        self._machine.transmit()
-        # This puts it into trasmitting_waiting.
-        # If the carrier is not busy, go straight into sending.
-        if not self._carrier_busy:
-            self._machine.no_carrier()
+        if self._carrier_busy:
+            # This puts it into transmitting_waiting.
+            self._machine.transmit_wait()
+        else:
+            # Go straight into sending.
+            self._machine.transmit_now()
 
     def end_transmit(self):
         """ Fake function for testing.  In reality, the transmit would finish

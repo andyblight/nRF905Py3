@@ -56,7 +56,7 @@ class Nrf905:
     @frequency_mhz.setter
     def frequency_mhz(self, frequency_mhz, country="GBR"):
         """ Validates and sets the frequency for the device in MHz. """
-        print("frequency:", frequency_mhz)
+        # print("frequency:", frequency_mhz)
         if Nrf905ConfigRegister.is_valid(frequency_mhz, country):
             (channel, hfreq_pll) = Nrf905ConfigRegister.frequency_to_channel(
                 frequency_mhz
@@ -81,7 +81,7 @@ class Nrf905:
         """ Sets the receive address. Must be 4 bytes or less.
         Please read datasheet for adivce on setting addres values.
         """
-        print("rx_address:", hex(address))
+        # print("rx_address:", hex(address))
         if address.bit_length() > 32:
             raise ValueError("Address contains more than 32 bits.")
         else:
@@ -96,7 +96,7 @@ class Nrf905:
         """ Sets the transmit address. Must be 4 bytes or less.
         Please read datasheet for adivce on setting address values.
         """
-        print("set_tx_address:", hex(address))
+        # print("set_tx_address:", hex(address))
         if address.bit_length() > 32:
             raise ValueError("Address contains more than 32 bits.")
         else:
@@ -111,7 +111,7 @@ class Nrf905:
         """ Sets the transmit power in dB.
         Values will be rounded down to one of these values: -10, -2, +6, +10.
         """
-        print("transmit_power_db:", power)
+        # print("transmit_power_db:", power)
         if power <= -10:
             self._tx_power = 0b00
         elif power <= -2:
@@ -131,7 +131,7 @@ class Nrf905:
         Uses the payload width value for transmit and receive payloads.
         Default value is 32 bytes.
         """
-        print("set_payload_width:", width)
+        # print("set_payload_width:", width)
         if 1 <= width <= 32:
             raise ValueError("width must be between 1 and 32 bytes inclusive.")
         else:
@@ -145,7 +145,7 @@ class Nrf905:
     def next_tx_mode_rx(self, next_mode):
         """ Sets the next tx mode.  True is receive mode, False is standby.
         """
-        print("next_tx_mode_rx:", next_mode)
+        # print("next_tx_mode_rx:", next_mode)
         self._next_tx_mode_rx = next_mode
 
     def enable_receive(self, callback):
@@ -248,8 +248,9 @@ class Nrf905:
     def send(self, data):
         """ Sends the data. Maximum of 32 bytes will be sent (checked by
         Nrf905Spi.write_transmit_payload()).
+        NOTE: data must be a bytearray.
         """
-        print("send:", data)
+        # print("send:", data)
         if not self._open:
             raise StateError("Call Nrf905.open() first.")
         else:
@@ -260,7 +261,7 @@ class Nrf905:
             self._enter_standby()
             # Load the data.
             payload = bytearray()
-            payload.extend(map(ord, data))
+            payload.extend(data)
             self._spi.write_transmit_payload(payload)
             # Tell the device to send the data and block until done.
             self._data_sent = False
@@ -286,7 +287,7 @@ class Nrf905:
         print("-------------------")
 
     def _read_payload(self):
-        print("rp")
+        # print("rp")
         # Loop until driver closed.
         while self._open:
             # Wait for data to be received.
@@ -302,14 +303,14 @@ class Nrf905:
 
     def _enter_power_down(self):
         """ Set the mode and state. """
-        print("epd")
+        # print("epd")
         self._gpio.set_mode_power_down(self._pi)
         time.sleep(self._NEXT_MODE_SLEEP_S)
         self._state_machine.power_down()
 
     def _enter_standby(self):
         """ Set the mode and state. """
-        print("es")
+        # print("es")
         if self._state_machine.state != "standby":
             self._gpio.set_mode_standby(self._pi)
             time.sleep(self._NEXT_MODE_SLEEP_S)
@@ -320,29 +321,30 @@ class Nrf905:
 
     def _enter_rx_mode(self):
         """ Set the mode and state. """
-        print("erm")
+        # print("erm")
         self._gpio.set_mode_receive(self._pi)
         time.sleep(self._NEXT_MODE_SLEEP_S)
         self._state_machine.receiver_enable()
 
     def _enter_tx_mode(self):
         """ Set the mode and state. """
-        print("etm: carrier:", self._carrier_busy)
+        # print("etm: carrier:", self._carrier_busy)
         self._gpio.set_mode_transmit(self._pi)
         time.sleep(self._NEXT_MODE_SLEEP_S)
-        self._state_machine.transmit()
-        # If carrier not present, start transmitting.
+        # If carrier not present, start transmitting now else wait.
         if not self._carrier_busy:
-            self._state_machine.no_carrier()
+            self._state_machine.transmit_now()
+        else:
+            self._state_machine.transmit_wait()
 
     def _carrier_detect_callback(self, gpio, level, tick):
         """ Only used for transmitting. """
-        print("cdc:", gpio, level, tick)
+        # print("cdc:", gpio, level, tick)
         if level == 0:
             # High to low
             self._carrier_busy = False
             # If waiting to start transmitting, start transmitting.
-            if self._state_machine.is_transmitting_waiting():
+            if self._state_machine.state == "transmitting_waiting":
                 self._state_machine.no_carrier()
         elif level == 1:
             # Low to high.
@@ -352,7 +354,7 @@ class Nrf905:
 
     def _address_matched_callback(self, gpio, level, tick):
         """ Update state machine directly. """
-        print("amc:", gpio, level, tick)
+        # print("amc:", gpio, level, tick)
         if level == 0:
             # High to low
             # CRC failed so go back to listening.

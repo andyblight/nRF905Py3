@@ -35,7 +35,10 @@ def main():
     time.sleep(0.02)
     # Send whatever data the user enters until quit.
     if test_mode:
-        transceiver.send("Test data 12345")
+        payload = bytearray()
+        payload.extend("Test data 12345".encode())
+        print("Sending packet", payload)
+        transceiver.send(payload)
         time.sleep(1)
     else:
         quit = False
@@ -49,6 +52,7 @@ def main():
                     packet = data[0:32]
                     payload = bytearray()
                     payload.extend(packet.encode())
+                    print("Sending packet", payload)
                     transceiver.send(payload)
                     # Take the first 32 bytes off the data.
                     data = data[32:]
