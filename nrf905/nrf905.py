@@ -242,9 +242,11 @@ class Nrf905:
         """
         logger.info("close")
         self._open = False
-        self._enter_power_down()
         if self._auto_receive:
+            logger.info("joining")
             self._read_thread.join()
+        logger.info("joined")
+        self._enter_power_down()
         # Release objects.
         self._spi.close()
         self._pi.stop()
@@ -301,14 +303,13 @@ class Nrf905:
             self._rx_data_ready = False
             logger.debug("rp: waiting...")
             # Wait for data to be received.
-            while not self._rx_data_ready:
-                if not self._open:
-                    break
+            while self._open and not self._rx_data_ready:
                 time.sleep(self._READ_SLEEP_S)
-            logger.debug("rp: received")
-            payload = self._spi.read_receive_payload()
-            # Call the callback. payload is a bytearray.
-            self._receive_callback(payload)
+            if self._rx_data_ready:
+                logger.debug("rp: received")
+                payload = self._spi.read_receive_payload()
+                # Call the callback. payload is a bytearray.
+                self._receive_callback(payload)
 
     def _enter_power_down(self):
         """ Set the mode and state. """
