@@ -13,27 +13,11 @@ def callback(data):
 
 class TestNrf905(unittest.TestCase):
     def setUp(self):
-        self.self.transceiver = Nrf905()
+        self.transceiver = Nrf905()
 
     def tearDown(self):
         self.transceiver.close()
 
-    def test_frequency(self):
-        """ Test the setter. """
-
-    def test_write(self):
-        """ Verify write before open fails.
-        Verify write after open succeeds.
-        """
-        data_bytes = [20] * 32
-        # StateError if write before open
-        with self.assertRaises(StateError):
-            self.transceiver.write(data_bytes)
-        # No assert after opening.
-        self.transceiver.open(callback)
-        self.transceiver.write(data_bytes)
-
-    # THE FOLLOWING TESTS ARE BROKEN
     def test_set_address(self):
         # Verify it works before open for unsigned 32 bit integers.
         address = 0
@@ -54,73 +38,60 @@ class TestNrf905(unittest.TestCase):
         with self.assertRaises(StateError):
             self.transceiver.set_address(address)
 
-    def test_open_rx_rx(self):
-        # No exceptions expected
-        self.transceiver.open(434, callback)
-        self.transceiver.open(434, callback)
+    def test_frequency(self):
+        """ Test the setter and getter. """
+        # Verify default.
+        expected_mhz = 0.0
+        default_mhz = self.transceiver.frequency_mhz
+        self.assertEqual(expected_mhz, default_mhz)
+        # Check that set and get works with a valid frequency.
+        expected_mhz = 434.2
+        self.transceiver.frequency_mhz = expected_mhz
+        result_mhz = self.transceiver.frequency_mhz
+        self.assertEqual(expected_mhz, expected_mhz)
+        # Check that set fails with invalid frequencies.
+        expected_mhz = 0
+        with self.assertRaises(ValueError):
+            self.transceiver.frequency_mhz = expected_mhz
+        expected_mhz = 430
+        with self.assertRaises(ValueError):
+            self.transceiver.frequency_mhz = expected_mhz
+        expected_mhz = 1000
+        with self.assertRaises(ValueError):
+            self.transceiver.frequency_mhz = expected_mhz
 
-    def test_open_tx_rx(self):
-        # Expect exception on second call
-        self.transceiver.open(434)
+    def test_receive_address(self):
+        """ Test the setter and getter. """
+        # Verify default.
+        expected = -1
+        result = self.transceiver.receive_address
+        self.assertEqual(expected, result)
+        # Check that set and get works with a valid address.
+        expected = 0x47474747
+        self.transceiver.receive_address = expected
+        result = self.transceiver.receive_address
+        self.assertEqual(expected, result)
+        # Check that set fails with invalid addresses.
+        expected = 0x4
+        self.transceiver.receive_address = expected
+        result = self.transceiver.receive_address
+        self.assertEqual(expected, result)
+        expected = 0x123456789
+        self.transceiver.receive_address = expected
+        result = self.transceiver.receive_address
+        self.assertEqual(expected, result)
+
+    def test_send(self):
+        """ Verify send before open fails.
+        Verify write after open succeeds.
+        """
+        data_bytes = [20] * 32
+        # StateError if write before open
         with self.assertRaises(StateError):
-            self.transceiver.open(434, callback)
-        self.transceiver.close()
-
-    def test_open_rx_tx(self):
-        # Expect exception on second call
-        self.transceiver.open(434, callback)
-        with self.assertRaises(StateError):
-            self.transceiver.open(434)
-        self.transceiver.close()
-
-    def test_open_tx_tx(self):
-        # No exceptions expected
-        self.transceiver.open(434)
-        self.transceiver.open(434)
-        self.transceiver.close()
-
-    def test_read_success(self):
-        self.transceiver.open(434, callback)
-        # TODO This test needs to invoke the callback and verify what is
-        # returned.
-        self.transceiver.close()
-
-    def test_set_crc_mode(self):
-        # Verify it works before open for 0, 8 and 16.
-        crc_mode = 0
-        self.transceiver.set_crc_mode(crc_mode)
-        crc_mode = 8
-        self.transceiver.set_crc_mode(crc_mode)
-        crc_mode = 16
-        self.transceiver.set_crc_mode(crc_mode)
-        # Verify ValueError before open for not 0, 8 and 16.
-        crc_mode = -1
-        with self.assertRaises(ValueError):
-            self.transceiver.set_crc_mode(crc_mode)
-        crc_mode = 1
-        with self.assertRaises(ValueError):
-            self.transceiver.set_crc_mode(crc_mode)
-        crc_mode = 7
-        with self.assertRaises(ValueError):
-            self.transceiver.set_crc_mode(crc_mode)
-        crc_mode = 9
-        with self.assertRaises(ValueError):
-            self.transceiver.set_crc_mode(crc_mode)
-        crc_mode = 15
-        with self.assertRaises(ValueError):
-            self.transceiver.set_crc_mode(crc_mode)
-        crc_mode = 17
-        with self.assertRaises(ValueError):
-            self.transceiver.set_crc_mode(crc_mode)
-        crc_mode = 200
-        with self.assertRaises(ValueError):
-            self.transceiver.set_crc_mode(crc_mode)
-        # Set after open causes StateError.
-        self.transceiver.open(434)
-        crc_mode = 8
-        with self.assertRaises(StateError):
-            self.transceiver.set_crc_mode(crc_mode)
-        self.transceiver.close()
+            self.transceiver.send(data_bytes)
+        # No assert after opening.
+        self.transceiver.open()
+        self.transceiver.send(data_bytes)
 
 
 if __name__ == "__main__":
