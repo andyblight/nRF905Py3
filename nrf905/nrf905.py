@@ -19,6 +19,7 @@ logger = logging.getLogger("Nrf905")
 
 class Nrf905State(Enum):
     """ Main states of the nRF905 device. """
+
     SLEEP = 0
     STANDBY = 1
     TRANSMITTING = 2
@@ -36,7 +37,7 @@ class Nrf905:
     _READ_SLEEP_S = 0.01  # 10ms
     _SEND_SLEEP_S = 0.001  # 1ms Want this to be quick.
     _NEXT_MODE_SLEEP_S = 0.0007  # 700us from datasheet.
-    _POWER_UP_SLEEP_S =  0.003  # 3ms Powering up takes longer.
+    _POWER_UP_SLEEP_S = 0.003  # 3ms Powering up takes longer.
 
     def __init__(self):
         # nRF905 properties

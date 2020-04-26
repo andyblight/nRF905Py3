@@ -224,17 +224,7 @@ worked and was much simpler.  The final state machine diagram in included in
 the docs directory for reference.
 
 ## TO DO List
-
-1. Make `example.py` work.
-    1. Nrf905 is part way through a re-write.
-        1. Use setters and getters for exposed properties. DONE.
-        1. API should hide the three GPIO pin callbacks.  It should just have
-        one callback to handle the date being received.  DONE.
-        1. `threads.py` can be used as an example of how to use threads,
-        queues and semaphores to do what I need.  DONE. Implemented read
-        thread.
-        1. Test with second RPi to make sure that communications actually work.
-        RPi2 to have new image, then install and test (verifies installation).
+1. Implement better example with ack/retry mechanism.
 1. Add SPI bus 1 functionality.  The `Nrf905Spi.__init__()` function takes
     the spi_bus parameter but there is no implemented functionality.  Affects
     Nrf905SPI and Nrf905Gpio classes.  Needs RPi 2 or later to test.
@@ -243,7 +233,7 @@ the docs directory for reference.
     using queues, each user need unique handle (in the Nrf905 class).
     Need to work out user privileges for each function.
 1. Consider moving all PiGPIO functions into a single class to allow alternative
-    implementations.  Also hides PiGPIO from API functions.
+    implementations.
 1. Band scan to identify busy/free frequencies.  Change frequency through list,
     listen for period of time, log busy time, repeat for several minutes,
     print report as table.

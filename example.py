@@ -1,12 +1,13 @@
 #!/usr/bin/env python3
 """ Example program that uses the Nrf905 class to implement a simple text chat
 system between two devices.
+NOTE: This example works pretty well but needs some for of ack/retry system
+as longer packets sometimes get lost.
 """
 
 import time
 
 from nrf905.nrf905 import Nrf905
-
 
 
 def callback(payload):
@@ -16,9 +17,13 @@ def callback(payload):
     packet_number = int(payload[0])
     packet_length = int(payload[1])
     # Using ASCII as it is fixed length.
-    packet_string = str(payload[2:packet_length + 2], "ascii")
+    packet_string = str(payload[2 : packet_length + 2], "ascii")
     print()
-    print("Received: {}, {}, '{}'".format(packet_number, packet_length, packet_string))
+    print(
+        "Received: {}, {}, '{}'".format(
+            packet_number, packet_length, packet_string
+        )
+    )
 
 
 def main():
@@ -63,7 +68,11 @@ def main():
                     payload[1] = len(packet)
                     # Using ASCII as it is fixed length.
                     payload.extend(packet.encode("ascii"))
-                    print("Sending packet: {}, {}, '{}'".format(data_packets_sent, len(packet), packet))
+                    print(
+                        "Sending packet: {}, {}, '{}'".format(
+                            data_packets_sent, len(packet), packet
+                        )
+                    )
                     transceiver.send(payload)
                     # Take the first 30 bytes off the data.
                     data = data[30:]
