@@ -1,5 +1,6 @@
 #!/usr/bin/env python3
 
+import time
 import unittest
 
 from nrf905.nrf905 import Nrf905, StateError
@@ -16,27 +17,8 @@ class TestNrf905(unittest.TestCase):
         self.transceiver = Nrf905()
 
     def tearDown(self):
+        time.sleep(0.001)
         self.transceiver.close()
-
-    def test_set_address(self):
-        # Verify it works before open for unsigned 32 bit integers.
-        address = 0
-        self.transceiver.set_address(address)
-        address = 0xFFFFFFFF
-        self.transceiver.set_address(address)
-        # Verify values that are not unsigned 32 bit integers generate
-        # exceptions.
-        address = -1
-        with self.assertRaises(ValueError):
-            self.transceiver.set_address(address)
-        address = 3.4
-        with self.assertRaises(TypeError):
-            self.transceiver.set_address(address)
-        # Set after open asserts with StateError.
-        self.transceiver.open(434)
-        address = 105
-        with self.assertRaises(StateError):
-            self.transceiver.set_address(address)
 
     def test_frequency(self):
         """ Test the setter and getter. """
@@ -71,15 +53,10 @@ class TestNrf905(unittest.TestCase):
         self.transceiver.receive_address = expected
         result = self.transceiver.receive_address
         self.assertEqual(expected, result)
-        # Check that set fails with invalid addresses.
-        expected = 0x4
-        self.transceiver.receive_address = expected
-        result = self.transceiver.receive_address
-        self.assertEqual(expected, result)
+        # Check that set fails with an invalid address.
         expected = 0x123456789
-        self.transceiver.receive_address = expected
-        result = self.transceiver.receive_address
-        self.assertEqual(expected, result)
+        with self.assertRaises(StateError):
+            self.transceiver.receive_address = expected
 
     def test_send(self):
         """ Verify send before open fails.
@@ -90,6 +67,8 @@ class TestNrf905(unittest.TestCase):
         with self.assertRaises(StateError):
             self.transceiver.send(data_bytes)
         # No assert after opening.
+        self.transceiver.receive_address = 0x43454749
+        self.transceiver.transmit_address = 0x4345474A
         self.transceiver.open()
         self.transceiver.send(data_bytes)
 
