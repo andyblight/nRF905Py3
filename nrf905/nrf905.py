@@ -52,7 +52,8 @@ class Nrf905:
         self._next_tx_mode_rx = False
         self._carrier_busy = False
         self._auto_receive = False
-        self._data_sent = False
+        self._tx_sending = False
+        self._tx_sent = False
         self._data_received = False
         # Logging test
         logger.critical("critical")
@@ -261,8 +262,9 @@ class Nrf905:
         """ Sends the data. Maximum of 32 bytes will be sent (checked by
         Nrf905Spi.write_transmit_payload()).
         NOTE: data must be a bytearray.
+        NOTE: Blocks until sent.
         """
-        logger.debug("send:", data)
+        logger.debug("send: '{}'".format(data))
         if not self._open:
             raise StateError("Call Nrf905.open() first.")
         else:
@@ -274,11 +276,13 @@ class Nrf905:
             # Load the data.
             payload = bytearray()
             payload.extend(data)
+            self._tx_sending = False
+            self._tx_sent = False
             self._spi.write_transmit_payload(payload)
             # Tell the device to send the data and block until done.
-            self._data_sent = False
+            self._tx_sending = True
             self._enter_tx_mode()
-            while not self._data_sent:
+            while not self._tx_sent:
                 time.sleep(self._SEND_SLEEP_S)
             # Put into next mode.
             self._enter_standby()
@@ -397,10 +401,10 @@ class Nrf905:
                 # payload registers.
                 self._state_machine.received2listening()
         elif level == 1:
-            if self._state_machine.is_transmitting_sending():
+            if self._tx_sending:
                 # Transmit has completed.
                 self._state_machine.data_ready_tx()
-                self._data_sent = True
+                self._tx_sent = True
             elif self._state_machine.is_receiving_receiving_data():
                 # Successful receive with good CRC (if enabled).
                 self._state_machine.data_ready_rx()
